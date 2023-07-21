@@ -3,7 +3,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
 import {Container, Button, FormText, NavDropdown, Form} from "react-bootstrap";
 import "./App.css";
-import DropdownToggle from "react-bootstrap/DropdownToggle";
 import isEmpty from "validator/es/lib/isEmpty.js";
 
 function App() {
@@ -14,11 +13,25 @@ function App() {
   const [lastSelection, setLastSelection] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [text, setText] = useState(undefined);
+  const [path, setPath] = useState("");
 
     async function capture() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
     setText(await invoke("capture", {}));
   }
+
+    const DirectoryChooserForm = () => {
+
+        const handleChooseDirectory = async () => {
+            try {
+                const result = await invoke('openDirectoryDialog');
+                console.log('Selected Directory:', result);
+                // Handle the selected directory path as needed.
+            } catch (error) {
+                console.error('Error selecting directory:', error);
+            }
+        };
+    }
 
     function reserve(event) {
         event.preventDefault();
@@ -41,7 +54,10 @@ function App() {
 
           <Container className={"col-4"}></Container>
       <Container style={{zIndex: "2", position: "relative"}} className={"mx-5 col-8"}>
-
+          <Container className={"flex-row p-0 align-items-center"}>
+              <FormText className={"m-2"}>Path:</FormText>
+              <Form.Control type={"file"} directory={""}></Form.Control>
+          </Container>
         <Container className={"flex-row align-items-center justify-content-center"}>
 
         <Container className={"d-flex flex-column align-items-center justify-content-center p-0"}>
