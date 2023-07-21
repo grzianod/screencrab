@@ -1,12 +1,12 @@
-# Tauri + React
+# Screen Crab
 
-This template should help get you started developing with Tauri and React in Vite.
+A cross-platform Rust application to perform screen grabbing 
 
-## Recommended IDE Setup
+### Recommended IDE Setup
 
-- [CLion]([https://www.jetbrains.com/clion/download/]) + [Tauri](https://plugins.jetbrains.com/plugin/21659-tauri/versions/stable)
+- [CLion](https://www.jetbrains.com/clion/download/) + [Tauri](https://plugins.jetbrains.com/plugin/21659-tauri/versions/stable)
 
-## Commands
+### Commands
 
 - `npm run tauri dev`: launch the application in developer mode
 - `npm run tauri build`: builds the application for production
