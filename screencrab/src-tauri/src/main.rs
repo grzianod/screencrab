@@ -5,6 +5,12 @@ mod lib;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
+fn cwd() -> String {
+    lib::cwd()
+}
+
+
+#[tauri::command]
 fn capture() {
     let filename = "screenshot.png";
     lib::capture_screen(filename).unwrap();
@@ -12,7 +18,7 @@ fn capture() {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![capture])
+        .invoke_handler(tauri::generate_handler![capture, cwd])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

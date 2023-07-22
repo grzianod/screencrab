@@ -1,4 +1,4 @@
-import { useState} from "react";
+import {useEffect, useState} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
 import {Container, Button, FormText, NavDropdown, Form} from "react-bootstrap";
@@ -14,24 +14,13 @@ function App() {
   const [expanded, setExpanded] = useState(false);
   const [text, setText] = useState(undefined);
   const [path, setPath] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [modify, setModify] = useState(false);
 
     async function capture() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setText(await invoke("capture", {}));
+    await invoke("capture", {});
   }
-
-    const DirectoryChooserForm = () => {
-
-        const handleChooseDirectory = async () => {
-            try {
-                const result = await invoke('openDirectoryDialog');
-                console.log('Selected Directory:', result);
-                // Handle the selected directory path as needed.
-            } catch (error) {
-                console.error('Error selecting directory:', error);
-            }
-        };
-    }
 
     function reserve(event) {
         event.preventDefault();
@@ -46,17 +35,90 @@ function App() {
 
     }
 
-  return (
-      <>
-    <Container className="background-container"></Container>
+    useEffect( () => {
+        setLoading(true);
+    }, []);
+
+    useEffect(  () => {
+        if(loading) {
+            invoke("cwd", {})
+                .then( (result) => {
+                    if(result.error)
+                            /* TODO: handle file system error */
+                            console.log("error1");
+                    else
+                        setPath(result.response);
+                })
+                .catch((err) => {
+                        /* TODO: handle IPC error */
+                        console.log("error2:" +err);
+                });
+            setLoading(false);
+        }
+    }, [loading]);
+
+    if(!loading)
+        return (
+            <>
+        <Container className="background-container"></Container>
 
           <Container className={"flex-row align-self-center"}>
 
           <Container className={"col-4"}></Container>
       <Container style={{zIndex: "2", position: "relative"}} className={"mx-5 col-8"}>
           <Container className={"flex-row p-0 align-items-center"}>
-              <FormText className={"m-2"}>Path:</FormText>
-              <Form.Control type={"file"} directory={""}></Form.Control>
+              <FormText className={"m-2"}>Save to </FormText>
+              <Form>
+                  <div style={{ position: "relative" }}>
+                      <Form.Control
+                          type="text"
+                          value={path}
+                          readOnly={modify}
+                          disabled={modify}
+                          style={{ minWidth: "28rem" }}
+                      />
+                      <Button
+                          variant="link"
+                          style={{ position: "absolute", top: 0, right: 0, color: "black" }}
+                          onClick={() => setModify((modify) => !modify)}
+                      >
+                          <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              fill="currentColor"
+                              className="bi bi-pencil-square"
+                              viewBox="0 0 16 16"
+                          >
+                              <path
+                                  d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
+                              />
+                              <path
+                                  fillRule="evenodd"
+                                  d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"
+                              />
+                          </svg>
+                      </Button>
+                  </div>
+              </Form>
+
+              <Form.Control
+                      type="file"
+                      webkitdirectory={""}
+                      directory={""}
+                      className="d-none"
+                      id="fileInput"
+                      onChange={(event) => setPath(event.target.value)}
+                  />
+                  <label htmlFor="fileInput" className="btn btn-light mx-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                           className="bi bi-folder-plus" viewBox="0 0 16 16">
+                          <path
+                              d="m.5 3 .04.87a1.99 1.99 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2Zm5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19c-.24 0-.47.042-.683.12L1.5 2.98a1 1 0 0 1 1-.98h3.672Z"/>
+                          <path
+                              d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5Z"/>
+                      </svg>
+                  </label>
           </Container>
         <Container className={"flex-row align-items-center justify-content-center"}>
 
