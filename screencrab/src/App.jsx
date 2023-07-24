@@ -1,7 +1,7 @@
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
-import {Container, Button, FormText, NavDropdown, Form} from "react-bootstrap";
+import {Container, Button, FormText, Form} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
 
@@ -15,12 +15,19 @@ function App() {
   const [text, setText] = useState(undefined);
   const [path, setPath] = useState("");
   const [loading, setLoading] = useState(false);
-  const [modify, setModify] = useState(false);
 
     async function capture() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    await invoke("capture", {});
-  }
+        // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+        await invoke("capture", {});
+    }
+
+    async function openFolderDialog() {
+        const result = await invoke("folder_dialog");
+        if(result.response)
+            setPath(result.response);
+        else
+            console.log(result.error); /* TODO: handle error */
+    }
 
     function reserve(event) {
         event.preventDefault();
@@ -35,28 +42,6 @@ function App() {
 
     }
 
-    useEffect( () => {
-        setLoading(true);
-    }, []);
-
-    useEffect(  () => {
-        if(loading) {
-            invoke("cwd", {})
-                .then( (result) => {
-                    if(result.error)
-                            /* TODO: handle file system error */
-                            console.log("error1");
-                    else
-                        setPath(result.response);
-                })
-                .catch((err) => {
-                        /* TODO: handle IPC error */
-                        console.log("error2:" +err);
-                });
-            setLoading(false);
-        }
-    }, [loading]);
-
     if(!loading)
         return (
             <>
@@ -65,7 +50,7 @@ function App() {
           <Container className={"flex-row align-self-center"}>
 
           <Container className={"col-4"}></Container>
-      <Container style={{zIndex: "2", position: "relative"}} className={"mx-5 col-8"}>
+      <Container style={{zIndex: "2", position: "relative"}} className={"w-75 mx-5 col-8 p-0"}>
           <Container className={"flex-row p-0 align-items-center"}>
               <FormText className={"m-2"}>Save to </FormText>
               <Form>
@@ -73,32 +58,9 @@ function App() {
                       <Form.Control
                           type="text"
                           value={path}
-                          readOnly={modify}
-                          disabled={modify}
                           style={{ minWidth: "28rem" }}
+                          onChange={ (event) => setPath(event.target.value)}
                       />
-                      <Button
-                          variant="link"
-                          style={{ position: "absolute", top: 0, right: 0, color: "black" }}
-                          onClick={() => setModify((modify) => !modify)}
-                      >
-                          <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              fill="currentColor"
-                              className="bi bi-pencil-square"
-                              viewBox="0 0 16 16"
-                          >
-                              <path
-                                  d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
-                              />
-                              <path
-                                  fillRule="evenodd"
-                                  d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"
-                              />
-                          </svg>
-                      </Button>
                   </div>
               </Form>
 
@@ -108,9 +70,8 @@ function App() {
                       directory={""}
                       className="d-none"
                       id="fileInput"
-                      onChange={(event) => setPath(event.target.value)}
                   />
-                  <label htmlFor="fileInput" className="btn btn-light mx-2">
+                  <label className="btn btn-light mx-2" onClick={openFolderDialog}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                            className="bi bi-folder-plus" viewBox="0 0 16 16">
                           <path
@@ -222,35 +183,8 @@ function App() {
             </Container>
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 m-2"}>
-                <FormText>&nbsp;</FormText>
-                <NavDropdown title="Options" variant={"light"}>
-                    <NavDropdown.Item
-                        as="button"
-                        onClick={() => setPointer((pointer) => !pointer)}
-                        style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                    >
-                        <span>Show Mouse Pointer</span>
-                        {pointer ? <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                        className="bi bi-check" viewBox="0 0 16 16">
-                            <path
-                                d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                        </svg>: false}
-                    </NavDropdown.Item>
-                    <NavDropdown.Item
-                        as="button"
-                        onClick={() => setLastSelection((lastSelection) => !lastSelection)}
-                        style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                    >
-                        <span className={"me-2"}>Remember Last Selection</span>
-                        {lastSelection ? <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                              className="bi bi-check" viewBox="0 0 16 16">
-                            <path
-                                d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                        </svg> : false}
-                    </NavDropdown.Item>
-
-
-                </NavDropdown>
+                <FormText>Show Mouse Pointer</FormText>
+                <Form.Switch checked={pointer} onChange={() => setPointer( (pointer) => !pointer)}></Form.Switch>
             </Container>
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 m-2"}>
