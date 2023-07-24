@@ -47,7 +47,7 @@
         "resizable": false,
         "focus": true,
         "title": "Screen Crab",
-        "width": 1000,
+        "width": 1200,
         "height": 200,
         "center": true,
         "decorations": true

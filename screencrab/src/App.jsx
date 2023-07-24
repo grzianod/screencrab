@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
 import {Container, Button, FormText, Form} from "react-bootstrap";
@@ -10,11 +10,9 @@ function App() {
   const [view, setView] = useState("fullscreen");
   const [timer, setTimer] = useState(0);
   const [pointer, setPointer] = useState(false);
-  const [lastSelection, setLastSelection] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [text, setText] = useState(undefined);
   const [path, setPath] = useState("");
-  const [loading, setLoading] = useState(false);
+
 
     async function capture() {
         // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -29,6 +27,17 @@ function App() {
             console.log(result.error); /* TODO: handle error */
     }
 
+    useEffect( () => {
+        invoke("cwd")
+            .then( (result) => {
+                if(result.response)
+                    setPath(result.response);
+                else
+                    console.log("ERROR"); /* TODO: handle path retrieve error */
+            })
+            .catch( (err) => console.log("ERROR") /* TODO: handle error */);
+    }, []);
+
     function reserve(event) {
         event.preventDefault();
 
@@ -42,7 +51,7 @@ function App() {
 
     }
 
-    if(!loading)
+
         return (
             <>
         <Container className="background-container"></Container>
@@ -52,26 +61,20 @@ function App() {
           <Container className={"col-4"}></Container>
       <Container style={{zIndex: "2", position: "relative"}} className={"w-75 mx-5 col-8 p-0"}>
           <Container className={"flex-row p-0 align-items-center"}>
-              <FormText className={"m-2"}>Save to </FormText>
+              {text ? <h2>text</h2> : false}
+              <FormText className={"m-2"}>Save to</FormText>
               <Form>
                   <div style={{ position: "relative" }}>
                       <Form.Control
                           type="text"
                           value={path}
-                          style={{ minWidth: "28rem" }}
+                          readOnly
+                          style={{minWidth: "35rem"}}
                           onChange={ (event) => setPath(event.target.value)}
                       />
                   </div>
               </Form>
-
-              <Form.Control
-                      type="file"
-                      webkitdirectory={""}
-                      directory={""}
-                      className="d-none"
-                      id="fileInput"
-                  />
-                  <label className="btn btn-light mx-2" onClick={openFolderDialog}>
+                  <Button variant={"light"} className="mx-2" onClick={openFolderDialog}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                            className="bi bi-folder-plus" viewBox="0 0 16 16">
                           <path
@@ -79,7 +82,7 @@ function App() {
                           <path
                               d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5Z"/>
                       </svg>
-                  </label>
+                  </Button>
           </Container>
         <Container className={"flex-row align-items-center justify-content-center"}>
 
