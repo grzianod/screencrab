@@ -16,6 +16,7 @@ function App() {
   const [countdown, setCountdown] = useState(0);
   const [capturing, setCapturing] = useState(false);
   const [isCounting, setIsCounting] = useState(false);
+  const [fileType, setFileType] = useState(".png");
 
 
     async function wait(countdown) {
@@ -47,13 +48,12 @@ function App() {
                 setCountdown(0);
                 setIsCounting(false);
                 setCapturing(true);
-                await invoke("capture", {mode, view, pointer, path});
+                await invoke("capture", {mode: mode, view: view, pointer: pointer, path: path, name: name, file_type: fileType});
                 setCapturing(false);
             }
         }
 
-        if(duration > 0)
-            handleCountdown();
+        handleCountdown()
 
     }, [countdown, isCounting]);
 
@@ -140,16 +140,41 @@ function App() {
                   </div>
               </Form>
               <Dropdown className={"ms-2"}>
-                  <Dropdown.Toggle variant="light" id="dropdown-basic">
+                  <Dropdown.Toggle variant="light" id="dropdown-basic" style={{fontSize: "0.9rem"}}>
                       Save as
                   </Dropdown.Toggle>
 
                   <Dropdown.Menu>
-                      <Dropdown.Item className={mode==="record" ? "d-none" : false}>.jpeg</Dropdown.Item>
-                      <Dropdown.Item className={mode==="record" ? "d-none" : false}>.png</Dropdown.Item>
-                      <Dropdown.Item className={mode==="capture" ? "d-none" : false}>.mov</Dropdown.Item>
-                      <Dropdown.Item className={mode==="capture" ? "d-none" : false}>.mp4</Dropdown.Item>
-                      <Dropdown.Item className={mode==="capture" ? "d-none" : false}>.gif</Dropdown.Item>
+                      <Dropdown.Item onClick={() => setFileType(".jpeg")} className={mode==="record" ? "d-none" : false}>.jpeg{fileType === ".jpeg" ?
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                               className="bi bi-check" viewBox="0 0 16 16">
+                              <path
+                                  d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                          </svg> : false}</Dropdown.Item>
+                      <Dropdown.Item onClick={() => setFileType(".png")} className={mode==="record" ? "d-none" : false}>.png{fileType === ".png" ?
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                               className="bi bi-check" viewBox="0 0 16 16">
+                              <path
+                                  d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                          </svg> : false}</Dropdown.Item>
+                      <Dropdown.Item onClick={() => setFileType(".mov")} className={mode==="capture" ? "d-none" : false}>.mov{fileType === ".mov" ?
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                               className="bi bi-check" viewBox="0 0 16 16">
+                              <path
+                                  d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                          </svg> : false}</Dropdown.Item>
+                      <Dropdown.Item onClick={() => setFileType(".mp4")} className={mode==="capture" ? "d-none" : false}>.mp4{fileType === ".mp4" ?
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                               className="bi bi-check" viewBox="0 0 16 16">
+                              <path
+                                  d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                          </svg> : false}</Dropdown.Item>
+                      <Dropdown.Item onClick={() => setFileType(".gif")} className={mode==="capture" ? "d-none" : false}>.gif{fileType === ".gif" ?
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                               className="bi bi-check" viewBox="0 0 16 16">
+                              <path
+                                  d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                          </svg> : false}</Dropdown.Item>
                   </Dropdown.Menu>
               </Dropdown>
           </Container>

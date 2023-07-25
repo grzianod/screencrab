@@ -3,6 +3,7 @@
 use std::process::Command;
 use std::io::{Result, Error, ErrorKind};
 use std::env;
+use std::ffi::OsString;
 use tauri::api::dialog::FileDialogBuilder;
 use tauri::{AppHandle, State};
 use tauri::Manager;
