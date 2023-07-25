@@ -9,7 +9,6 @@ async fn folder_dialog() -> Response {
 
 #[tauri::command]
 async fn cwd() -> Response {
-    println!("{:?}", lib::cwd().await);
     lib::cwd().await
 }
 

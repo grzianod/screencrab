@@ -1,22 +1,65 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState, useRef} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
-import {Container, Button, FormText, Form} from "react-bootstrap";
+import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
 
 function App() {
   const [mode, setMode] = useState("capture");
   const [view, setView] = useState("fullscreen");
-  const [timer, setTimer] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [pointer, setPointer] = useState(false);
   const [text, setText] = useState(undefined);
+  const [name, setName] = useState("");
   const [path, setPath] = useState("");
+  const [countdown, setCountdown] = useState(0);
+  const [capturing, setCapturing] = useState(false);
+  const [isCounting, setIsCounting] = useState(false);
 
+
+    async function wait(countdown) {
+        if (countdown <= 0) {
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            setCountdown(countdown);
+            return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setCountdown((countdown) => countdown - 1);
+        await wait(countdown - 1)
+    }
 
     async function capture() {
-        // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-        await invoke("capture", {});
+        setCountdown(duration);
+        setIsCounting(true);
+    }
+
+    useEffect( () => {
+
+        const handleCountdown = async () => {
+            if (countdown > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                setCountdown(countdown => countdown-1);
+            }
+
+            if (countdown <= 0 && isCounting ) {
+                setCountdown(0);
+                setIsCounting(false);
+                setCapturing(true);
+                await invoke("capture", {mode, view, pointer, path});
+                setCapturing(false);
+            }
+        }
+
+        if(duration > 0)
+            handleCountdown();
+
+    }, [countdown, isCounting]);
+
+    async function stopCapture() {
+        setCountdown(0);
+        setIsCounting(false);
     }
 
     async function openFolderDialog() {
@@ -42,11 +85,11 @@ function App() {
         event.preventDefault();
 
         if (isEmpty(event.target.value)) {
-            setTimer(0);
+            setDuration(0);
             return;
         }
 
-        setTimer(parseInt(event.target.value));
+        setDuration(parseInt(event.target.value));
         return;
 
     }
@@ -60,7 +103,7 @@ function App() {
 
           <Container className={"col-4"}></Container>
       <Container style={{zIndex: "2", position: "relative"}} className={"w-75 mx-5 col-8 p-0"}>
-          <Container className={"flex-row p-0 align-items-center"}>
+          <Container className={"flex-row p-0 align-items-center mb-2"}>
               {text ? <h2>text</h2> : false}
               <FormText className={"m-2"}>Save to</FormText>
               <Form>
@@ -69,7 +112,7 @@ function App() {
                           type="text"
                           value={path}
                           readOnly
-                          style={{minWidth: "35rem"}}
+                          style={{minWidth: "40rem"}}
                           onChange={ (event) => setPath(event.target.value)}
                       />
                   </div>
@@ -84,6 +127,33 @@ function App() {
                       </svg>
                   </Button>
           </Container>
+          <Container className={"flex-row p-0 align-items-center"}>
+              <FormText className={"m-2"}>Name:</FormText>
+              <Form>
+                  <div style={{ position: "relative" }}>
+                      <Form.Control
+                          type="text"
+                          value={name}
+                          style={{minWidth: "15rem"}}
+                          onChange={ (event) => setName(event.target.value)}
+                      />
+                  </div>
+              </Form>
+              <Dropdown className={"ms-2"}>
+                  <Dropdown.Toggle variant="light" id="dropdown-basic">
+                      Save as
+                  </Dropdown.Toggle>
+
+                  <Dropdown.Menu>
+                      <Dropdown.Item className={mode==="record" ? "d-none" : false}>.jpeg</Dropdown.Item>
+                      <Dropdown.Item className={mode==="record" ? "d-none" : false}>.png</Dropdown.Item>
+                      <Dropdown.Item className={mode==="capture" ? "d-none" : false}>.mov</Dropdown.Item>
+                      <Dropdown.Item className={mode==="capture" ? "d-none" : false}>.mp4</Dropdown.Item>
+                      <Dropdown.Item className={mode==="capture" ? "d-none" : false}>.gif</Dropdown.Item>
+                  </Dropdown.Menu>
+              </Dropdown>
+          </Container>
+
         <Container className={"flex-row align-items-center justify-content-center"}>
 
         <Container className={"d-flex flex-column align-items-center justify-content-center p-0"}>
@@ -172,17 +242,18 @@ function App() {
           </Container>
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 m-2"}>
-                <FormText>Timer [s]</FormText>
-                    <Form.Control
+                <FormText className={countdown > 0 ? "blink" : ""}>Timer [s]</FormText>
+                <Form.Control
                                   type={"text"}
                                   step={1}
                                   min={0}
-                                  value={timer}
+                                  value={countdown > 0 ? countdown : duration}
+                                  className={countdown > 0 ? "blink" : ""}
                                   style={{
                                       display: "inline-block", textAlign: "center", maxWidth: "7rem"
-                                  }}
-                                  onChange={reserve}>
-                </Form.Control>
+                                   }}
+                                  onChange={reserve}></Form.Control>
+
             </Container>
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 m-2"}>
@@ -192,11 +263,12 @@ function App() {
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 m-2"}>
                 <FormText>&nbsp;</FormText>
-                <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={capture}>{mode[0].toUpperCase() + mode.slice(1)}</Button>
+                {!capturing ?
+                     countdown > 0 ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
+                    <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={capture}>{mode[0].toUpperCase() + mode.slice(1)}</Button> : false }
             </Container>
 
             </Container>
-          {text ? <h4>{text}</h4> : false}
       </Container>
 
           </Container>
