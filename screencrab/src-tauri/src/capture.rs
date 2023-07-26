@@ -1,12 +1,9 @@
-// File: src/lib.rs
+// File: src/capture
 
 use std::process::Command;
 use std::io::{Result, Error, ErrorKind};
 use std::env;
-use std::ffi::OsString;
 use tauri::api::dialog::FileDialogBuilder;
-use tauri::{AppHandle, State};
-use tauri::Manager;
 use serde::{Serialize, Deserialize};
 use tokio::task;
 use tokio::sync::oneshot;
@@ -60,9 +57,39 @@ pub async fn folder_dialog() -> Response {
     })
 }
 
-pub fn capture_screen(filename: &str) -> Result<()> {
+pub fn capture_screen(filename: &str, file_type: &str, view: &str, pointer: bool, clipboard: bool) -> Result<()> {
+    let mut command = Command::new("screencapture");
+
+    match view {
+        "fullscreen" => {}
+        "window" => { command.arg("-w"); }
+        "custom" => { command.arg("-i"); }
+        _ => { return Err(Error::new(ErrorKind::Other, format!("Invalid view: {:?}", view))); } /* TODO: handle error */
+    }
+
+    if pointer { command.arg("-C"); }
+    if clipboard { command.arg("-c"); }
+
+    command.args(&["-t", file_type]);
+
+    let output = command.arg(filename).output()?;
+    if !output.status.success() {
+        return Err(Error::new(ErrorKind::Other, format!("Failed to take a screenshot")));
+    }
+
+    if !clipboard {
+        let open = Command::new("open").args(&["-a", "Preview", filename]).output()?;
+        if !open.status.success() {
+            return Err(Error::new(ErrorKind::Other, format!("Failed to open a screenshot")));
+        }
+    }
+    Ok(())
+}
+
+
+pub fn record_screen(filename: &str) -> Result<()> {
     let output = Command::new("screencapture")
-        .args(&["-i", filename])
+        .args(&["-v", filename])
         .output()?;
 
     if output.status.success() {
@@ -71,6 +98,3 @@ pub fn capture_screen(filename: &str) -> Result<()> {
         Err(Error::new(ErrorKind::Other, format!("Failed to take a screenshot: {:?}", output)))
     }
 }
-
-
-fn main() {}

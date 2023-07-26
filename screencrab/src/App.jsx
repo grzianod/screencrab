@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
+import dayjs from "dayjs";
 
 function App() {
   const [mode, setMode] = useState("capture");
@@ -16,7 +17,8 @@ function App() {
   const [countdown, setCountdown] = useState(0);
   const [capturing, setCapturing] = useState(false);
   const [isCounting, setIsCounting] = useState(false);
-  const [fileType, setFileType] = useState(".png");
+  const [fileType, setFileType] = useState("png");
+  const [clipboard, setClipboard] = useState(true);
 
 
     async function wait(countdown) {
@@ -48,7 +50,7 @@ function App() {
                 setCountdown(0);
                 setIsCounting(false);
                 setCapturing(true);
-                await invoke("capture", {mode: mode, view: view, pointer: pointer, path: path, name: name, file_type: fileType});
+                await invoke("capture", {mode: mode, view: view, pointer: pointer, path: path, name: name, file_type: fileType, clipboard: clipboard});
                 setCapturing(false);
             }
         }
@@ -102,7 +104,7 @@ function App() {
           <Container className={"flex-row align-self-center"}>
 
           <Container className={"col-4"}></Container>
-      <Container style={{zIndex: "2", position: "relative"}} className={"w-75 mx-5 col-8 p-0"}>
+      <Container style={{zIndex: "2", position: "relative"}} className={"w-75 mx-5 col-8 p-0 mt-0"}>
           <Container className={"flex-row p-0 align-items-center mb-2"}>
               {text ? <h2>text</h2> : false}
               <FormText className={"m-2"}>Save to</FormText>
@@ -110,14 +112,15 @@ function App() {
                   <div style={{ position: "relative" }}>
                       <Form.Control
                           type="text"
-                          value={path}
+                          value={clipboard ? "Clipboard" : path}
+                          disabled={clipboard}
                           readOnly
                           style={{minWidth: "40rem"}}
                           onChange={ (event) => setPath(event.target.value)}
                       />
                   </div>
               </Form>
-                  <Button variant={"light"} className="mx-2" onClick={openFolderDialog}>
+                  <Button variant={"light"} disabled={clipboard} className="mx-2" onClick={openFolderDialog}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                            className="bi bi-folder-plus" viewBox="0 0 16 16">
                           <path
@@ -133,43 +136,56 @@ function App() {
                   <div style={{ position: "relative" }}>
                       <Form.Control
                           type="text"
-                          value={name}
-                          style={{minWidth: "15rem"}}
+                          value={clipboard ? "" : name}
+                          disabled={clipboard}
+                          style={{minWidth: "20rem"}}
                           onChange={ (event) => setName(event.target.value)}
                       />
                   </div>
               </Form>
               <Dropdown className={"ms-2"}>
-                  <Dropdown.Toggle variant="light" id="dropdown-basic" style={{fontSize: "0.9rem"}}>
+                  <Dropdown.Toggle variant="light" id="dropdown-basic" disabled={clipboard} style={{fontSize: "0.9rem"}}>
                       Save as
                   </Dropdown.Toggle>
 
                   <Dropdown.Menu>
-                      <Dropdown.Item onClick={() => setFileType(".jpeg")} className={mode==="record" ? "d-none" : false}>.jpeg{fileType === ".jpeg" ?
+                      <Dropdown.Item onClick={() => setFileType("pdf")} className={mode==="record" ? "d-none" : false}>pdf{fileType === "pdf" ?
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                className="bi bi-check" viewBox="0 0 16 16">
                               <path
                                   d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                           </svg> : false}</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType(".png")} className={mode==="record" ? "d-none" : false}>.png{fileType === ".png" ?
+                      <Dropdown.Item onClick={() => setFileType("jpeg")} className={mode==="record" ? "d-none" : false}>jpeg{fileType === "jpeg" ?
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                className="bi bi-check" viewBox="0 0 16 16">
                               <path
                                   d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                           </svg> : false}</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType(".mov")} className={mode==="capture" ? "d-none" : false}>.mov{fileType === ".mov" ?
+                      <Dropdown.Item onClick={() => setFileType("png")} className={mode==="record" ? "d-none" : false}>png{fileType === "png" ?
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                className="bi bi-check" viewBox="0 0 16 16">
                               <path
                                   d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                           </svg> : false}</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType(".mp4")} className={mode==="capture" ? "d-none" : false}>.mp4{fileType === ".mp4" ?
+                      <Dropdown.Item onClick={() => setFileType("tiff")} className={mode==="record" ? "d-none" : false}>tiff{fileType === "tiff" ?
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                className="bi bi-check" viewBox="0 0 16 16">
                               <path
                                   d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                           </svg> : false}</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType(".gif")} className={mode==="capture" ? "d-none" : false}>.gif{fileType === ".gif" ?
+                      <Dropdown.Item onClick={() => setFileType("mov")} className={mode==="capture" ? "d-none" : false}>mov{fileType === "mov" ?
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                               className="bi bi-check" viewBox="0 0 16 16">
+                              <path
+                                  d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                          </svg> : false}</Dropdown.Item>
+                      <Dropdown.Item onClick={() => setFileType("mp4")} className={mode==="capture" ? "d-none" : false}>mp4{fileType === "mp4" ?
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                               className="bi bi-check" viewBox="0 0 16 16">
+                              <path
+                                  d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                          </svg> : false}</Dropdown.Item>
+                      <Dropdown.Item onClick={() => setFileType("gif")} className={mode==="capture" ? "d-none" : false}>gif{fileType === "gif" ?
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                className="bi bi-check" viewBox="0 0 16 16">
                               <path
@@ -281,12 +297,17 @@ function App() {
 
             </Container>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 m-2"}>
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
                 <FormText>Show Mouse Pointer</FormText>
-                <Form.Switch checked={pointer} onChange={() => setPointer( (pointer) => !pointer)}></Form.Switch>
+                <Form.Switch checked={pointer} disabled={view!=="fullscreen"} onChange={() => setPointer( (pointer) => !pointer)}></Form.Switch>
             </Container>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 m-2"}>
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
+                <FormText>Copy to Clipboard</FormText>
+                <Form.Switch checked={clipboard} onChange={() => setClipboard( (clipboard) => !clipboard)}></Form.Switch>
+            </Container>
+
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
                 <FormText>&nbsp;</FormText>
                 {!capturing ?
                      countdown > 0 ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :

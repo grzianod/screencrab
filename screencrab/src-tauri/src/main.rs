@@ -1,32 +1,40 @@
-use std::ffi::OsString;
-use crate::lib::Response;
+use crate::capture::Response;
 use chrono::prelude::*;
 
-mod lib;
+mod capture;
 
 #[tauri::command]
 async fn folder_dialog() -> Response {
-    lib::folder_dialog().await
+    capture::folder_dialog().await
 }
 
 #[tauri::command]
 async fn cwd() -> Response {
-    lib::cwd().await
+    capture::cwd().await
 }
 
 
 #[tauri::command(rename_all = "snake_case")]
-fn capture(mode: String, view: String, pointer: bool, path: String, name: String, file_type: String) {
-    let filename: String;
+fn capture(mode: &str, view: &str, pointer: bool, path: &str, name: &str, file_type: &str, clipboard: bool) {
+    let file: String;
     if name.is_empty() {
         let current_date = Local::now();
-        let formatted_date = current_date.format("%H-%M-%S on %Y-%m-%d").to_string();
-        filename = format!("{}/Screen Crab at {}{}", path.as_str(), formatted_date, file_type);
+        let formatted_date = current_date.format("%Y-%m-%d at %H-%M-%S").to_string();
+        file = format!("{}/Screen Crab {}.{}", path, formatted_date, file_type);
     }
     else {
-        filename = format!("{}/{}{}", path.as_str(), name.as_str(), file_type);
+        file = format!("{}/{}.{}", path, name, file_type);
     }
-    lib::capture_screen(filename.as_str()).unwrap();
+    match mode {
+        "capture" => {
+            capture::capture_screen(file.as_str(), file_type, view, pointer, clipboard).unwrap();
+        }
+        "record" => {
+            capture::record_screen(file.as_str()).unwrap();
+        }
+        _ => println!("Error occurred") /* TODO: handle error */
+    }
+
 }
 
 fn main() {
