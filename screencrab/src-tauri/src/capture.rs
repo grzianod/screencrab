@@ -1,18 +1,29 @@
-// File: src/capture
-
-use std::process::Command;
-use std::io::{Result, Error, ErrorKind};
 use std::env;
 use tauri::api::dialog::FileDialogBuilder;
 use serde::{Serialize, Deserialize};
 use tokio::task;
 use tokio::sync::oneshot;
+use tokio::process::Command;
+use tokio::task::JoinHandle;
+use tokio::sync::Mutex;
+use lazy_static::lazy_static;
+use std::sync::Arc;
 
+lazy_static! {
+    static ref CAPTURE_PROCESS: Mutex<Option<JoinHandle<()>>> = Mutex::new(None);
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
     response: Option<String>,
     error: Option<String>,
+}
+
+impl Response {
+    // Constructor function to create a new instance of Response
+    pub fn new(response: Option<String>, error: Option<String>) -> Self {
+        Response { response, error }
+    }
 }
 
 pub async fn cwd() -> Response {
@@ -57,44 +68,38 @@ pub async fn folder_dialog() -> Response {
     })
 }
 
-pub fn capture_screen(filename: &str, file_type: &str, view: &str, pointer: bool, clipboard: bool) -> Result<()> {
+pub async fn capture_screen(filename: &str, file_type: &str, view: &str, timer: u64, pointer: bool, clipboard: bool) -> Response {
     let mut command = Command::new("screencapture");
 
     match view {
         "fullscreen" => {}
         "window" => { command.arg("-w"); }
         "custom" => { command.arg("-i"); }
-        _ => { return Err(Error::new(ErrorKind::Other, format!("Invalid view: {:?}", view))); } /* TODO: handle error */
+        _ => { return Response { response: None, error: Some(format!("Invalid view {}", view))} }
     }
 
     if pointer { command.arg("-C"); }
     if clipboard { command.arg("-c"); }
 
     command.args(&["-t", file_type]);
+    command.args(&["-T", timer.to_string().as_str()]);
 
-    let output = command.arg(filename).output()?;
-    if !output.status.success() {
-        return Err(Error::new(ErrorKind::Other, format!("Failed to take a screenshot")));
-    }
+
+    let output = command.arg(filename).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e))});
 
     if !clipboard {
-        let open = Command::new("open").args(&["-a", "Preview", filename]).output()?;
-        if !open.status.success() {
-            return Err(Error::new(ErrorKind::Other, format!("Failed to open a screenshot")));
-        }
+        let open = Command::new("open").args(&["-a", "Preview", filename]).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e))});
     }
-    Ok(())
+
+    Response { response: Some(filename.to_string()), error: None }
 }
 
 
-pub fn record_screen(filename: &str) -> Result<()> {
-    let output = Command::new("screencapture")
-        .args(&["-v", filename])
-        .output()?;
+pub async fn cancel() -> Response {
+    Response { response: Some(format!("Capture cancelled")), error: None }
+}
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(Error::new(ErrorKind::Other, format!("Failed to take a screenshot: {:?}", output)))
-    }
+
+pub async fn record_screen(filename: &str) -> Response {
+    Response { response: Some(filename.to_string()), error: None }
 }

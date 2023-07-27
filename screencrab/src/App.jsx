@@ -20,22 +20,24 @@ function App() {
   const [fileType, setFileType] = useState("png");
   const [clipboard, setClipboard] = useState(true);
 
-
-    async function wait(countdown) {
-        if (countdown <= 0) {
-            await new Promise((resolve) => setTimeout(resolve, 5));
-            setCountdown(countdown);
-            return;
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setCountdown((countdown) => countdown - 1);
-        await wait(countdown - 1)
-    }
-
     async function capture() {
         setCountdown(duration);
         setIsCounting(true);
+
+        setCapturing(true);
+        invoke("capture", {mode: mode, view: view, timer: duration, pointer: pointer, path: path, name: name, file_type: fileType, clipboard: clipboard})
+            .then( (response) => {
+                if(clipboard)
+                    setText("Screen Crab copied to clipboard!");
+                else
+                    if(response.response)
+                        setText("Screen Crab saved to "+response.response);
+                    else
+                        setText(response.error);
+                setTimeout(() => setText(undefined), 8000);
+            })
+            .finally(() => setCapturing(false));
+
     }
 
     useEffect( () => {
@@ -49,9 +51,6 @@ function App() {
             if (countdown <= 0 && isCounting ) {
                 setCountdown(0);
                 setIsCounting(false);
-                setCapturing(true);
-                await invoke("capture", {mode: mode, view: view, pointer: pointer, path: path, name: name, file_type: fileType, clipboard: clipboard});
-                setCapturing(false);
             }
         }
 
@@ -62,6 +61,11 @@ function App() {
     async function stopCapture() {
         setCountdown(0);
         setIsCounting(false);
+        invoke("cancel", {})
+            .then((response) => {
+                setText(response.response || response.error)
+                setTimeout(() => setText(undefined), 8000);
+            })
     }
 
     async function openFolderDialog() {
@@ -101,12 +105,11 @@ function App() {
             <>
         <Container className="background-container"></Container>
 
-          <Container className={"flex-row align-self-center"}>
+          <Container className={"flex-row align-self-center p-4"}>
 
           <Container className={"col-4"}></Container>
       <Container style={{zIndex: "2", position: "relative"}} className={"w-75 mx-5 col-8 p-0 mt-0"}>
           <Container className={"flex-row p-0 align-items-center mb-2"}>
-              {text ? <h2>text</h2> : false}
               <FormText className={"m-2"}>Save to</FormText>
               <Form>
                   <div style={{ position: "relative" }}>
@@ -144,8 +147,8 @@ function App() {
                   </div>
               </Form>
               <Dropdown className={"ms-2"}>
-                  <Dropdown.Toggle variant="light" id="dropdown-basic" disabled={clipboard} style={{fontSize: "0.9rem"}}>
-                      Save as
+                  <Dropdown.Toggle variant="light" id="dropdown-basic" style={{fontSize: "0.9rem"}}>
+                      {clipboard ? "Copy" : "Save"} as
                   </Dropdown.Toggle>
 
                   <Dropdown.Menu>
@@ -195,7 +198,7 @@ function App() {
               </Dropdown>
           </Container>
 
-        <Container className={"flex-row align-items-center justify-content-center"}>
+        <Container className={"flex-row align-items-center justify-content-center p-0 m-2 mb-1"}>
 
         <Container className={"d-flex flex-column align-items-center justify-content-center p-0"}>
           <FormText>Capture</FormText>
@@ -241,7 +244,7 @@ function App() {
           </Container>
 
 
-          <Container className={"d-flex flex-column align-items-center justify-content-center p-0 m-2"}>
+          <Container className={"d-flex flex-column align-items-center justify-content-center p-0"}>
             <FormText className={"title-record"}>Record</FormText>
             <Container className={"d-flex flex-row p-0"}>
           <Button title={"Record Entire Screen"} className={"m-1"} variant={mode === "record" && view === "fullscreen" ? "danger" : "outline-danger"}
@@ -282,7 +285,7 @@ function App() {
             </Container>
           </Container>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 m-2"}>
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0"}>
                 <FormText className={countdown > 0 ? "blink" : ""}>Timer [s]</FormText>
                 <Form.Control
                                   type={"text"}
@@ -297,25 +300,29 @@ function App() {
 
             </Container>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
-                <FormText>Show Mouse Pointer</FormText>
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1 w-75"}>
+                <FormText>Capture Mouse Pointer</FormText>
                 <Form.Switch checked={pointer} disabled={view!=="fullscreen"} onChange={() => setPointer( (pointer) => !pointer)}></Form.Switch>
             </Container>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1 w-50"}>
                 <FormText>Copy to Clipboard</FormText>
                 <Form.Switch checked={clipboard} onChange={() => setClipboard( (clipboard) => !clipboard)}></Form.Switch>
             </Container>
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
                 <FormText>&nbsp;</FormText>
-                {!capturing ?
-                     countdown > 0 ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
-                    <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={capture}>{mode[0].toUpperCase() + mode.slice(1)}</Button> : false }
+                { countdown > 0 ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
+                    <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={capture}>{mode[0].toUpperCase() + mode.slice(1)}</Button>}
             </Container>
 
             </Container>
+          <Container className={"align-self-baseline justify-content-center p-0 m-1"}>
+            <FormText>{text}</FormText>
+          </Container>
       </Container>
+
+
 
           </Container>
 

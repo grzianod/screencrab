@@ -2419,6 +2419,7 @@ name = "screen_crab"
 version = "0.0.0"
 dependencies = [
  "chrono",
+ "lazy_static",
  "serde",
  "serde_json",
  "tauri",

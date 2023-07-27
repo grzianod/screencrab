@@ -15,7 +15,7 @@ async fn cwd() -> Response {
 
 
 #[tauri::command(rename_all = "snake_case")]
-fn capture(mode: &str, view: &str, pointer: bool, path: &str, name: &str, file_type: &str, clipboard: bool) {
+async fn capture(mode: &str, view: &str, timer: u64, pointer: bool, path: &str, name: &str, file_type: &str, clipboard: bool) -> Result<Response, ()> {
     let file: String;
     if name.is_empty() {
         let current_date = Local::now();
@@ -27,19 +27,25 @@ fn capture(mode: &str, view: &str, pointer: bool, path: &str, name: &str, file_t
     }
     match mode {
         "capture" => {
-            capture::capture_screen(file.as_str(), file_type, view, pointer, clipboard).unwrap();
+            Ok(capture::capture_screen(file.as_str(), file_type, view, timer, pointer, clipboard).await)
         }
         "record" => {
-            capture::record_screen(file.as_str()).unwrap();
+            Ok(capture::record_screen(file.as_str()).await)
         }
-        _ => println!("Error occurred") /* TODO: handle error */
+        _ => Ok(Response::new(None, Some(format!("Invalid mode: {}", mode))))
     }
+}
 
+
+
+#[tauri::command]
+async fn cancel() {
+    capture::cancel().await;
 }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, cwd])
+        .invoke_handler(tauri::generate_handler![capture, cancel, folder_dialog, cwd])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
