@@ -41,6 +41,7 @@ async fn capture(mode: &str, view: &str, timer: u64, pointer: bool, path: &str, 
     }
 
 fn main() {
+
     tauri::Builder::default()
         .setup(|app| {
             // listen to the `stop` event (emitted on any window)
