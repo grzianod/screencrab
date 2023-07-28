@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
+import { emit, listen } from '@tauri-apps/api/event'
 import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
@@ -61,11 +62,9 @@ function App() {
     async function stopCapture() {
         setCountdown(0);
         setIsCounting(false);
-        invoke("cancel", {})
-            .then((response) => {
-                setText(response.response || response.error)
-                setTimeout(() => setText(undefined), 8000);
-            })
+        emit('kill', {})
+            .then((response) => setText(response.response || response.error))
+            .catch((err) => console.log("ERROR") /* TODO:handle error */);
     }
 
     async function openFolderDialog() {

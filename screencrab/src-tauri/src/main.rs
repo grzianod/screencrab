@@ -1,5 +1,6 @@
 use crate::capture::Response;
 use chrono::prelude::*;
+use tauri::Manager;
 
 mod capture;
 
@@ -25,13 +26,7 @@ async fn capture(mode: &str, view: &str, timer: u64, pointer: bool, path: &str, 
         file = format!("{}/{}.{}", path, name, file_type);
     }
 
-    let file_type = file_type.to_string(); // Convert &str to String
-    let view = view.to_string();
-    let mode = mode.to_string();
-
-    // Use tokio::task::spawn to execute the capture_screen or record_screen asynchronously
-    let task_result = tokio::task::spawn(async move {
-        match mode.as_str() {
+        match mode {
             "capture" => {
                 #[cfg(target_os = "macos")]
                 Ok(capture::capture_screen(file.as_str(), &file_type, &view, timer, pointer, clipboard).await)
@@ -42,22 +37,19 @@ async fn capture(mode: &str, view: &str, timer: u64, pointer: bool, path: &str, 
             }
             _ => Ok(Response::new(None, Some(format!("Invalid mode: {}", mode)))),
         }
-    });
 
-    // Wait for the task_result to complete and return its value
-    task_result.await.unwrap_or_else(|_| Ok(Response::new(None, Some("Failed to take screenshot.".to_string()))))
-}
-
-
-
-#[tauri::command]
-async fn cancel() {
-    capture::cancel().await;
-}
+    }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![capture, cancel, folder_dialog, cwd])
+        .setup(|app| {
+            // listen to the `stop` event (emitted on any window)
+            app.listen_global("kill", |event| {
+                println!("got kill with payload {:?}", event.payload());
+            });
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, cwd])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
