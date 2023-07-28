@@ -21,19 +21,31 @@ async fn capture(mode: &str, view: &str, timer: u64, pointer: bool, path: &str, 
         let current_date = Local::now();
         let formatted_date = current_date.format("%Y-%m-%d at %H-%M-%S").to_string();
         file = format!("{}/Screen Crab {}.{}", path, formatted_date, file_type);
-    }
-    else {
+    } else {
         file = format!("{}/{}.{}", path, name, file_type);
     }
-    match mode {
-        "capture" => {
-            Ok(capture::capture_screen(file.as_str(), file_type, view, timer, pointer, clipboard).await)
+
+    let file_type = file_type.to_string(); // Convert &str to String
+    let view = view.to_string();
+    let mode = mode.to_string();
+
+    // Use tokio::task::spawn to execute the capture_screen or record_screen asynchronously
+    let task_result = tokio::task::spawn(async move {
+        match mode.as_str() {
+            "capture" => {
+                #[cfg(target_os = "macos")]
+                Ok(capture::capture_screen(file.as_str(), &file_type, &view, timer, pointer, clipboard).await)
+            }
+            "record" => {
+                #[cfg(target_os = "macos")]
+                Ok(capture::record_screen(file.as_str()).await)
+            }
+            _ => Ok(Response::new(None, Some(format!("Invalid mode: {}", mode)))),
         }
-        "record" => {
-            Ok(capture::record_screen(file.as_str()).await)
-        }
-        _ => Ok(Response::new(None, Some(format!("Invalid mode: {}", mode))))
-    }
+    });
+
+    // Wait for the task_result to complete and return its value
+    task_result.await.unwrap_or_else(|_| Ok(Response::new(None, Some("Failed to take screenshot.".to_string()))))
 }
 
 

@@ -2419,7 +2419,7 @@ name = "screen_crab"
 version = "0.0.0"
 dependencies = [
  "chrono",
- "lazy_static",
+ "crossbeam-channel",
  "serde",
  "serde_json",
  "tauri",

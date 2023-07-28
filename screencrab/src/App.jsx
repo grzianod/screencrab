@@ -1,10 +1,9 @@
-import {useEffect, useState, useRef} from "react";
+import {useEffect, useState} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
 import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
-import dayjs from "dayjs";
 
 function App() {
   const [mode, setMode] = useState("capture");
@@ -19,6 +18,7 @@ function App() {
   const [isCounting, setIsCounting] = useState(false);
   const [fileType, setFileType] = useState("png");
   const [clipboard, setClipboard] = useState(true);
+  const [channel, setChannel] = useState(undefined);
 
     async function capture() {
         setCountdown(duration);

@@ -6,12 +6,6 @@ use tokio::sync::oneshot;
 use tokio::process::Command;
 use tokio::task::JoinHandle;
 use tokio::sync::Mutex;
-use lazy_static::lazy_static;
-use std::sync::Arc;
-
-lazy_static! {
-    static ref CAPTURE_PROCESS: Mutex<Option<JoinHandle<()>>> = Mutex::new(None);
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
