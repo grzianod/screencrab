@@ -1,7 +1,7 @@
 use crate::capture::Response;
 use chrono::prelude::*;
 use tauri::Manager;
-
+use tauri::Window;
 mod capture;
 
 #[tauri::command]
@@ -16,7 +16,7 @@ async fn cwd() -> Response {
 
 
 #[tauri::command(rename_all = "snake_case")]
-async fn capture(mode: &str, view: &str, timer: u64, pointer: bool, path: &str, name: &str, file_type: &str, clipboard: bool) -> Result<Response, ()> {
+async fn capture(window: Window, mode: &str, view: &str, timer: u64, pointer: bool, path: &str, name: &str, file_type: &str, clipboard: bool) -> Result<Response, ()> {
     let file: String;
     if name.is_empty() {
         let current_date = Local::now();
@@ -29,7 +29,7 @@ async fn capture(mode: &str, view: &str, timer: u64, pointer: bool, path: &str, 
         match mode {
             "capture" => {
                 #[cfg(target_os = "macos")]
-                Ok(capture::capture_screen(file.as_str(), &file_type, &view, timer, pointer, clipboard).await)
+                Ok(capture::capture_screen(window, file.as_str(), &file_type, &view, timer, pointer, clipboard).await)
             }
             "record" => {
                 #[cfg(target_os = "macos")]
@@ -39,6 +39,12 @@ async fn capture(mode: &str, view: &str, timer: u64, pointer: bool, path: &str, 
         }
 
     }
+
+
+#[tauri::command]
+async fn kill(pid: u32) -> Response {
+    capture::kill(pid).await
+}
 
 fn main() {
 
@@ -50,7 +56,7 @@ fn main() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, cwd])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, cwd, kill])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -2420,6 +2420,7 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "crossbeam-channel",
+ "lazy_static",
  "serde",
  "serde_json",
  "tauri",

@@ -4,6 +4,13 @@ use serde::{Serialize, Deserialize};
 use tokio::task;
 use tokio::sync::oneshot;
 use tokio::process::Command;
+use tauri::Window;
+
+#[derive(Clone, serde::Serialize)]
+struct Payload {
+    pid: u32,
+}
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
@@ -60,7 +67,7 @@ pub async fn folder_dialog() -> Response {
     })
 }
 
-pub async fn capture_screen(filename: &str, file_type: &str, view: &str, timer: u64, pointer: bool, clipboard: bool) -> Response {
+pub async fn capture_screen(window: Window, filename: &str, file_type: &str, view: &str, timer: u64, pointer: bool, clipboard: bool) -> Response {
     let filename1 = filename.to_string();
     let file_type = file_type.to_string();
     let view = view.to_string();
@@ -82,7 +89,13 @@ pub async fn capture_screen(filename: &str, file_type: &str, view: &str, timer: 
         command.args(&["-t", file_type.as_str()]);
         command.args(&["-T", timer.to_string().as_str()]);
 
-        let _output = command.arg(filename1.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
+        let process = command.arg(filename1.as_str()).spawn().map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
+        window.emit("capture", Payload { pid: process.as_ref().unwrap().id().unwrap() }).unwrap();
+
+        match process {
+            Ok(output) => { output.wait_with_output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) }) }
+            Err(response) => Err(response)
+        }.unwrap();
 
         Response { response: Some(filename1), error: None }
     });
@@ -107,6 +120,16 @@ pub async fn capture_screen(filename: &str, file_type: &str, view: &str, timer: 
     Response { response: Some(filename3), error: None }
 }
 
+pub async fn kill(pid: u32) -> Response {
+    println!("Received KILL request!");
+    let _output = Command::new("kill")
+        .arg("-15") // 15 is the signal number for SIGTERM
+        .arg(pid.to_string())
+        .output()
+        .await
+        .map_err(|e| Response {response: None, error: Some(format!("Failed to cancel screen capture: {}", e)) });
+    Response {response: Some(format!("Screen Crab cancelled.")), error: None }
+}
 
 pub async fn record_screen(filename: &str) -> Response {
     Response { response: Some(filename.to_string()), error: None }

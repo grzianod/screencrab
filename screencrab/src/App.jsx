@@ -19,7 +19,7 @@ function App() {
   const [isCounting, setIsCounting] = useState(false);
   const [fileType, setFileType] = useState("png");
   const [clipboard, setClipboard] = useState(true);
-  const [channel, setChannel] = useState(undefined);
+  const [capturePid, setCapturePid] = useState(undefined);
 
     async function capture() {
         setCountdown(duration);
@@ -62,9 +62,9 @@ function App() {
     async function stopCapture() {
         setCountdown(0);
         setIsCounting(false);
-        emit('kill', {})
-            .then((response) => setText(response.response || response.error))
-            .catch((err) => console.log("ERROR") /* TODO:handle error */);
+        invoke("kill", {pid: capturePid})
+            .then( (response) => setText(response.response || response.error))
+            .catch((err) => console.log("ERROR: "+e) /* TODO: handle error */);
     }
 
     async function openFolderDialog() {
@@ -76,6 +76,9 @@ function App() {
     }
 
     useEffect( () => {
+        listen('capture', (event) => {
+            setCapturePid(event.payload.pid);
+        })
         invoke("cwd")
             .then( (result) => {
                 if(result.response)
