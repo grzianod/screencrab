@@ -11,7 +11,21 @@
     "version": "0.0.1"
   },
   "tauri": {
+    "macOSPrivateApi": true,
     "allowlist": {
+      "window": {
+        "all": false,
+        "close": true,
+        "hide": true,
+        "show": true,
+        "maximize": true,
+        "minimize": true,
+        "unmaximize": true,
+        "unminimize": true,
+        "startDragging": true,
+        "setResizable": true,
+        "setCursorGrab": true
+      },
       "all": false,
       "dialog": {
         "all": true,
@@ -43,6 +57,7 @@
     },
     "windows": [
       {
+        "label": "main",
         "fullscreen": false,
         "resizable": false,
         "focus": true,

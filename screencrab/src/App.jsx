@@ -1,10 +1,11 @@
 import {useEffect, useState} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
-import { emit, listen } from '@tauri-apps/api/event'
+import {emit, listen, once} from '@tauri-apps/api/event'
 import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
+import { WebviewWindow } from '@tauri-apps/api/window';
 
 function App() {
   const [mode, setMode] = useState("capture");
@@ -18,27 +19,42 @@ function App() {
   const [capturing, setCapturing] = useState(false);
   const [isCounting, setIsCounting] = useState(false);
   const [fileType, setFileType] = useState("png");
-  const [clipboard, setClipboard] = useState(true);
-  const [capturePid, setCapturePid] = useState(undefined);
+  const [clipboard, setClipboard] = useState(false);
 
     async function capture() {
+        let selector = WebviewWindow.getByLabel('selector');
+        let area = "";
         setCountdown(duration);
         setIsCounting(true);
-
         setCapturing(true);
-        invoke("capture", {mode: mode, view: view, timer: duration, pointer: pointer, path: path, name: name, file_type: fileType, clipboard: clipboard})
-            .then( (response) => {
-                if(clipboard)
-                    setText("Screen Crab copied to clipboard!");
-                else
-                    if(response.response)
-                        setText("Screen Crab saved to "+response.response);
-                    else
-                        setText(response.error);
-                setTimeout(() => setText(undefined), 8000);
-            })
-            .finally(() => setCapturing(false));
 
+        if(view === "custom") {
+            await selector.setResizable(false);
+            let position = await selector.innerPosition();
+            let size = await selector.innerSize();
+            let scaleFactor = await selector.scaleFactor();
+            area = position.toLogical(scaleFactor).x + "," + position.toLogical(scaleFactor).y + "," + size.toLogical(scaleFactor).width + "," + size.toLogical(scaleFactor).height;
+        }
+
+            let response = await invoke("capture", {
+                mode: mode,
+                view: view,
+                area: area,
+                timer: duration,
+                pointer: pointer,
+                path: path,
+                name: name,
+                file_type: fileType,
+                clipboard: clipboard
+            });
+
+            setText(response.response || response.error)
+            setTimeout(() => setText(undefined), 5000);
+            setCapturing(false);
+
+            if(view === "custom") {
+                await selector.setResizable(true);
+            }
     }
 
     useEffect( () => {
@@ -62,9 +78,15 @@ function App() {
     async function stopCapture() {
         setCountdown(0);
         setIsCounting(false);
-        invoke("kill", {pid: capturePid})
-            .then( (response) => setText(response.response || response.error))
-            .catch((err) => console.log("ERROR: "+e) /* TODO: handle error */);
+
+        mode === "capture" ?
+            emit("kill", {})
+                .then( () => {})
+                .catch((err) => console.log("ERROR: "+err) /* TODO: handle error */) :
+            emit("stop", {})
+                .then( () => {})
+                .catch((err) => console.log("ERROR: "+err) /* TODO: handle error */)
+                .finally(() => setCapturing(false));
     }
 
     async function openFolderDialog() {
@@ -76,9 +98,6 @@ function App() {
     }
 
     useEffect( () => {
-        listen('capture', (event) => {
-            setCapturePid(event.payload.pid);
-        })
         invoke("cwd")
             .then( (result) => {
                 if(result.response)
@@ -209,7 +228,9 @@ function App() {
                   title={"Capture Entire Screen"}
                   onClick={() => {
                     setMode("capture");
-                    setView("fullscreen"); } }>
+                    setView("fullscreen");
+                    WebviewWindow.getByLabel('selector').hide()
+                  } }>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                  className="bi bi-window-desktop" viewBox="0 0 16 16">
               <path d="M3.5 11a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-9Z"/>
@@ -218,25 +239,14 @@ function App() {
             </svg>
           </Button>
 
-          <Button className={"m-1"} variant={mode === "capture" && view === "window" ? "primary" : "outline-primary"}
-                  title={"Capture Selected Window"}
-                  onClick={() => {
-                    setMode("capture");
-                    setView("window"); } }>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-window"
-               viewBox="0 0 16 16">
-            <path
-                d="M2.5 4a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm2-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0zm1 .5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
-            <path
-                d="M2 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H2zm13 2v2H1V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1zM2 14a1 1 0 0 1-1-1V6h14v7a1 1 0 0 1-1 1H2z"/>
-          </svg>
-          </Button>
-
           <Button className={"m-1"} variant={mode === "capture" && view === "custom" ? "primary" : "outline-primary"}
                   title={"Capture Selected Portion"}
                   onClick={() => {
                     setMode("capture");
-                    setView("custom"); } }>
+                    setView("custom");
+                    WebviewWindow.getByLabel('selector').show();
+                      }
+                }>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                className="bi bi-fullscreen" viewBox="0 0 16 16">
             <path
@@ -251,8 +261,12 @@ function App() {
             <Container className={"d-flex flex-row p-0"}>
           <Button title={"Record Entire Screen"} className={"m-1"} variant={mode === "record" && view === "fullscreen" ? "danger" : "outline-danger"}
                   onClick={() => {
-                    setMode("record");
-                    setView("fullscreen"); } }>
+                      
+                    if(mode==="capture") { setMode("record"); setFileType("mov");} 
+                    setClipboard(false);
+                    setView("fullscreen");
+                    WebviewWindow.getByLabel('selector').hide()
+                  } }>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                  className="bi bi-window-desktop" viewBox="0 0 16 16">
               <path d="M3.5 11a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-9Z"/>
@@ -266,8 +280,10 @@ function App() {
               variant={mode === "record" && view === "custom" ? "danger" : "outline-danger"}
               title={"Record Selected Portion"}
               onClick={() => {
-                setMode("record");
-                setView("custom"); } }
+                if(mode==="capture") { setMode("record"); setFileType("mov");}
+                setClipboard(false);
+                setView("custom");
+                  WebviewWindow.getByLabel('selector').show(); } }
           >
               <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -309,12 +325,13 @@ function App() {
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1 w-50"}>
                 <FormText>Copy to Clipboard</FormText>
-                <Form.Switch checked={clipboard} onChange={() => setClipboard( (clipboard) => !clipboard)}></Form.Switch>
+                <Form.Switch checked={clipboard} disabled={mode==="record"} onChange={() => setClipboard( (clipboard) => !clipboard)}></Form.Switch>
             </Container>
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
                 <FormText>&nbsp;</FormText>
-                { countdown > 0 ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
+                { countdown > 0 && mode==="capture" ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
+                    mode==="record" && capturing ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Stop</Button> :
                     <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={capture}>{mode[0].toUpperCase() + mode.slice(1)}</Button>}
             </Container>
 
