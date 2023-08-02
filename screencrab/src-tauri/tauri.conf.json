@@ -65,6 +65,9 @@
         "width": 1200,
         "height": 280,
         "center": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "contentProtected": true,
         "decorations": true
       }
     ]
