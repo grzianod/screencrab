@@ -30,6 +30,7 @@ function App() {
 
         if(view === "custom") {
             await selector.setResizable(false);
+            await selector.setCursorGrab(true);
             let position = await selector.innerPosition();
             let size = await selector.innerSize();
             let scaleFactor = await selector.scaleFactor();
@@ -54,6 +55,7 @@ function App() {
 
             if(view === "custom") {
                 await selector.setResizable(true);
+                await selector.setCursorGrab(false);
             }
     }
 
