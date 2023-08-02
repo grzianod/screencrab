@@ -194,19 +194,15 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
 
         let output = process.unwrap().wait().await.unwrap();
         if output.success() {
-            if !clipboard { return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None }; }
-            else { return Response { response: None, error: Some(format!("Screen Crab cancelled.")) }; }
-        }
+            return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None }; }
         return Response { response: None, error: Some(format!("Failed to take Screen Crab.")) };
     });
 
     let output = record_task.await.unwrap();
-    if !clipboard {
         // Use tokio::task::spawn to execute the opening
         let _open_task = task::spawn(async move {
             let _open = Command::new("open").arg(filename2.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e)) });
         });
-    }
     output
 }
 
@@ -247,18 +243,17 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
 
         let output = process.unwrap().wait().await.unwrap();
         if output.success() {
-            if !clipboard { return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None }; }
-            else { return Response { response: None, error: Some(format!("Screen Crab cancelled.")) }; }
+            return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None };
         }
         return Response { response: None, error: Some(format!("Failed to take Screen Crab.")) };
     });
 
     let output = record_task.await.unwrap();
-    if !clipboard {
+
         // Use tokio::task::spawn to execute the opening
         let _open_task = task::spawn(async move {
             let _open = Command::new("open").arg(filename2.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e)) });
         });
-    }
+
     output
 }
