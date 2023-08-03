@@ -1,6 +1,6 @@
 use crate::capture::Response;
 use chrono::prelude::*;
-use tauri::{Window, AppHandle, TitleBarStyle};
+use tauri::{Window, AppHandle, TitleBarStyle, Manager, PhysicalSize, PhysicalPosition};
 
 
 mod capture;
@@ -68,11 +68,15 @@ async fn capture(window: Window, mode: &str, view: &str, area: &str, timer: u64,
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
+            let monitor_size = *app.get_window("main").unwrap().current_monitor().unwrap().unwrap().size();
+            let width = monitor_size.width*4/5;
+            let height = monitor_size.height*9/30;
+            app.handle().windows().get("main").unwrap().set_size(PhysicalSize::new(width, height)).unwrap();
+            app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*14/10)).unwrap();
             let area = tauri::WindowBuilder::new(
                 app,
                 "selector",
                 tauri::WindowUrl::App("./blank.html".into()))
-                .inner_size(300.0, 300.0)
                 .decorations(false)
                 .title_bar_style(TitleBarStyle::Overlay)
                 .always_on_top(true)
@@ -84,6 +88,7 @@ fn main() {
                 .content_protected(true)
                 .focused(true)
                 .build().unwrap();
+            area.set_size(PhysicalSize::new(width/2, height)).unwrap();
             area.hide().unwrap();
             Ok(())
         })

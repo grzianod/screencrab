@@ -6,6 +6,7 @@ use tokio::sync::oneshot;
 use tokio::process::Command;
 use tauri::{Window, AppHandle, Manager, PhysicalPosition};
 use tauri::PhysicalSize;
+use std::process::Stdio;
 
 
 #[derive(Clone, serde::Serialize)]
@@ -118,10 +119,9 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
                 });
                 return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None };
             }
-            Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }
-        } else {
-            Response { response: None, error: Some(format!("Screen Crab cancelled.")) }
+            return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None };
         }
+    return Response { response: None, error: Some(format!("Screen Crab cancelled.")) };
 }
 
 pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool) -> Response {
@@ -159,19 +159,17 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
             });
             return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None };
         }
-        Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }
-    } else {
-        Response { response: None, error: Some(format!("Screen Crab cancelled.")) }
+        return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None };
     }
+    return Response { response: None, error: Some(format!("Screen Crab cancelled.")) };
 }
 
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, pointer: bool, clipboard: bool) -> Response {
     let filename1 = filename.to_string();
     let filename2 = filename.to_string();
 
-    let record_task = tokio::task::spawn(async move {
         let mut command = Command::new("screencapture");
-
+        command.stdin(Stdio::piped());
         command.arg("-v");
 
         if pointer { command.arg("-C"); }
@@ -179,81 +177,87 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
 
         command.args(&["-T", timer.to_string().as_str()]);
 
-        let process = command.arg(filename1.as_str()).spawn().map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
-        let pid = process.as_ref().unwrap().id().unwrap();
+        let mut process = command.arg(filename1.as_str()).spawn().map_err(|e| Response {response: None, error: Some(format!("Failed to launch screen record: {}",e))}).unwrap();
+        let _stdin = process.stdin.take().unwrap();  //do not release process stdin at wait(), capture it to send SIGTERM to recording process
+        let pid = process.id().unwrap();
+
+        window.listen_global("kill", move |_event| {
+        tokio::task::spawn(async move {
+            let _output = Command::new("kill")
+                .arg("-9")
+                .arg(pid.to_string())
+                .output()
+                .await;
+            });
+        });
 
         window.listen_global("stop", move |_event| {
             tokio::task::spawn(async move {
                 let _output = Command::new("kill")
-                    .arg("-2")
+                    .arg("-2")  //SIGTERM
                     .arg(pid.to_string())
                     .output()
                     .await;
             });
         });
 
-        let output = process.unwrap().wait().await.unwrap();
-        if output.success() {
-            return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None }; }
-        return Response { response: None, error: Some(format!("Failed to take Screen Crab.")) };
-    });
-
-    let output = record_task.await.unwrap();
+    let output = process.wait().await.unwrap();
+    if output.success() {
         // Use tokio::task::spawn to execute the opening
         let _open_task = task::spawn(async move {
             let _open = Command::new("open").arg(filename2.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e)) });
         });
-    output
+        return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None };
+    }
+    return Response { response: None, error: Some(format!("Screen Crab cancelled.")) };
+
 }
 
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, pointer: bool, clipboard: bool) -> Response {
     let filename1 = filename.to_string();
     let filename2 = filename.to_string();
-    let area1 = area.to_string();
 
-    window.emit("selected", {}).unwrap();
-    window.listen_global("position", move |event| {
-        let position = event.payload().unwrap();
-        println!("{}", position);
-    });
+    let mut command = Command::new("screencapture");
+    command.stdin(Stdio::piped());
+    command.arg("-v");
 
-    let record_task = tokio::task::spawn(async move {
-        let mut command = Command::new("screencapture");
+    if pointer { command.arg("-C"); }
+    if clipboard { command.arg("-c"); }
 
-        command.arg("-v");
-        command.args(&["-R", area1.as_str()]);
+    command.args(&["-T", timer.to_string().as_str()]);
+    command.args(&["-R", area]);
 
-        if pointer { command.arg("-C"); }
-        if clipboard { command.arg("-c"); }
+    let mut process = command.arg(filename1.as_str()).spawn().map_err(|e| Response {response: None, error: Some(format!("Failed to launch screen record: {}",e))}).unwrap();
+    let mut _stdin = process.stdin.take().unwrap();  //do not release process stdin at wait(), capture it to send SIGTERM to recording process
+    let pid = process.id().unwrap();
 
-        command.args(&["-T", timer.to_string().as_str()]);
-
-        let process = command.arg(filename1.as_str()).spawn().map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
-        let pid = process.as_ref().unwrap().id().unwrap();
-
-        window.listen_global("stop", move |_event| {
-            tokio::task::spawn(async move {
-                let _output = Command::new("kill")
-                    .arg("-2")
-                    .arg(pid.to_string())
-                    .output()
-                    .await;
-            });
+    window.listen_global("kill", move |_event| {
+        tokio::task::spawn(async move {
+            let _output = Command::new("kill")
+                .arg("-9")
+                .arg(pid.to_string())
+                .output()
+                .await;
         });
-
-        let output = process.unwrap().wait().await.unwrap();
-        if output.success() {
-            return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None };
-        }
-        return Response { response: None, error: Some(format!("Failed to take Screen Crab.")) };
     });
 
-    let output = record_task.await.unwrap();
+    window.listen_global("stop", move |_event| {
+        tokio::task::spawn(async move {
+            let _output = Command::new("kill")
+                .arg("-2")  //SIGTERM
+                .arg(pid.to_string())
+                .output()
+                .await;
+        });
+    });
 
+    let output = process.wait().await.unwrap();
+    if output.success() {
         // Use tokio::task::spawn to execute the opening
         let _open_task = task::spawn(async move {
             let _open = Command::new("open").arg(filename2.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e)) });
         });
-
-    output
+        return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None };
+    }
+    return Response { response: None, error: Some(format!("Screen Crab cancelled.")) };
 }

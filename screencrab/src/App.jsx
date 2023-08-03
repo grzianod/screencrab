@@ -8,8 +8,8 @@ import isEmpty from "validator/es/lib/isEmpty.js";
 import { WebviewWindow } from '@tauri-apps/api/window';
 
 function App() {
-  const [mode, setMode] = useState("capture");
-  const [view, setView] = useState("fullscreen");
+  const [mode, setMode] = useState(undefined);
+  const [view, setView] = useState(undefined);
   const [duration, setDuration] = useState(0);
   const [pointer, setPointer] = useState(false);
   const [text, setText] = useState(undefined);
@@ -29,8 +29,7 @@ function App() {
         setCapturing(true);
 
         if(view === "custom") {
-            await selector.setResizable(false);
-            await selector.setCursorGrab(true);
+            selector.hide();
             let position = await selector.innerPosition();
             let size = await selector.innerSize();
             let scaleFactor = await selector.scaleFactor();
@@ -55,8 +54,11 @@ function App() {
 
             if(view === "custom") {
                 await selector.setResizable(true);
-                await selector.setCursorGrab(false);
+                selector.hide();
             }
+
+            setMode(undefined);
+            setView(undefined);
     }
 
     useEffect( () => {
@@ -81,14 +83,19 @@ function App() {
         setCountdown(0);
         setIsCounting(false);
 
-        mode === "capture" ?
+        if(mode === "capture")
             emit("kill", {})
                 .then( () => {})
-                .catch((err) => console.log("ERROR: "+err) /* TODO: handle error */) :
+                .catch((err) => console.log("ERROR: "+err) /* TODO: handle error */)
+        else if (capturing)
             emit("stop", {})
                 .then( () => {})
                 .catch((err) => console.log("ERROR: "+err) /* TODO: handle error */)
                 .finally(() => setCapturing(false));
+        else
+            emit("kill", {})
+                .then( () => {})
+                .catch((err) => console.log("ERROR: "+err) /* TODO: handle error */)
     }
 
     async function openFolderDialog() {
@@ -130,8 +137,8 @@ function App() {
 
           <Container className={"flex-row align-self-center p-4"}>
 
-          <Container className={"col-4"}></Container>
-      <Container style={{zIndex: "2", position: "relative"}} className={"w-75 mx-5 col-8 p-0 mt-0"}>
+          <Container className={"col-5"}></Container>
+      <Container style={{zIndex: "2", position: "relative"}} className={"w-100 col-7 p-0 mt-0 justify-content-center"}>
           <Container className={"flex-row p-0 align-items-center mb-2"}>
               <FormText className={"m-2"}>Save to</FormText>
               <Form>
@@ -170,7 +177,7 @@ function App() {
                   </div>
               </Form>
               <Dropdown className={"ms-2"}>
-                  <Dropdown.Toggle variant="light" id="dropdown-basic" style={{fontSize: "0.9rem"}}>
+                  <Dropdown.Toggle disabled={!mode} variant="light" id="dropdown-basic" style={{fontSize: "0.9rem"}}>
                       {clipboard ? "Copy" : "Save"} as
                   </Dropdown.Toggle>
 
@@ -211,6 +218,12 @@ function App() {
                               <path
                                   d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                           </svg> : false}</Dropdown.Item>
+                      <Dropdown.Item onClick={() => setFileType("avi")} className={mode==="capture" ? "d-none" : false}>avi{fileType === "avi" ?
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                               className="bi bi-check" viewBox="0 0 16 16">
+                              <path
+                                  d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                          </svg> : false}</Dropdown.Item>
                       <Dropdown.Item onClick={() => setFileType("gif")} className={mode==="capture" ? "d-none" : false}>gif{fileType === "gif" ?
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                className="bi bi-check" viewBox="0 0 16 16">
@@ -221,17 +234,20 @@ function App() {
               </Dropdown>
           </Container>
 
-        <Container className={"flex-row align-items-center justify-content-center p-0 m-2 mb-1"}>
+        <Container className={"flex-row align-items-center p-0 mt-2 mb-1"}>
 
-        <Container className={"d-flex flex-column align-items-center justify-content-center p-0"}>
+        <Container className={"d-flex flex-column align-items-center justify-content-center p-0 "}>
           <FormText>Capture</FormText>
           <Container className={"d-flex flex-row p-0"}>
           <Button className={"m-1"} variant={mode === "capture" && view === "fullscreen" ? "primary" : "outline-primary"}
+                  disabled={capturing}
                   title={"Capture Entire Screen"}
                   onClick={() => {
-                    setMode("capture");
-                    setView("fullscreen");
-                    WebviewWindow.getByLabel('selector').hide()
+                      if(mode!=="capture") setFileType("png");
+
+                      setMode("capture");
+                      setView("fullscreen");
+                      WebviewWindow.getByLabel('selector').hide()
                   } }>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                  className="bi bi-window-desktop" viewBox="0 0 16 16">
@@ -243,10 +259,15 @@ function App() {
 
           <Button className={"m-1"} variant={mode === "capture" && view === "custom" ? "primary" : "outline-primary"}
                   title={"Capture Selected Portion"}
+                  disabled={capturing}
                   onClick={() => {
-                    setMode("capture");
-                    setView("custom");
-                    WebviewWindow.getByLabel('selector').show();
+
+                      if(mode!=="capture") setFileType("png");
+
+                      setMode("capture");
+                      setView("custom");
+                      WebviewWindow.getByLabel('selector').show()
+
                       }
                 }>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
@@ -261,13 +282,18 @@ function App() {
           <Container className={"d-flex flex-column align-items-center justify-content-center p-0"}>
             <FormText className={"title-record"}>Record</FormText>
             <Container className={"d-flex flex-row p-0"}>
-          <Button title={"Record Entire Screen"} className={"m-1"} variant={mode === "record" && view === "fullscreen" ? "danger" : "outline-danger"}
+          <Button title={"Record Entire Screen"} className={"m-1"}
+                  disabled={capturing}
+                  variant={mode === "record" && view === "fullscreen" ? "danger" : "outline-danger"}
                   onClick={() => {
                       
-                    if(mode==="capture") { setMode("record"); setFileType("mov");} 
-                    setClipboard(false);
-                    setView("fullscreen");
-                    WebviewWindow.getByLabel('selector').hide()
+                    if(mode !== "record") setFileType("mov");
+
+                      setMode("record");
+                      setView("fullscreen");
+                      WebviewWindow.getByLabel('selector').hide()
+
+                      setClipboard(false);
                   } }>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
                  className="bi bi-window-desktop" viewBox="0 0 16 16">
@@ -281,11 +307,19 @@ function App() {
               className={"m-1"}
               variant={mode === "record" && view === "custom" ? "danger" : "outline-danger"}
               title={"Record Selected Portion"}
+              disabled={capturing}
               onClick={() => {
-                if(mode==="capture") { setMode("record"); setFileType("mov");}
-                setClipboard(false);
-                setView("custom");
-                  WebviewWindow.getByLabel('selector').show(); } }
+
+                  if(mode!=="record") setFileType("mov");
+
+                  setMode("record");
+                  setView("custom");
+                  WebviewWindow.getByLabel('selector').show()
+
+                  setClipboard(false);
+
+                 }
+          }
           >
               <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -332,9 +366,9 @@ function App() {
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
                 <FormText>&nbsp;</FormText>
-                { countdown > 0 && mode==="capture" ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
+                { countdown > 0 ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
                     mode==="record" && capturing ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Stop</Button> :
-                    <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={capture}>{mode[0].toUpperCase() + mode.slice(1)}</Button>}
+                        (mode !== undefined && view !== undefined) ? <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={capture}>{mode[0].toUpperCase() + mode.slice(1)}</Button> : false}
             </Container>
 
             </Container>
