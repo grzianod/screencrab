@@ -1,4 +1,3 @@
-use std::env;
 use tauri::api::dialog::FileDialogBuilder;
 use serde::{Serialize, Deserialize};
 use tokio::task;
@@ -7,6 +6,7 @@ use tokio::process::Command;
 use tauri::{Window, AppHandle, Manager, PhysicalPosition};
 use tauri::PhysicalSize;
 use std::process::Stdio;
+use tauri_api::path::home_dir;
 
 
 #[derive(Clone, serde::Serialize)]
@@ -34,14 +34,11 @@ impl Response {
     }
 }
 
-pub async fn cwd() -> Response {
-    match env::current_dir() {
-        Ok(current_dir) => {
-            Response { response: Some(current_dir.display().to_string()), error: None }
-        }
-        Err(err) => {
-            Response { response: None, error: Some(format!("Error getting current working directory: {}", err)) }
-        }
+pub fn cwd() -> Response {
+    if let Some(home_dir) = home_dir() {
+        Response { response: Some(home_dir.display().to_string()), error: None }
+    } else {
+        Response { response: None, error: Some(format!("Error while retrieving current user home directory.")) }
     }
 }
 

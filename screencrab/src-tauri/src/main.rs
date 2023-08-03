@@ -12,7 +12,7 @@ async fn folder_dialog(handle: AppHandle) -> Response {
 
 #[tauri::command]
 async fn cwd() -> Response {
-    capture::cwd().await
+    capture::cwd()
 }
 
 
