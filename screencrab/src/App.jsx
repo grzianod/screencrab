@@ -153,7 +153,7 @@ function App() {
                       <Form.Control
                           type="text"
                           value={clipboard ? "Clipboard" : filePath}
-                          disabled={clipboard}
+                          disabled={clipboard || capturing}
                           style={{minWidth: "35rem"}}
                           onChange={ (event) => setFilePath(event.target.value)}
                       />
@@ -170,7 +170,7 @@ function App() {
               </Button>
 
               <Dropdown drop={"down-centered"} className={"ms-3"}>
-                  <Dropdown.Toggle disabled={!mode} variant="light" id="dropdown-basic">
+                  <Dropdown.Toggle disabled={!mode || capturing} variant="light" id="dropdown-basic">
                       <FormText>{clipboard ? "Copy" : "Save"} as</FormText>
                   </Dropdown.Toggle>
 
@@ -374,7 +374,7 @@ function App() {
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
                 <FormText>&nbsp;</FormText>
                 <Dropdown>
-                    <Dropdown.Toggle variant="light" id="dropdown-basic">
+                    <Dropdown.Toggle disabled={capturing} variant="light" id="dropdown-basic">
                         <FormText>Options</FormText>
                     </Dropdown.Toggle>
 
