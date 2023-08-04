@@ -13,6 +13,9 @@
   "tauri": {
     "macOSPrivateApi": true,
     "allowlist": {
+      "notification": {
+        "all": true
+      },
       "window": {
         "all": false,
         "close": true,

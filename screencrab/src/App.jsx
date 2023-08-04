@@ -116,7 +116,6 @@ function App() {
 
     useEffect( () => {
 
-
         navigator.mediaDevices.getUserMedia({audio:true})
         .then((stream)=> {
             setMicrophonePermission(true);
@@ -315,7 +314,7 @@ function App() {
                   disabled={capturing}
                   variant={mode === "record" && view === "fullscreen" ? "danger" : "outline-danger"}
                   onClick={() => {
-                      
+
                     if(mode !== "record") setFileType("mov");
 
                       setMode("record");
@@ -453,5 +452,6 @@ function App() {
       </>
   );
 }
+
 
 export default App;
