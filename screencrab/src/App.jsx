@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
-import {emit, listen, once} from '@tauri-apps/api/event'
+import {emit} from '@tauri-apps/api/event'
 import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
@@ -21,6 +21,7 @@ function App() {
   const [clipboard, setClipboard] = useState(false);
   const [audio, setAudio] = useState(false);
   const [openFile, setOpenFile] = useState(true);
+  const [microphonePermission, setMicrophonePermission] = useState(false);
 
     async function capture() {
         let selector = WebviewWindow.getByLabel('selector');
@@ -114,6 +115,15 @@ function App() {
     }
 
     useEffect( () => {
+
+
+        navigator.mediaDevices.getUserMedia({audio:true}).then((stream)=> {
+            setMicrophonePermission(true);
+        }).catch(() => {
+            setMicrophonePermission(false);
+            setText("Microphone permission denied. Screen Crab will not be able to record external audio while performing screen recording.")
+        });
+
         invoke("cuhd")
             .then( (result) => {
                 if(result.response)
@@ -399,13 +409,14 @@ function App() {
                             </svg> : false}
                             <FormText className={!clipboard ? "ms-3" : false }>Copy to Clipboard</FormText>
                         </Dropdown.Item>
-                        <Dropdown.Item onClick={() => setAudio((audio) => !audio)} className={mode==="capture" ? "d-none" : false}>{audio ?
+                        <Dropdown.Item disabled={!microphonePermission} onClick={() => setAudio((audio) => !audio)} className={mode==="capture" ? "d-none" : false}>{audio ?
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                  className="bi bi-check" viewBox="0 0 16 16">
                                 <path
                                     d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                             </svg> : false}
-                            <FormText className={!audio ? "ms-3" : false}>Record External Audio</FormText>
+                            <FormText className={!audio ? "ms-3" : false}>
+                                {!microphonePermission ? <s>Record External Audio</s> : "Record External Audio"}</FormText>
                         </Dropdown.Item>
                         <Dropdown.Item onClick={() => setOpenFile((openFile) => !openFile)}>
                             {openFile ?

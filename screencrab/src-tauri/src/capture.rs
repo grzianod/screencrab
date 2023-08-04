@@ -8,7 +8,6 @@ use tauri::PhysicalSize;
 use std::process::Stdio;
 use tauri_api::path::home_dir;
 
-
 #[derive(Clone, serde::Serialize)]
 struct Payload {
     position: String,
