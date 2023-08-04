@@ -2,10 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>AVCaptureScreenInput</key>
-  <string></string>
-  <key>NSCameraUsageDescription</key>
-  <string></string>
   <key>NSMicrophoneUsageDescription</key>
   <string>Screen Crab uses the microphone to register external audio while recording the screen</string>
 </dict>

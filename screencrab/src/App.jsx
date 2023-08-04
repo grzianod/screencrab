@@ -117,9 +117,11 @@ function App() {
     useEffect( () => {
 
 
-        navigator.mediaDevices.getUserMedia({audio:true}).then((stream)=> {
+        navigator.mediaDevices.getUserMedia({audio:true})
+        .then((stream)=> {
             setMicrophonePermission(true);
-        }).catch(() => {
+        })
+        .catch(() => {
             setMicrophonePermission(false);
             setText("Microphone permission denied. Screen Crab will not be able to record external audio while performing screen recording.")
         });
