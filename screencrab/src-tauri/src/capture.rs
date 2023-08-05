@@ -7,6 +7,7 @@ use tauri::{Window, AppHandle, Manager, PhysicalPosition};
 use tauri::PhysicalSize;
 use std::process::Stdio;
 use tauri_api::path::home_dir;
+use tauri::api::notification::Notification;
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
@@ -93,7 +94,7 @@ fn get_current_monitor_index(window: &Window) -> usize {
     return 0;
 }
 
-pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, open_file: bool) -> Response {
+pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, open_file: bool) -> Response {
     let filename1 = filename.to_string();
     let index = get_current_monitor_index(&window);
 
@@ -127,13 +128,26 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
                 let _open = Command::new("open").arg(filename1.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e)) });
             });
         }
-        if clipboard { return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }; }
-        else {return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None }; }
+        if clipboard {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body("Screen Crab saved to Clipboard")
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }; }
+        else {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body(format!("Screen Crab saved to {}", filename.to_string()))
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None }; }
     }
-    return Response { response: None, error: Some(format!("Screen Crab cancelled.")) };
+    Notification::new(&app.config().tauri.bundle.identifier)
+        .body("Screen Crab cancelled")
+        .icon("icons/icon.icns").show().unwrap();
+    return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }
 
-pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, open_file: bool) -> Response {
+pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, open_file: bool) -> Response {
     let filename1 = filename.to_string();
     let index = get_current_monitor_index(&window);
 
@@ -169,13 +183,26 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
                 let _open = Command::new("open").arg(filename1.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e)) });
             });
         }
-        if clipboard { return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }; }
-        else {return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None }; }
+        if clipboard {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body("Screen Crab saved to Clipboard")
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }; }
+        else {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body(format!("Screen Crab saved to {}", filename.to_string()))
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None }; }
     }
-    return Response { response: None, error: Some(format!("Screen Crab cancelled.")) };
+    Notification::new(&app.config().tauri.bundle.identifier)
+        .body(format!("Screen Crab cancelled"))
+        .icon("icons/icon.icns").show().unwrap();
+    return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }
 
-pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
+pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, timer: u64, pointer: bool, clipboard: bool, open_file: bool) -> Response {
     let filename1 = filename.to_string();
     let filename2 = filename.to_string();
     let index = get_current_monitor_index(&window);
@@ -186,7 +213,6 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
 
     if pointer { command.arg("-C"); }
     if clipboard { command.arg("-c"); }
-    if audio { command.arg("-g"); }
 
     command.args(&["-T", timer.to_string().as_str()]);
     command.args(&["-D", index.to_string().as_str()]);
@@ -223,12 +249,19 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
                 let _open = Command::new("open").arg(filename2.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e)) });
             });
         }
+        Notification::new(&app.config().tauri.bundle.identifier)
+            .title("All done!")
+            .body(format!("Screen Crab saved to {}", filename.to_string()))
+            .icon("icons/icon.icns").show().unwrap();
         return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None };
     }
-    return Response { response: None, error: Some(format!("Screen Crab cancelled.")) };
+    Notification::new(&app.config().tauri.bundle.identifier)
+        .body("Screen Crab cancelled")
+        .icon("icons/icon.icns").show().unwrap();
+    return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }
 
-pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
+pub async fn record_custom(app: AppHandle, window: Window, area: &str, filename: &str, timer: u64, pointer: bool, clipboard: bool, open_file: bool) -> Response {
     let filename1 = filename.to_string();
     let filename2 = filename.to_string();
     let index = get_current_monitor_index(&window);
@@ -239,7 +272,6 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
 
     if pointer { command.arg("-C"); }
     if clipboard { command.arg("-c"); }
-    if audio { command.arg("-g"); }
 
     command.args(&["-T", timer.to_string().as_str()]);
     command.args(&["-R", area]);
@@ -277,7 +309,14 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
                 let _open = Command::new("open").arg(filename2.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e)) });
             });
         }
+        Notification::new(&app.config().tauri.bundle.identifier)
+            .title("All done!")
+            .body(format!("Screen Crab saved to {}", filename.to_string()))
+            .icon("icons/icon.icns").show().unwrap();
         return Response { response: Some(format!("Screen Crab saved to {}", filename1.to_string())), error: None };
     }
-    return Response { response: None, error: Some(format!("Screen Crab cancelled.")) };
+    Notification::new(&app.config().tauri.bundle.identifier)
+        .body("Screen Crab cancelled")
+        .icon("icons/icon.icns").show().unwrap();
+    return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }

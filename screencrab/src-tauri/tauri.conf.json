@@ -11,8 +11,15 @@
     "version": "0.0.1"
   },
   "tauri": {
+    "systemTray": {
+      "iconPath": "./icons/cuddlyferris.png",
+      "iconAsTemplate": true
+    },
     "macOSPrivateApi": true,
     "allowlist": {
+      "globalShortcut": {
+        "all": true
+      },
       "notification": {
         "all": true
       },
@@ -65,6 +72,7 @@
     "windows": [
       {
         "label": "main",
+        "alwaysOnTop": true,
         "fullscreen": false,
         "resizable": false,
         "focus": true,
