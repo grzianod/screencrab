@@ -72,7 +72,6 @@
     "windows": [
       {
         "label": "main",
-        "alwaysOnTop": true,
         "fullscreen": false,
         "resizable": false,
         "focus": true,
