@@ -79,7 +79,6 @@
         "title": "Screen Crab",
         "width": 1200,
         "height": 260,
-        "skipTaskbar": true,
         "contentProtected": true,
         "decorations": true
       }

@@ -70,12 +70,17 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let system_tray_menu = SystemTrayMenu::new();
     tauri::Builder::default()
+        .menu(create_context_menu())
+        .on_menu_event(|event| {
+            event.window().emit_all(event.menu_item_id(), {}).unwrap();
+        })
         .setup(|app| {
             let monitor_size = *app.get_window("main").unwrap().current_monitor().unwrap().unwrap().size();
-            let width = monitor_size.width*25/40;
+            let width = monitor_size.width*28/40;
             let height = monitor_size.height*4/15;
             app.handle().windows().get("main").unwrap().set_size(PhysicalSize::new(width, height)).unwrap();
             app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*14/10)).unwrap();
@@ -85,11 +90,9 @@ fn main() {
                 tauri::WindowUrl::App("./blank.html".into()))
                 .decorations(false)
                 .title_bar_style(TitleBarStyle::Overlay)
-                .always_on_top(true)
                 .transparent(true)
                 .resizable(true)
                 .center()
-                .skip_taskbar(true)
                 .title("")
                 .content_protected(true)
                 .focused(true)
@@ -98,19 +101,6 @@ fn main() {
             area.hide().unwrap();
 
             Ok(())
-        })
-        .menu(create_context_menu())
-        .on_menu_event(|event| {
-            event.window().emit_all(event.menu_item_id(), {}).unwrap();
-            match event.menu_item_id() {
-                "capture_mouse_pointer" => {
-                    event.window().menu_handle().get_item(event.menu_item_id()).set_selected(false).unwrap();
-                }
-                "copy_to_clipboard" => {
-                    event.window().menu_handle().get_item(event.menu_item_id()).set_selected(false).unwrap();
-                }
-                _ => {}
-            }
         })
         .system_tray(SystemTray::new().with_menu(system_tray_menu))
         .on_system_tray_event(|app, event| match event {
@@ -122,6 +112,7 @@ fn main() {
                 let window = app.get_window("main").unwrap();
                 // toggle application window
                 if window.is_visible().unwrap() {
+
                     window.hide().unwrap();
                 } else {
                     window.show().unwrap();

@@ -17,7 +17,8 @@ function App() {
   const [countdown, setCountdown] = useState(0);
   const [capturing, setCapturing] = useState(false);
   const [isCounting, setIsCounting] = useState(false);
-  const [fileType, setFileType] = useState("png");
+  const [captureType, setCaptureType] = useState("png");
+  const [recordType, setRecordType] = useState("mov");
   const [clipboard, setClipboard] = useState(false);
   const [openFile, setOpenFile] = useState(true);
 
@@ -113,21 +114,18 @@ function App() {
     }
 
     async function setCaptureFullscreen() {
-        if(mode!=="capture") setFileType("png");
         setMode("capture");
         setView("fullscreen");
         await WebviewWindow.getByLabel('selector').hide();
     }
 
     async function setCaptureCustom() {
-        if(mode!=="capture") setFileType("png");
         setMode("capture");
         setView("custom");
         await WebviewWindow.getByLabel('selector').show()
     }
 
     async function setRecordFullscreen() {
-        if(mode !== "record") setFileType("mov");
         setMode("record");
         setView("fullscreen");
         await WebviewWindow.getByLabel('selector').hide()
@@ -135,7 +133,6 @@ function App() {
     }
 
     async function setRecordCustom() {
-        if(mode!=="record") setFileType("mov");
         setMode("record");
         setView("custom");
         await WebviewWindow.getByLabel('selector').show()
@@ -143,16 +140,38 @@ function App() {
     }
 
     useEffect(() => {
+        const promise = listen("capture_mouse_pointer", () => {
+            setPointer((pointer) => !pointer);
+        });
+        return () => promise.then(remove => remove());
+    });
+
+    useEffect(() => {
+        const promise = listen("copy_to_clipboard", () => {
+            if(mode === "capture") {
+                setClipboard((clipboard) => !clipboard);
+                setOpenFile(false);
+            }
+        });
+        return () => promise.then(remove => remove());
+    });
+    useEffect(() => {
+        const promise = listen("open", () => {
+            setOpenFile((openFile) => !openFile);
+        });
+        return () => promise.then(remove => remove());
+    });
+
+    useEffect(() => {
         const promise = listen("capture_fullscreen", async () => {
-            if (mode !== "capture") { setMode("capture"); await capture("capture", "fullscreen", duration, pointer, filePath, "png", clipboard, openFile); }
-            else await capture(mode, view, duration, pointer, filePath, fileType, clipboard, openFile);
+            setCaptureFullscreen().then(async () => await capture("capture", "fullscreen", duration, pointer, filePath, captureType, clipboard, openFile));
         });
             return () => promise.then(remove => remove());
         });
     useEffect(() => {
         const promise = listen("capture_custom", async () => {
             WebviewWindow.getByLabel('selector').isVisible().then( async (value) => {
-                if(value) await capture(mode, view, duration, pointer, filePath, fileType, clipboard, openFile);
+                if(value) await capture("capture", "custom", duration, pointer, filePath, captureType, clipboard, openFile);
                 else await setCaptureCustom();
             })
         });
@@ -160,15 +179,14 @@ function App() {
     });
     useEffect(() => {
         const promise = listen("record_fullscreen", async () => {
-            if (mode !== "record") { setMode("record"); await capture("record", "fullscreen", duration, pointer, filePath, "mov", clipboard, openFile); }
-            else await capture(mode, view, duration, pointer, filePath, fileType, clipboard, openFile);
+            setRecordFullscreen().then(async () => await capture("record", "fullscreen", duration, pointer, filePath, recordType, clipboard, openFile));
         });
         return () => promise.then(remove => remove());
     });
     useEffect(() => {
         const promise = listen("record_custom", async () => {
             WebviewWindow.getByLabel('selector').isVisible().then( async (value) => {
-                if(value) await capture(mode, view, duration, pointer, filePath, fileType, clipboard, openFile);
+                if(value) await capture("record", "custom", duration, pointer, filePath, recordType, clipboard, openFile);
                 else await setRecordCustom();
             })
         });
@@ -207,9 +225,9 @@ function App() {
         <Container className="background-container p-0 m-0"></Container>
 
           <Container className={"flex-row justify-content-center p-0 m-0 w-100"}>
-              <div className={"col-6"}></div>
+              <div className={"col-2"}></div>
 
-      <Container style={{zIndex: "2", position: "relative"}} className={"w-100 col-6 align-items-center"}>
+      <Container style={{zIndex: "2", position: "relative"}} className={"w-100 align-items-center"}>
           <Container className={"flex-row align-items-center mb-2 justify-content-center"}>
               <FormText>Save to:</FormText>
               <Form className={"mx-2"}>
@@ -239,72 +257,72 @@ function App() {
                   </Dropdown.Toggle>
 
                   <Dropdown.Menu style={{maxWidth: "3rem"}}>
-                      <Dropdown.Item onClick={() => setFileType("pdf")} className={mode==="record" ? "d-none" : false}>
+                      <Dropdown.Item onClick={() => setCaptureType("pdf")} className={mode==="record" ? "d-none" : false}>
                           <FormText >pdf</FormText>
-                          {fileType === "pdf" ?
+                          {captureType === "pdf" ?
                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                        className="bi bi-check" viewBox="0 0 16 16">
                                       <path
                                           d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                                   </svg> : false}
                       </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType("jpeg")} className={mode==="record" ? "d-none" : false}>
+                      <Dropdown.Item onClick={() => setCaptureType("jpeg")} className={mode==="record" ? "d-none" : false}>
                           <FormText >jpeg</FormText>
-                          {fileType === "jpeg" ?
+                          {captureType === "jpeg" ?
                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                        className="bi bi-check" viewBox="0 0 16 16">
                                       <path
                                           d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                                   </svg> : false}
                       </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType("png")} className={mode==="record" ? "d-none" : false}>
+                      <Dropdown.Item onClick={() => setCaptureType("png")} className={mode==="record" ? "d-none" : false}>
                           <FormText >png</FormText>
-                              {fileType === "png" ?
+                              {captureType === "png" ?
                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                        className="bi bi-check" viewBox="0 0 16 16">
                                       <path
                                           d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                                   </svg> : false}
                       </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType("tiff")} className={mode==="record" ? "d-none" : false}>
+                      <Dropdown.Item onClick={() => setCaptureType("tiff")} className={mode==="record" ? "d-none" : false}>
                           <FormText>tiff</FormText>
-                              {fileType === "tiff" ?
+                              {captureType === "tiff" ?
                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                        className="bi bi-check" viewBox="0 0 16 16">
                                       <path
                                           d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                                   </svg> : false}
                       </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType("mov")} className={mode==="capture" ? "d-none" : false}>
+                      <Dropdown.Item onClick={() => setRecordType("mov")} className={mode==="capture" ? "d-none" : false}>
                           <FormText>mov</FormText>
-                          {fileType === "mov" ?
+                          {recordType === "mov" ?
                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                        className="bi bi-check" viewBox="0 0 16 16">
                                       <path
                                           d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                                   </svg> : false}
                       </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType("mp4")} className={mode==="capture" ? "d-none" : false}>
+                      <Dropdown.Item onClick={() => setRecordType("mp4")} className={mode==="capture" ? "d-none" : false}>
                           <FormText>mp4</FormText>
-                          {fileType === "mp4" ?
+                          {recordType === "mp4" ?
                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                        className="bi bi-check" viewBox="0 0 16 16">
                                       <path
                                           d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                                   </svg> : false}
                       </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType("avi")} className={mode==="capture" ? "d-none" : false}>
+                      <Dropdown.Item onClick={() => setRecordType("avi")} className={mode==="capture" ? "d-none" : false}>
                           <FormText>avi</FormText>
-                          {fileType === "avi" ?
+                          {recordType === "avi" ?
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                    className="bi bi-check" viewBox="0 0 16 16">
                                   <path
                                       d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
                               </svg> : false}
                       </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setFileType("gif")} className={mode==="capture" ? "d-none" : false}>
+                      <Dropdown.Item onClick={() => setRecordType("gif")} className={mode==="capture" ? "d-none" : false}>
                           <FormText>gif</FormText>
-                          {fileType === "gif" ?
+                          {recordType === "gif" ?
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                    className="bi bi-check" viewBox="0 0 16 16">
                                   <path
@@ -399,57 +417,38 @@ function App() {
 
             </Container>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
-                <FormText>&nbsp;</FormText>
-                <Dropdown drop={"down-centered"}>
-                    <Dropdown.Toggle disabled={capturing} variant="light" id="dropdown-basic">
-                        <FormText>Options</FormText>
-                    </Dropdown.Toggle>
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1 w-100"}>
+            <FormText>{mode === "capture" ? "Capture" : "Record"} Mouse Pointer</FormText>
+                <Form.Switch checked={pointer} disabled={capturing}
+                onClick={() => setPointer((pointer) => !pointer)}></Form.Switch>
+            </Container>
 
-                    <Dropdown.Menu>
-                        <Dropdown.Item onClick={() => setPointer((pointer) => !pointer)}>
-                            <Container className={"flex-row justify-content-center align-items-center p-0 m-0"}>
-                                {pointer ?
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                         className="bi bi-check" viewBox="0 0 16 16">
-                                        <path
-                                            d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                                    </svg> : false}
-                            <FormText className={!pointer ? "ms-3" : false }>{mode === "capture" ? "Capture" : "Record"} Mouse Pointer</FormText>
-                            </Container>
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={() => setClipboard((clipboard) => !clipboard)} className={mode==="record" ? "d-none" : false}>
-                            {clipboard ?
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                 className="bi bi-check" viewBox="0 0 16 16">
-                                <path
-                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                            </svg> : false}
-                            <FormText className={!clipboard ? "ms-3" : false }>Copy to Clipboard</FormText>
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={() => setOpenFile((openFile) => !openFile)}>
-                            {openFile ?
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                 className="bi bi-check" viewBox="0 0 16 16">
-                                <path
-                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                            </svg> : false}
-                            <FormText className={!openFile ? "ms-3" : false }>{mode === "capture" ? "Edit After Capture" : "Open After Record"}</FormText>
-                        </Dropdown.Item>
-                    </Dropdown.Menu>
-                </Dropdown>
+            {mode !== "record" ? <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1 w-75"}>
+                <FormText>Copy to Clipboard</FormText>
+                <Form.Switch checked={clipboard} disabled={capturing}
+                             onClick={() => {setClipboard((clipboard) => !clipboard);
+                                                    setOpenFile(false);
+                             }
+                             }
+                ></Form.Switch>
+            </Container> : false }
+
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1 w-75"}>
+                <FormText>{mode==="capture" ? "Edit After Capture" : "Open After Record"} </FormText>
+                <Form.Switch checked={openFile} disabled={capturing || clipboard}
+                             onClick={() => setOpenFile((openFile) => !openFile)}></Form.Switch>
             </Container>
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
                 <FormText>&nbsp;</FormText>
                 { countdown > 0 ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
                     mode==="record" && capturing ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Stop</Button> :
-                        (mode !== undefined && view !== undefined) ? <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={async () => await capture(mode, view, duration, pointer, filePath, fileType, clipboard, openFile)}>{mode[0].toUpperCase() + mode.slice(1)}</Button> : false}
+                        (mode !== undefined && view !== undefined) ? <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={async () => await capture(mode, view, duration, pointer, filePath, mode==="capture" ? captureType : recordType, clipboard, openFile)}>{mode[0].toUpperCase() + mode.slice(1)}</Button> : false}
             </Container>
 
             </Container>
           <Container className={"justify-content-center p-0 m-1"}>
-            <FormText>{text}</FormText>
+            {/*<FormText>{text}</FormText>*/}
           </Container>
       </Container>
 

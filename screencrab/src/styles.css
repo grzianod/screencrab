@@ -38,8 +38,8 @@ body {
   height: 100vh;
   background-image: url("./assets/cuddlyferris.svg");
   background-repeat: no-repeat;
-  background-size: 35%;
-  background-position: center left -4rem;
+  background-size: 28%;
+  background-position: center left -6rem;
   opacity: 0.3;
   z-index: 1; /* Set a higher z-index to overlay the content container */
 }
