@@ -92,6 +92,7 @@ async fn main() {
                 .title_bar_style(TitleBarStyle::Overlay)
                 .transparent(true)
                 .resizable(true)
+                .always_on_top(true)
                 .center()
                 .title("")
                 .content_protected(true)
