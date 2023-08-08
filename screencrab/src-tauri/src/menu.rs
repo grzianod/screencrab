@@ -1,7 +1,5 @@
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 
-
-
 pub fn create_context_menu() -> Menu {
 
     let about = Submenu::new("Screen Crab",

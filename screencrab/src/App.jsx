@@ -147,7 +147,7 @@ function App() {
     });
 
     useEffect(() => {
-        const promise = listen("copy_to_clipboard", () => {
+        const promise = listen("copy_to_clipboard", (event) => {
             if(mode === "capture") {
                 setClipboard((clipboard) => !clipboard);
                 setOpenFile(false);

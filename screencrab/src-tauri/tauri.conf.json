@@ -17,6 +17,9 @@
     },
     "macOSPrivateApi": true,
     "allowlist": {
+      "os": {
+        "all": true
+      },
       "globalShortcut": {
         "all": true
       },

@@ -70,13 +70,18 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
     }
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let system_tray_menu = SystemTrayMenu::new();
     tauri::Builder::default()
         .menu(create_context_menu())
         .on_menu_event(|event| {
             event.window().emit_all(event.menu_item_id(), {}).unwrap();
+            match event.menu_item_id() {
+                "capture_mouse_pointer" => {
+                    event.window().menu_handle().get_item(event.menu_item_id()).set_selected(true).unwrap();
+                }
+                _ => {}
+            }
         })
         .setup(|app| {
             let monitor_size = *app.get_window("main").unwrap().current_monitor().unwrap().unwrap().size();
@@ -113,7 +118,6 @@ async fn main() {
                 let window = app.get_window("main").unwrap();
                 // toggle application window
                 if window.is_visible().unwrap() {
-
                     window.hide().unwrap();
                 } else {
                     window.show().unwrap();

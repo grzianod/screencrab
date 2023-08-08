@@ -10,10 +10,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.3", features = [] }
+tauri-build = { version = "1.4.0", features = [] }
 
 [dependencies]
-tauri = { version = "1.3", features = ["dialog-all", "global-shortcut-all", "macos-private-api", "notification-all", "shell-open", "system-tray", "window-close", "window-hide", "window-maximize", "window-minimize", "window-set-cursor-grab", "window-set-resizable", "window-show", "window-start-dragging", "window-unmaximize", "window-unminimize"] }
+tauri = { version = "1.4.0", features = [ "icon-png", "icon-ico", "dialog-all", "os-all", "global-shortcut-all", "macos-private-api", "notification-all", "shell-open", "system-tray", "window-close", "window-hide", "window-maximize", "window-minimize", "window-set-cursor-grab", "window-set-resizable", "window-show", "window-start-dragging", "window-unmaximize", "window-unminimize"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri-dialog = "0.1.1"
