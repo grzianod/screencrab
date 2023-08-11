@@ -1,26 +1,27 @@
-use crate::capture::Response;
+use crate::darwin::Response;
 use chrono::prelude::*;
 use tauri::{Window, AppHandle, TitleBarStyle, PhysicalSize, PhysicalPosition};
 use std::path::Path;
 use crate::menu::create_context_menu;
 use tauri::{Manager, SystemTray, SystemTrayEvent, SystemTrayMenu};
 
-mod capture;
+#[cfg(target_os = "macos")]
+mod darwin;
 mod menu;
 
 #[tauri::command]
 async fn folder_dialog(handle: AppHandle) -> Response {
-    capture::folder_dialog(handle).await
+    darwin::folder_dialog(handle).await
 }
 
 #[tauri::command]
 async fn cuhd() -> Response {
-    capture::cuhd()
+    darwin::cuhd()
 }
 
 
 #[tauri::command(rename_all = "snake_case")]
-async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &str, timer: u64, pointer: bool, file_path: &str, file_type: &str, clipboard: bool, open_file: bool) -> Result<Response, String> {
+async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &str, timer: u64, pointer: bool, file_path: &str, file_type: &str, clipboard: bool, audio: bool, open_file: bool) -> Result<Response, String> {
     let abs_path: String;
     let fs_path = Path::new(file_path);
 
@@ -43,11 +44,11 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
             match view {
                 "fullscreen" => {
                     #[cfg(target_os = "macos")]
-                    return Ok(capture::capture_fullscreen(app, window, abs_path.as_str(), &file_type, timer, pointer, clipboard, open_file).await);
+                    return Ok(darwin::capture_fullscreen(app, window, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
                 }
                 "custom" => {
                     #[cfg(target_os = "macos")]
-                    return Ok(capture::capture_custom(app, window, area, abs_path.as_str(), &file_type, timer, pointer, clipboard, open_file).await);
+                    return Ok(darwin::capture_custom(app, window, area, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
 
                 }
                 _ => return Ok(Response::new(None, Some(format!("Invalid view: {}", view))))
@@ -57,11 +58,11 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
             match view {
                 "fullscreen" => {
                     #[cfg(target_os = "macos")]
-                    return Ok(capture::record_fullscreen(app, window, abs_path.as_str(), timer, pointer, clipboard,  open_file).await);
+                    return Ok(darwin::record_fullscreen(app, window, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
                 }
                 "custom" => {
                     #[cfg(target_os = "macos")]
-                    return Ok(capture::record_custom(app, window, area, abs_path.as_str(), timer, pointer, clipboard,  open_file).await);
+                    return Ok(darwin::record_custom(app, window, area, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
                 }
                 _ => return Ok(Response::new(None, Some(format!("Invalid view: {}", view))))
             }
@@ -85,8 +86,8 @@ fn main() {
         })
         .setup(|app| {
             let monitor_size = *app.get_window("main").unwrap().current_monitor().unwrap().unwrap().size();
-            let width = monitor_size.width*28/40;
-            let height = monitor_size.height*4/15;
+            let width = monitor_size.width*7/10;
+            let height = monitor_size.height*3/10;
             app.handle().windows().get("main").unwrap().set_size(PhysicalSize::new(width, height)).unwrap();
             app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*14/10)).unwrap();
             let area = tauri::WindowBuilder::new(

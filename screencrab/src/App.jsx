@@ -21,6 +21,7 @@ function App() {
   const [recordType, setRecordType] = useState("mov");
   const [clipboard, setClipboard] = useState(false);
   const [openFile, setOpenFile] = useState(true);
+  const [externalAudio, setExternalAudio] = useState(false);
 
     async function capture(mode, view, duration, pointer, filePath, fileType, clipboard, openFile) {
         let selector = WebviewWindow.getByLabel('selector');
@@ -46,6 +47,7 @@ function App() {
                 file_path: filePath,
                 file_type: fileType,
                 clipboard: clipboard,
+                audio: externalAudio,
                 open_file: openFile
             })
             .then( (response) => {
@@ -155,6 +157,16 @@ function App() {
         });
         return () => promise.then(remove => remove());
     });
+
+    useEffect(() => {
+        let s;
+        const promise = listen("record_external_audio", (event) => {
+            setExternalAudio((externalAudio) => !externalAudio);
+            navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => s = stream);
+        });
+        return () => promise.then(remove => remove());
+    });
+
     useEffect(() => {
         const promise = listen("open", () => {
             setOpenFile((openFile) => !openFile);
@@ -417,27 +429,58 @@ function App() {
 
             </Container>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1 w-100"}>
-            <FormText>{mode === "capture" ? "Capture" : "Record"} Mouse Pointer</FormText>
-                <Form.Switch checked={pointer} disabled={capturing}
-                onClick={() => setPointer((pointer) => !pointer)}></Form.Switch>
-            </Container>
 
-            {mode !== "record" ? <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1 w-75"}>
-                <FormText>Copy to Clipboard</FormText>
-                <Form.Switch checked={clipboard} disabled={capturing}
-                             onClick={() => {setClipboard((clipboard) => !clipboard);
-                                                    setOpenFile(false);
-                             }
-                             }
-                ></Form.Switch>
-            </Container> : false }
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2"}>
+                <FormText className={countdown > 0 ? "blink" : ""}>&nbsp;</FormText>
+            <Dropdown drop={"down-centered"}>
+                <Dropdown.Toggle className={"mx-2"} disabled={capturing} variant="light" id="dropdown-basic">
+                    <FormText>Options</FormText>
+                </Dropdown.Toggle>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1 w-75"}>
-                <FormText>{mode==="capture" ? "Edit After Capture" : "Open After Record"} </FormText>
-                <Form.Switch checked={openFile} disabled={capturing || clipboard}
-                             onClick={() => setOpenFile((openFile) => !openFile)}></Form.Switch>
-            </Container>
+                <Dropdown.Menu>
+                    <Dropdown.Item onClick={() => setPointer((pointer) => !pointer)}>
+                        <FormText>{mode === "capture" ? "Capture Mouse Pointer" : "Record Mouse Pointer"}</FormText>
+                        {pointer ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                    {mode !== "record" ? <Dropdown.Item onClick={() => {setClipboard((clipboard) => !clipboard);
+                        setOpenFile(false);
+                    }}>
+                        <FormText>Copy To Clipboard</FormText>
+                        {clipboard ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item> : false }
+                    {mode === "record" ? <Dropdown.Item onClick={async () => {
+                        setExternalAudio((externalAudio) => !externalAudio);
+                    await navigator.mediaDevices.getUserMedia({audio: true});} }>
+                        <FormText>Record External Audio</FormText>
+                        {externalAudio ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item> : false }
+                    <Dropdown.Item onClick={() => setOpenFile((openFile) => !openFile)}>
+                        <FormText>{mode === "capture" ? "Edit After Capture" : "Open After Record"}</FormText>
+                        {openFile ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+            </Dropdown>
+        </Container>
 
             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
                 <FormText>&nbsp;</FormText>
