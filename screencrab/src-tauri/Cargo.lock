@@ -3020,6 +3020,7 @@ dependencies = [
  "tauri-build",
  "tauri-dialog",
  "tauri-plugin-positioner",
+ "tauri-runtime-wry",
  "tokio",
 ]
 

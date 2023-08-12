@@ -87,9 +87,9 @@ fn main() {
         .setup(|app| {
             let monitor_size = *app.get_window("main").unwrap().current_monitor().unwrap().unwrap().size();
             let width = monitor_size.width*7/10;
-            let height = monitor_size.height*3/10;
+            let height = monitor_size.height*7/30;
             app.handle().windows().get("main").unwrap().set_size(PhysicalSize::new(width, height)).unwrap();
-            app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*14/10)).unwrap();
+            app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
             let area = tauri::WindowBuilder::new(
                 app,
                 "selector",
@@ -102,6 +102,8 @@ fn main() {
                 .center()
                 .title("")
                 .content_protected(true)
+                .always_on_top(true)
+                .minimizable(false)
                 .focused(true)
                 .build().unwrap();
             area.set_size(PhysicalSize::new(width/2, height)).unwrap();

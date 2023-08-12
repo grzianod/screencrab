@@ -23,7 +23,6 @@ pub fn create_context_menu() -> Menu {
                                   .add_item(CustomMenuItem::new("record_custom".to_string(), "Custom Record").accelerator("CmdOrCtrl+Option+C"))
                                   .add_item(CustomMenuItem::new("stop_record".to_string(), "Stop Recording").accelerator("CmdOrCtrl+Option+S"))
                                   .add_native_item(MenuItem::Separator)
-                                  .add_item(CustomMenuItem::new("capture_mouse_pointer".to_string(), "Record Mouse Pointer").accelerator("Option+M"))
                                   .add_item(CustomMenuItem::new("record_external_audio".to_string(), "Record External Audio").accelerator("Option+A"))
                                   .add_item(CustomMenuItem::new("open".to_string(), "Open After Record").accelerator("Option+O")));
     let help = Submenu::new("Help",

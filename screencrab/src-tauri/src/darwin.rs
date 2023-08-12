@@ -84,13 +84,11 @@ pub async fn folder_dialog(handle: AppHandle) -> Response {
 }
 
 fn get_current_monitor_index(window: &Window) -> usize {
-    let current = window.current_monitor().unwrap().unwrap();
-    for (i, monitor) in window.available_monitors().unwrap().iter().enumerate() {
-        if monitor.name().unwrap().eq(current.name().unwrap()) {
-            return i + 1;
-        }
-    }
-    return 0;
+    window.available_monitors()
+                        .unwrap()
+                        .into_iter()
+                        .position(|item| item.name().unwrap().eq(window.current_monitor().unwrap().unwrap().name().unwrap()))
+                        .unwrap_or(0) + 1
 }
 
 pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
@@ -201,7 +199,7 @@ pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename
     return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }
 
-pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, timer: u64, pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
+pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     let filename1 = filename.to_string();
     let filename2 = filename.to_string();
     let index = get_current_monitor_index(&window);
@@ -211,8 +209,6 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
     command.arg("-v");
 
     if audio { command.arg("-g"); }
-    if pointer { command.arg("-C"); }
-    if clipboard { command.arg("-c"); }
 
     command.args(&["-T", timer.to_string().as_str()]);
     command.args(&["-D", index.to_string().as_str()]);
@@ -261,7 +257,7 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
     return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }
 
-pub async fn record_custom(app: AppHandle, window: Window, area: &str, filename: &str, timer: u64, pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
+pub async fn record_custom(app: AppHandle, window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     let filename1 = filename.to_string();
     let filename2 = filename.to_string();
     let index = get_current_monitor_index(&window);
@@ -271,8 +267,6 @@ pub async fn record_custom(app: AppHandle, window: Window, area: &str, filename:
     command.arg("-v");
 
     if audio { command.arg("-g"); }
-    if pointer { command.arg("-C"); }
-    if clipboard { command.arg("-c"); }
 
     command.args(&["-T", timer.to_string().as_str()]);
     command.args(&["-R", area]);

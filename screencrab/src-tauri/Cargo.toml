@@ -21,6 +21,7 @@ tauri-api = "0.7.6"
 tokio = { version = "1", features = ["full"] }
 chrono = "0.4"
 tauri-plugin-positioner = { version = "1.0.4", features = ["system-tray"] }
+tauri-runtime-wry = "0.14.0"
 
 
 [features]
