@@ -491,7 +491,7 @@ function App() {
 
             </Container>
           <Container className={"justify-content-center p-0 m-1"}>
-            {/*<FormText>{text}</FormText>*/}
+            <FormText>{text}</FormText>
           </Container>
       </Container>
 
