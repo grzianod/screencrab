@@ -4,10 +4,14 @@ use tauri::{Window, AppHandle, TitleBarStyle, PhysicalSize, PhysicalPosition};
 use std::path::Path;
 use crate::menu::create_context_menu;
 use tauri::{Manager, SystemTray, SystemTrayEvent, SystemTrayMenu};
+mod menu;
 
 #[cfg(target_os = "macos")]
 mod darwin;
-mod menu;
+#[cfg(target_os = "windows")]
+mod windows;
+#[cfg(target_os = "linux")]
+mod linux;
 
 #[tauri::command]
 async fn folder_dialog(handle: AppHandle) -> Response {
@@ -87,7 +91,7 @@ fn main() {
         .setup(|app| {
             let monitor_size = *app.get_window("main").unwrap().current_monitor().unwrap().unwrap().size();
             let width = monitor_size.width*7/10;
-            let height = monitor_size.height*7/30;
+            let height = monitor_size.height*8/30;
             app.handle().windows().get("main").unwrap().set_size(PhysicalSize::new(width, height)).unwrap();
             app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
             let area = tauri::WindowBuilder::new(

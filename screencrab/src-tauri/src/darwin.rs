@@ -85,10 +85,10 @@ pub async fn folder_dialog(handle: AppHandle) -> Response {
 
 fn get_current_monitor_index(window: &Window) -> usize {
     window.available_monitors()
-                        .unwrap()
-                        .into_iter()
-                        .position(|item| item.name().unwrap().eq(window.current_monitor().unwrap().unwrap().name().unwrap()))
-                        .unwrap_or(0) + 1
+        .unwrap()
+        .into_iter()
+        .position(|item| item.name().unwrap().eq(window.current_monitor().unwrap().unwrap().name().unwrap()))
+        .unwrap_or(0) + 1
 }
 
 pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
