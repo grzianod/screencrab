@@ -1,3 +1,5 @@
+use std::fs;
+use std::path::PathBuf;
 use tauri::api::dialog::FileDialogBuilder;
 use serde::{Serialize, Deserialize};
 use tokio::task;
@@ -34,12 +36,20 @@ impl Response {
     }
 }
 
-pub fn cuhd() -> Response {
-    if let Some(home_dir) = home_dir() {
-        Response { response: Some(format!("{}/", home_dir.display().to_string())), error: None }
-    } else {
-        Response { response: None, error: Some(format!("Error while retrieving current user home directory.")) }
+pub async fn current_default_path() -> Response {
+    let output = Command::new("defaults")
+        .args(&["read", "com.apple.screencapture", "location"])
+        .output()
+        .await
+        .expect("Failed to execute command");
+
+    let mut result = String::from_utf8(output.stdout).unwrap().trim().to_string();
+
+    if result.is_empty() {
+        result = home_dir().unwrap().display().to_string();
     }
+
+    return Response { response: Some(format!("{}/", fs::canonicalize(&result).unwrap().display().to_string())), error: None };
 }
 
 pub async fn folder_dialog(handle: AppHandle) -> Response {

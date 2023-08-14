@@ -211,7 +211,7 @@ function App() {
     
     useEffect( () => {
 
-                invoke("cuhd")
+                invoke("current_default_path")
                     .then((result) => {
                         if (result.response)
                             setFilePath(result.response);

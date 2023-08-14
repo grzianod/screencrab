@@ -19,8 +19,8 @@ async fn folder_dialog(handle: AppHandle) -> Response {
 }
 
 #[tauri::command]
-async fn cuhd() -> Response {
-    darwin::cuhd()
+async fn current_default_path() -> Response {
+    darwin::current_default_path().await
 }
 
 
@@ -133,7 +133,7 @@ fn main() {
             },
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, cuhd])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
