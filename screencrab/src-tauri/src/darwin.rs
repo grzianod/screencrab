@@ -1,4 +1,4 @@
-use std::fs;
+use std::{env};
 use tauri::api::dialog::FileDialogBuilder;
 use serde::{Serialize, Deserialize};
 use tokio::task;
@@ -7,7 +7,6 @@ use tokio::process::Command;
 use tauri::{Window, AppHandle, Manager, PhysicalPosition};
 use tauri::PhysicalSize;
 use std::process::Stdio;
-use tauri_api::path::home_dir;
 use tauri::api::notification::Notification;
 
 #[derive(Clone, serde::Serialize)]
@@ -44,11 +43,13 @@ pub async fn current_default_path() -> Response {
 
     let mut result = String::from_utf8(output.stdout).unwrap().trim().to_string();
 
-    if result.is_empty() {
-        result = home_dir().unwrap().display().to_string();
-    }
+    if result.is_empty() { result = env::var("HOME").unwrap().to_string(); }
 
-    return Response { response: Some(format!("{}/", fs::canonicalize(&result).unwrap().display().to_string())), error: None };
+    if result.starts_with('~') { result = result.replace("~", env::var("HOME").unwrap().as_str()) }
+
+    if !result.ends_with("/") { result.push('/'); }
+
+    return Response { response: Some(result), error: None };
 }
 
 pub async fn folder_dialog(handle: AppHandle) -> Response {

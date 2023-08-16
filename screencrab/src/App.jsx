@@ -159,10 +159,10 @@ function App() {
     });
 
     useEffect(() => {
-        let s;
+        let stream;
         const promise = listen("record_external_audio", (event) => {
+            navigator.mediaDevices.getUserMedia({audio: !externalAudio}).then((s) => stream = s);
             setExternalAudio((externalAudio) => !externalAudio);
-            navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => s = stream);
         });
         return () => promise.then(remove => remove());
     });
@@ -245,7 +245,7 @@ function App() {
               <Form className={"mx-2"}>
                   <div style={{ position: "relative" }}>
                       <Form.Control
-                          style={{minWidth: "25rem", fontSize: "1rem"}}
+                          style={{width: "30rem"}}
                           type="text"
                           value={clipboard ? "Clipboard" : filePath}
                           disabled={clipboard || capturing}
@@ -262,92 +262,11 @@ function App() {
                           d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5Z"/>
                   </svg>
               </Button>
-
-              <Dropdown drop={"down-centered"}>
-                  <Dropdown.Toggle className={"mx-2"} disabled={!mode || capturing} variant="light" id="dropdown-basic">
-                      <FormText>{clipboard ? "Copy" : "Save"} as</FormText>
-                  </Dropdown.Toggle>
-
-                  <Dropdown.Menu style={{maxWidth: "3rem"}}>
-                      <Dropdown.Item onClick={() => setCaptureType("pdf")} className={mode==="record" ? "d-none" : false}>
-                          <FormText >pdf</FormText>
-                          {captureType === "pdf" ?
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                       className="bi bi-check" viewBox="0 0 16 16">
-                                      <path
-                                          d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                                  </svg> : false}
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setCaptureType("jpeg")} className={mode==="record" ? "d-none" : false}>
-                          <FormText >jpeg</FormText>
-                          {captureType === "jpeg" ?
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                       className="bi bi-check" viewBox="0 0 16 16">
-                                      <path
-                                          d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                                  </svg> : false}
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setCaptureType("png")} className={mode==="record" ? "d-none" : false}>
-                          <FormText >png</FormText>
-                              {captureType === "png" ?
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                       className="bi bi-check" viewBox="0 0 16 16">
-                                      <path
-                                          d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                                  </svg> : false}
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setCaptureType("tiff")} className={mode==="record" ? "d-none" : false}>
-                          <FormText>tiff</FormText>
-                              {captureType === "tiff" ?
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                       className="bi bi-check" viewBox="0 0 16 16">
-                                      <path
-                                          d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                                  </svg> : false}
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setRecordType("mov")} className={mode==="capture" ? "d-none" : false}>
-                          <FormText>mov</FormText>
-                          {recordType === "mov" ?
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                       className="bi bi-check" viewBox="0 0 16 16">
-                                      <path
-                                          d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                                  </svg> : false}
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setRecordType("mp4")} className={mode==="capture" ? "d-none" : false}>
-                          <FormText>mp4</FormText>
-                          {recordType === "mp4" ?
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                       className="bi bi-check" viewBox="0 0 16 16">
-                                      <path
-                                          d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                                  </svg> : false}
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setRecordType("avi")} className={mode==="capture" ? "d-none" : false}>
-                          <FormText>avi</FormText>
-                          {recordType === "avi" ?
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                   className="bi bi-check" viewBox="0 0 16 16">
-                                  <path
-                                      d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                              </svg> : false}
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => setRecordType("gif")} className={mode==="capture" ? "d-none" : false}>
-                          <FormText>gif</FormText>
-                          {recordType === "gif" ?
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                   className="bi bi-check" viewBox="0 0 16 16">
-                                  <path
-                                      d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
-                              </svg> : false}
-                      </Dropdown.Item>
-                  </Dropdown.Menu>
-              </Dropdown>
           </Container>
 
         <Container className={"flex-row align-items-center p-0"}>
 
-        <Container className={"d-flex flex-column align-items-center p-0 justify-content-center mx-2"}>
+        <Container className={"d-flex flex-column align-items-center p-0 justify-content-center p-0 mx-2 w-auto"}>
           <FormText>Capture</FormText>
           <Container className={"d-flex flex-row p-0"}>
           <Button className={"m-1"} variant={mode === "capture" && view === "fullscreen" ? "primary" : "outline-primary"}
@@ -375,7 +294,7 @@ function App() {
           </Container>
 
 
-          <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2"}>
+          <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2 w-auto"}>
             <FormText className={"title-record"}>Record</FormText>
             <Container className={"d-flex flex-row p-0"}>
           <Button title={"Record Entire Screen"} className={"m-1"}
@@ -414,7 +333,7 @@ function App() {
             </Container>
           </Container>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2"}>
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-4 w-auto"}>
                 <FormText className={countdown > 0 ? "blink" : ""}>Timer [s]</FormText>
                 <Form.Control
                                   type={"text"}
@@ -429,8 +348,105 @@ function App() {
 
             </Container>
 
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2 w-auto"}>
+                <FormText>&nbsp;</FormText>
+            <Dropdown drop={"down-centered"}>
+                <Dropdown.Toggle disabled={!mode || capturing} variant="light">
+                    <FormText>Format</FormText>
+                </Dropdown.Toggle>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2"}>
+                <Dropdown.Menu style={{columnCount: "2"}}>
+                    <div className={"column"}>
+                    <Dropdown.Item onClick={() => setCaptureType("pdf")} className={mode==="record" ? "d-none" : false}>
+                        <FormText>pdf</FormText>
+                        {captureType === "pdf" ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => setCaptureType("jpeg")} className={mode==="record" ? "d-none" : false}>
+                        <FormText >jpeg</FormText>
+                        {captureType === "jpeg" ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => setCaptureType("png")} className={mode==="record" ? "d-none" : false}>
+                        <FormText >png</FormText>
+                        {captureType === "png" ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                    </div>
+                    <div className={"column"}>
+                    <Dropdown.Item onClick={() => setCaptureType("tiff")} className={mode==="record" ? "d-none" : false}>
+                        <FormText>tiff</FormText>
+                        {captureType === "tiff" ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                        <Dropdown.Item onClick={() => setCaptureType("bmp")} className={mode==="record" ? "d-none" : false}>
+                            <FormText>bmp</FormText>
+                            {captureType === "bmp" ?
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     className="bi bi-check" viewBox="0 0 16 16">
+                                    <path
+                                        d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                                </svg> : false}
+                        </Dropdown.Item>
+                    <Dropdown.Item onClick={() => setRecordType("mov")} className={mode==="capture" ? "d-none" : false}>
+                        <FormText>mov</FormText>
+                        {recordType === "mov" ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => setRecordType("mp4")} className={mode==="capture" ? "d-none" : false}>
+                        <FormText>mp4</FormText>
+                        {recordType === "mp4" ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => setRecordType("avi")} className={mode==="capture" ? "d-none" : false}>
+                        <FormText>avi</FormText>
+                        {recordType === "avi" ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => mode === "capture" ? setCaptureType("gif") : setRecordType("gif")}>
+                        <FormText>gif</FormText>
+                        {recordType === "gif" || captureType === "gif" ?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 className="bi bi-check" viewBox="0 0 16 16">
+                                <path
+                                    d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                            </svg> : false}
+                    </Dropdown.Item>
+                    </div>
+                </Dropdown.Menu>
+            </Dropdown>
+        </Container>
+
+
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2 w-auto"}>
                 <FormText className={countdown > 0 ? "blink" : ""}>&nbsp;</FormText>
             <Dropdown drop={"down-centered"}>
                 <Dropdown.Toggle className={"mx-2"} disabled={capturing} variant="light" id="dropdown-basic">
@@ -459,8 +475,9 @@ function App() {
                             </svg> : false}
                     </Dropdown.Item> : false }
                     {mode === "record" ? <Dropdown.Item onClick={async () => {
+                        navigator.mediaDevices.getUserMedia({audio: !externalAudio}).then((s) => stream = s);
                         setExternalAudio((externalAudio) => !externalAudio);
-                    await navigator.mediaDevices.getUserMedia({audio: true});} }>
+                    } }>
                         <FormText>Record External Audio</FormText>
                         {externalAudio ?
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -482,7 +499,7 @@ function App() {
             </Dropdown>
         </Container>
 
-            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-1"}>
+            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2 w-auto"}>
                 <FormText>&nbsp;</FormText>
                 { countdown > 0 ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
                     mode==="record" && capturing ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Stop</Button> :

@@ -1,4 +1,4 @@
-use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
+use tauri::{CustomMenuItem, Menu, MenuItem, Submenu, SystemTrayMenu, SystemTrayMenuItem};
 
 pub fn create_context_menu() -> Menu {
 
@@ -6,7 +6,7 @@ pub fn create_context_menu() -> Menu {
                              Menu::new()
                                  .add_native_item(MenuItem::Services)
                                  .add_native_item(MenuItem::Separator)
-                                 .add_native_item(MenuItem::Hide)
+                                 .add_item(CustomMenuItem::new("toggle".to_string(), "Toggle Visibility").accelerator("CmdOrCtrl+B"))
                                  .add_native_item(MenuItem::HideOthers)
                                  .add_native_item(MenuItem::ShowAll)
                                  .add_native_item(MenuItem::Separator)
@@ -34,5 +34,12 @@ pub fn create_context_menu() -> Menu {
         .add_submenu(record)
         .add_submenu(help)
 
+}
+
+pub fn create_system_tray_menu() -> SystemTrayMenu {
+    SystemTrayMenu::new()
+        .add_item(CustomMenuItem::new("toggle".to_string(), "Hide").accelerator("CmdOrCtrl+B"))
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(CustomMenuItem::new("quit".to_string(), "Quit").accelerator("CmdOrCtrl+Q"))
 }
 

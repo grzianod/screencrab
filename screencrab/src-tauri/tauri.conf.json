@@ -77,6 +77,7 @@
         "label": "main",
         "fullscreen": false,
         "resizable": false,
+        "closable": false,
         "minimizable": false,
         "focus": true,
         "title": "Screen Crab",

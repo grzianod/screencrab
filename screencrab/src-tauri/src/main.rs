@@ -2,8 +2,9 @@ use crate::darwin::Response;
 use chrono::prelude::*;
 use tauri::{Window, AppHandle, TitleBarStyle, PhysicalSize, PhysicalPosition};
 use std::path::Path;
-use crate::menu::create_context_menu;
-use tauri::{Manager, SystemTray, SystemTrayEvent, SystemTrayMenu};
+use std::process;
+use crate::menu::{create_context_menu, create_system_tray_menu};
+use tauri::{Manager, SystemTray, SystemTrayEvent};
 mod menu;
 
 #[cfg(target_os = "macos")]
@@ -76,22 +77,29 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
 }
 
 fn main() {
-    let system_tray_menu = SystemTrayMenu::new();
     tauri::Builder::default()
         .menu(create_context_menu())
         .on_menu_event(|event| {
             event.window().emit_all(event.menu_item_id(), {}).unwrap();
             match event.menu_item_id() {
-                "capture_mouse_pointer" => {
-                    event.window().menu_handle().get_item(event.menu_item_id()).set_selected(true).unwrap();
+                "toggle" => {
+                    let item = event.window().menu_handle().get_item("toggle");
+                    if event.window().windows().get("main").unwrap().is_visible().unwrap() {
+                        event.window().windows().get("main").unwrap().hide().unwrap();
+                        item.set_title("Show").unwrap();
+                    } else {
+                        event.window().windows().get("main").unwrap().show().unwrap();
+                        event.window().windows().get("main").unwrap().set_focus().unwrap();
+                        item.set_title("Hide").unwrap();
+                    }
                 }
                 _ => {}
             }
         })
         .setup(|app| {
             let monitor_size = *app.get_window("main").unwrap().current_monitor().unwrap().unwrap().size();
-            let width = monitor_size.width*7/10;
-            let height = monitor_size.height*8/30;
+            let width = monitor_size.width*70/100;
+            let height = monitor_size.height*26/100;
             app.handle().windows().get("main").unwrap().set_size(PhysicalSize::new(width, height)).unwrap();
             app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
             let area = tauri::WindowBuilder::new(
@@ -115,23 +123,38 @@ fn main() {
 
             Ok(())
         })
-        .system_tray(SystemTray::new().with_menu(system_tray_menu))
+        .system_tray(SystemTray::new().with_menu(create_system_tray_menu() ))
         .on_system_tray_event(|app, event| match event {
-            SystemTrayEvent::LeftClick {
-                position: _,
-                size: _,
-                ..
-            } => {
+                SystemTrayEvent::MenuItemClick { id, .. } => {
+                    if id.as_str() == "quit" {
+                        process::exit(0);
+                    }
+                    if id.as_str() == "toggle" {
+                        let window = app.get_window("main").unwrap();
+                        let item = app.tray_handle().get_item("toggle");
+                        if window.is_visible().unwrap() {
+                            window.hide().unwrap();
+                            item.set_title("Show").unwrap();
+                        } else {
+                            window.show().unwrap();
+                            window.set_focus().unwrap();
+                            item.set_title("Hide").unwrap();
+                        }
+                    }
+                }
+            SystemTrayEvent::RightClick { .. } => {
                 let window = app.get_window("main").unwrap();
-                // toggle application window
+                let item = app.tray_handle().get_item("toggle");
                 if window.is_visible().unwrap() {
                     window.hide().unwrap();
+                    item.set_title("Show").unwrap();
                 } else {
                     window.show().unwrap();
                     window.set_focus().unwrap();
+                    item.set_title("Hide").unwrap();
                 }
-            },
-            _ => {}
+            }
+                _ => {}
         })
         .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path])
         .run(tauri::generate_context!())
