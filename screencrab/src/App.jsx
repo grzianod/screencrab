@@ -433,7 +433,7 @@ function App() {
                     </Dropdown.Item>
                     <Dropdown.Item onClick={() => mode === "capture" ? setCaptureType("gif") : setRecordType("gif")}>
                         <FormText>gif</FormText>
-                        {recordType === "gif" || captureType === "gif" ?
+                        {(mode === "record" && recordType === "gif") || (mode === "capture" && captureType === "gif") ?
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                  className="bi bi-check" viewBox="0 0 16 16">
                                 <path
