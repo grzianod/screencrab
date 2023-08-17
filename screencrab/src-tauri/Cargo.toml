@@ -1,6 +1,6 @@
 [package]
 name = "screen_crab"
-version = "0.0.0"
+version = "0.0.1"
 description = "A cross-platform screen grabbing application in Rust"
 authors = ["you"]
 license = ""
@@ -13,13 +13,13 @@ edition = "2021"
 tauri-build = { version = "1.4.0", features = [] }
 
 [dependencies]
-tauri = { version = "1.4.0", features = [ "icon-png", "icon-ico", "dialog-all", "os-all", "global-shortcut-all", "macos-private-api", "notification-all", "shell-open", "system-tray", "window-close", "window-hide", "window-maximize", "window-minimize", "window-set-cursor-grab", "window-set-resizable", "window-show", "window-start-dragging", "window-unmaximize", "window-unminimize"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+tauri = { version = "1.4.1", features = [ "icon-png", "icon-ico", "dialog-all", "os-all", "global-shortcut-all", "macos-private-api", "notification-all", "shell-open", "system-tray", "window-close", "window-hide", "window-maximize", "window-minimize", "window-set-cursor-grab", "window-set-resizable", "window-show", "window-start-dragging", "window-unmaximize", "window-unminimize"] }
+serde = { version = "1.0.183", features = ["derive"] }
+serde_json = "1.0.105"
 tauri-dialog = "0.1.1"
 tauri-api = "0.7.6"
-tokio = { version = "1", features = ["full"] }
-chrono = "0.4"
+tokio = { version = "1.32.0", features = ["full"] }
+chrono = "0.4.1"
 tauri-plugin-positioner = { version = "1.0.4", features = ["system-tray"] }
 tauri-runtime-wry = "0.14.0"
 
