@@ -1,27 +1,41 @@
-use crate::darwin::Response;
 use chrono::prelude::*;
-use tauri::{Window, AppHandle, TitleBarStyle, PhysicalSize, PhysicalPosition};
+use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition};
 use std::path::Path;
 use std::process;
 use crate::menu::{create_context_menu, create_system_tray_menu};
 use tauri::{Manager, SystemTray, SystemTrayEvent};
 mod menu;
 
-#[cfg(target_os = "macos")]
-mod darwin;
-#[cfg(target_os = "windows")]
-mod windows;
-#[cfg(target_os = "linux")]
-mod linux;
+#[cfg(target_os = "macos")] {
+    use tauri::TitleBarStyle;
+    mod darwin;
+    use crate::darwin::Response;
+}
+
+#[cfg(target_os = "windows")] {
+    mod windows;
+}
+
+#[cfg(target_os = "linux")] {
+    mod linux;
+    use crate::linux::Response
+}
+
 
 #[tauri::command]
 async fn folder_dialog(handle: AppHandle) -> Response {
-    darwin::folder_dialog(handle).await
+    #[cfg(target_os = "macos")]
+    return darwin::folder_dialog(handle).await;
+    #[cfg(target_os = "linux")]
+    return linux::folder_dialog(handle).await;
 }
 
 #[tauri::command]
 async fn current_default_path() -> Response {
-    darwin::current_default_path().await
+    #[cfg(target_os = "macos")]
+    return darwin::current_default_path().await;
+    #[cfg(target_os = "linux")]
+    return linux::current_default_path().await;
 }
 
 
@@ -50,11 +64,15 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
                 "fullscreen" => {
                     #[cfg(target_os = "macos")]
                     return Ok(darwin::capture_fullscreen(app, window, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
+                    #[cfg(target_os = "linux")]
+                    return Ok(linux::capture_fullscreen(app, window, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
                 }
                 "custom" => {
                     #[cfg(target_os = "macos")]
                     return Ok(darwin::capture_custom(app, window, area, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
-
+                    #[cfg(target_os = "linux")]
+                    return Ok(linux::capture_custom(app, window, area, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
+            
                 }
                 _ => return Ok(Response::new(None, Some(format!("Invalid view: {}", view))))
             }
@@ -64,10 +82,14 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
                 "fullscreen" => {
                     #[cfg(target_os = "macos")]
                     return Ok(darwin::record_fullscreen(app, window, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
+                    #[cfg(target_os = "linux")]  
+                    return Ok(linux::record_fullscreen(app, window, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
                 }
                 "custom" => {
                     #[cfg(target_os = "macos")]
                     return Ok(darwin::record_custom(app, window, area, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
+                    #[cfg(target_os = "linux")] 
+                    return Ok(linux::record_custom(app, window, area, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
                 }
                 _ => return Ok(Response::new(None, Some(format!("Invalid view: {}", view))))
             }
@@ -102,12 +124,13 @@ fn main() {
             let height = monitor_size.height*26/100;
             app.handle().windows().get("main").unwrap().set_size(PhysicalSize::new(width, height)).unwrap();
             app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
+            #[cfg(target_os="macos")]
             let area = tauri::WindowBuilder::new(
                 app,
                 "selector",
                 tauri::WindowUrl::App("./blank.html".into()))
-                .decorations(false)
                 .title_bar_style(TitleBarStyle::Overlay)
+                .decorations(false)
                 .transparent(true)
                 .resizable(true)
                 .always_on_top(true)
@@ -118,8 +141,27 @@ fn main() {
                 .minimizable(false)
                 .focused(true)
                 .build().unwrap();
+
+            #[cfg(target_os="linux")]
+            let area = tauri::WindowBuilder::new(
+                app,
+                "selector",
+                tauri::WindowUrl::App("./blank.html".into()))
+                .decorations(false)
+                .transparent(true)
+                .resizable(true)
+                .always_on_top(true)
+                .center()
+                .title("")
+                .content_protected(true)
+                .always_on_top(true)
+                .minimizable(false)
+                .focused(true)
+                .build().unwrap();
+
             area.set_size(PhysicalSize::new(width/2, height)).unwrap();
             area.hide().unwrap();
+                
 
             Ok(())
         })
