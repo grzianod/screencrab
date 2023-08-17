@@ -6,20 +6,22 @@ use crate::menu::{create_context_menu, create_system_tray_menu};
 use tauri::{Manager, SystemTray, SystemTrayEvent};
 mod menu;
 
-#[cfg(target_os = "macos")] {
-    use tauri::TitleBarStyle;
-    mod darwin;
-    use crate::darwin::Response;
-}
+#[cfg(target_os = "macos")]
+use tauri::TitleBarStyle;
+#[cfg(target_os = "macos")]
+mod darwin;
+#[cfg(target_os = "macos")]
+use crate::darwin::Response;
 
-#[cfg(target_os = "windows")] {
+
+#[cfg(target_os = "windows")]
     mod windows;
-}
 
-#[cfg(target_os = "linux")] {
+
+#[cfg(target_os = "linux")]
     mod linux;
-    use crate::linux::Response
-}
+#[cfg(target_os = "linux")]
+    use crate::linux::Response;
 
 
 #[tauri::command]
