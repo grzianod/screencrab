@@ -16,6 +16,8 @@ use crate::darwin::Response;
 
 #[cfg(target_os = "windows")]
     mod windows;
+#[cfg(target_os = "windows")]
+    use crate::windows::Response;
 
 
 #[cfg(target_os = "linux")]
@@ -68,13 +70,16 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
                     return Ok(darwin::capture_fullscreen(app, window, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
                     #[cfg(target_os = "linux")]
                     return Ok(linux::capture_fullscreen(app, window, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
+                    #[cfg(target_os = "windows")]
+                    return Ok(windows::capture_fullscreen(app, window, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
                 }
                 "custom" => {
                     #[cfg(target_os = "macos")]
                     return Ok(darwin::capture_custom(app, window, area, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
                     #[cfg(target_os = "linux")]
                     return Ok(linux::capture_custom(app, window, area, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
-            
+                    #[cfg(target_os = "windows")]
+                    return Ok(windows::capture_custom(app, window, area, abs_path.as_str(), &file_type, timer, pointer, clipboard, audio, open_file).await);
                 }
                 _ => return Ok(Response::new(None, Some(format!("Invalid view: {}", view))))
             }
@@ -86,12 +91,16 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
                     return Ok(darwin::record_fullscreen(app, window, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
                     #[cfg(target_os = "linux")]  
                     return Ok(linux::record_fullscreen(app, window, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
+                    #[cfg(target_os = "windows")]
+                    return Ok(windows::record_fullscreen(app, window, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
                 }
                 "custom" => {
                     #[cfg(target_os = "macos")]
                     return Ok(darwin::record_custom(app, window, area, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
                     #[cfg(target_os = "linux")] 
                     return Ok(linux::record_custom(app, window, area, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
+                    #[cfg(target_os = "windows")]
+                    return Ok(windows::record_custom(app, window, area, abs_path.as_str(), timer, pointer, clipboard, audio, open_file).await);
                 }
                 _ => return Ok(Response::new(None, Some(format!("Invalid view: {}", view))))
             }
