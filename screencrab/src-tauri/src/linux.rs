@@ -29,8 +29,7 @@ impl Response {
 }
 
 pub async fn current_default_path() -> Response {
-    let result = format!("{}/Pictures/", env::var("HOME").unwrap().to_string());
-
+    let result = format!("{}/", env::var("HOME").unwrap().to_string());
     return Response { response: Some(result), error: None };
 }
 
@@ -84,7 +83,49 @@ fn get_current_monitor_index(window: &Window) -> usize {
 }
 
 pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
-    return Response { response: Some(format!("Screen Crab taken!")), error: None };
+    let filename1 = filename.to_string();
+    let index = get_current_monitor_index(&window);
+
+    let mut command = Command::new("scrot");
+
+    let process = command.arg(filename1.as_str()).spawn().map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
+    let pid = process.as_ref().unwrap().id().unwrap();
+
+    window.listen_global("kill", move |_event| {
+        tokio::task::spawn(async move {
+            let _output = Command::new("kill")
+                .arg("-15")
+                .arg(pid.to_string())
+                .output()
+                .await;
+        });
+    });
+
+    let output = process.unwrap().wait().await.unwrap();
+    if output.success() {
+        if !clipboard && open_file {
+            // Use tokio::task::spawn to execute the opening
+            let _open_task = task::spawn(async move {
+                let _open = Command::new("open").arg(filename1.as_str()).output().await.map_err(|e| Response { response: None, error: Some(format!("Failed to open screenshot: {}", e)) });
+            });
+        }
+        if clipboard {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body("Screen Crab saved to Clipboard")
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }; }
+        else {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body(format!("Screen Crab saved to {}", filename.to_string()))
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None }; }
+    }
+    Notification::new(&app.config().tauri.bundle.identifier)
+        .body("Screen Crab cancelled")
+        .icon("icons/icon.icns").show().unwrap();
+    return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }
 
 pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
