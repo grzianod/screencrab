@@ -63,8 +63,8 @@ pub async fn folder_dialog(handle: AppHandle) -> Response {
         selector.hide().unwrap();
     }
 
-// Spawn a blocking task to run the pick_folder closure
-    task::spawn_blocking(move || {
+// Spawn a tokio task to run the pick_folder closure
+    task::spawn(async move {
         FileDialogBuilder::new().pick_folder(move |folder_path| {
             let result = match folder_path {
                 Some(path) => Response {
