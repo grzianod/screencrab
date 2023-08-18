@@ -21,6 +21,7 @@ use crate::darwin::Response;
 
 #[cfg(target_os = "linux")]
     mod linux;
+
 #[cfg(target_os = "linux")]
     use crate::linux::Response;
 
@@ -115,11 +116,13 @@ fn main() {
             event.window().emit_all(event.menu_item_id(), {}).unwrap();
         })
         .setup(|app| {
+
             let monitor_size = *app.get_window("main").unwrap().current_monitor().unwrap().unwrap().size();
             let width = monitor_size.width*70/100;
             let height = monitor_size.height*26/100;
             app.handle().windows().get("main").unwrap().set_size(PhysicalSize::new(width, height)).unwrap();
             app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
+            app.handle().windows().get("main").unwrap().set_resizable(false).unwrap();
             #[cfg(target_os="macos")]
             let area = tauri::WindowBuilder::new(
                 app,

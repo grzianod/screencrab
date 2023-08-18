@@ -20,6 +20,7 @@
     "react-countdown": "^2.3.5",
     "react-dom": "^18.2.0",
     "react-file-picker": "^0.0.6",
+    "tauri-plugin-spotlight-api": "^0.1.2",
     "validator": "^13.9.0"
   },
   "devDependencies": {

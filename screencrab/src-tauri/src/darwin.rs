@@ -54,7 +54,7 @@ pub async fn current_default_path() -> Response {
 
 pub async fn folder_dialog(handle: AppHandle) -> Response {
     let mut visible = false;
-// Create a channel to receive the result from the pick_folder closure
+    // Create a channel to receive the result from the pick_folder closure
     let (sender, receiver) = oneshot::channel();
 
     let selector = handle.windows().get("selector").cloned().unwrap();
@@ -63,7 +63,7 @@ pub async fn folder_dialog(handle: AppHandle) -> Response {
         selector.hide().unwrap();
     }
 
-// Spawn a tokio task to run the pick_folder closure
+    // Spawn a tokio task to run the pick_folder closure
     task::spawn(async move {
         FileDialogBuilder::new().pick_folder(move |folder_path| {
             let result = match folder_path {

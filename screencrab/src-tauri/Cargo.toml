@@ -23,7 +23,6 @@ chrono = "0.4.1"
 tauri-plugin-positioner = { version = "1.0.4", features = ["system-tray"] }
 tauri-runtime-wry = "0.14.0"
 
-
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
