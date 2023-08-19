@@ -1,0 +1,12 @@
+{
+    "capture_fullscreen": "CmdOrCtrl+F",
+    "capture_custom": "CmdOrCtrl+C",
+    "capture_mouse_pointer" : "Option+M",
+    "copy_to_clipboard" : "Option+C",
+    "open_capture" : "Option+E",
+    "record_fullscreen" : "CmdOrCtrl+Option+F",
+    "record_custom" : "CmdOrCtrl+Option+C",
+    "stop_record" : "CmdOrCtrl+Option+S",
+    "record_external_audio" : "Option+A",
+    "open_record" : "Option+O"
+}
