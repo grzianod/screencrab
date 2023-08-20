@@ -34,3 +34,7 @@ form {
 input {
   margin-bottom: 10px;
 }
+
+.selected-cell {
+  border: 2px solid blue !important;
+}

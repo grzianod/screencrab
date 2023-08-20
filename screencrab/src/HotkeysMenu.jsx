@@ -1,4 +1,4 @@
-import {useState, useEffect} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {Container} from "react-bootstrap";
 import { invoke } from '@tauri-apps/api/tauri';
@@ -14,10 +14,58 @@ function saveData(data, setFeedback) {
     });
 }
 
+function KeyCaptureInput({ value, onChange, name }) {
+  const [currentKeys, setCurrentKeys] = useState([]);
+  const inputRef = useRef(null);
+
+  const handleKeyDown = (event) => {
+    event.preventDefault();
+    let capturedKey = event.key;
+    
+    if (capturedKey === "Meta") {
+      capturedKey = "Command";  // Replace "meta" with "command"
+    }
+
+    if (!currentKeys.includes(capturedKey)) {
+      setCurrentKeys((prevKeys) => [...prevKeys, capturedKey]);
+    }
+  };
+
+  const handleKeyUp = (event) => {
+    event.preventDefault();
+    if (currentKeys.length) {
+      onChange({ target: { name, value: currentKeys.join('+').replace("Meta", "Command") } });  // Replace "meta" with "command" in the joined string
+    }
+    setTimeout(() => setCurrentKeys([]), 500);
+  };
+
+  useEffect(() => {
+    const inputElement = inputRef.current;
+    inputElement.addEventListener('keydown', handleKeyDown);
+    inputElement.addEventListener('keyup', handleKeyUp);
+    return () => {
+      inputElement.removeEventListener('keydown', handleKeyDown);
+      inputElement.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [currentKeys]);
+
+  return (
+    <input
+      ref={inputRef}
+      className="w-100"
+      type="text"
+      name={name}
+      value={value}
+      readOnly
+    />
+  );
+}
+
 function HotkeyForm({ hotkeys, setHotkeys }) {
   const [inputs, setInputs] = useState(hotkeys);
   const [feedback, setFeedback] = useState(null);  // for feedback messages
   const [currentKeys, setCurrentKeys] = useState([]);
+  const [selectedCommand, setSelectedCommand] = useState(null);
 
   const handleKeyDown = (event, command) => {
     event.preventDefault(); // Prevent default action of the keypress
@@ -54,13 +102,13 @@ function HotkeyForm({ hotkeys, setHotkeys }) {
           <tbody>
             {Object.keys(hotkeys).map((command) => (
               <tr key={command}>
-                <td style={{width: '50%'}}>
+                <td style={{ width: '50%' }}>
                   <label>{formatLabel(command)}</label>
                 </td>
-                <td style={{width: '50%'}}>
-                  <input
-                    className="w-100"
-                    type="text"
+                <td style={{ width: '50%' }} 
+                  className={command === selectedCommand ? 'selected-cell' : ''}
+                onClick={() => setSelectedCommand(command)}>
+                  <KeyCaptureInput
                     name={command}
                     value={inputs[command]}
                     onChange={handleChange}
@@ -72,7 +120,7 @@ function HotkeyForm({ hotkeys, setHotkeys }) {
         </table>
         <button type="submit">Update Hotkeys and Restart</button>
       </form>
-      {feedback && <p>{feedback}</p>}  {/* Display feedback here */}
+      {feedback && <p>{feedback}</p>}
     </div>
   );
 }
