@@ -1,3 +1,6 @@
+
+#![cfg_attr(all(not(debug_assertions), target_os = "macos"), windows_subsystem = "console")]
+
 use chrono::prelude::*;
 use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition, App};
 use std::path::Path;
@@ -8,6 +11,11 @@ mod menu;
 
 use std::fs;
 use serde_json;
+
+#[derive(serde::Deserialize)]
+struct HotkeyInput {
+    hotkeyData: serde_json::Value,
+}
 
 #[derive(serde::Deserialize)]
 struct CmdArgs {
@@ -130,7 +138,6 @@ fn open_new_window(app: tauri::AppHandle) {
         "new_window",
         tauri::WindowUrl::App("hotkeys_menu.html".into()))
         .title("Change Hotkeys")
-        // Configura altre opzioni per la nuova finestra qui
         .build()
         .unwrap();
 
@@ -222,7 +229,7 @@ fn main() {
             },
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -231,4 +238,10 @@ fn main() {
 #[tauri::command]
 fn log_message(args: CmdArgs) {
     println!("{}", args.message);
+}
+
+#[tauri::command]
+fn write_to_json(input: HotkeyInput) -> Result<(), String> {
+    let file_path = Path::new("src/hotkeys.json");
+    fs::write(file_path, input.hotkeyData.to_string()).map_err(|e| e.to_string())
 }
