@@ -9,6 +9,11 @@ mod menu;
 use std::fs;
 use serde_json;
 
+#[derive(serde::Deserialize)]
+struct CmdArgs {
+    message: String,
+}
+
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
 #[cfg(target_os = "macos")]
@@ -217,7 +222,13 @@ fn main() {
             },
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+
+#[tauri::command]
+fn log_message(args: CmdArgs) {
+    println!("{}", args.message);
 }

@@ -4,7 +4,7 @@
     "beforeBuildCommand": "npm run build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
-    "withGlobalTauri": false
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "Screen Crab",
@@ -17,6 +17,7 @@
     },
     "macOSPrivateApi": true,
     "allowlist": {
+      "all": true,
       "os": {
         "all": true
       },
@@ -39,7 +40,6 @@
         "setResizable": true,
         "setCursorGrab": true
       },
-      "all": false,
       "dialog": {
         "all": true,
         "ask": true,
