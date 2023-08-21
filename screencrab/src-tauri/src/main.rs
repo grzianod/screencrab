@@ -225,8 +225,9 @@ fn log_message(args: CmdArgs) {
 
 #[tauri::command]
 fn write_to_json(input: HotkeyInput) -> Result<(), String> {
-    let path = get_home_dir() + "./screencrab/hotkeys.json";
+    let path = get_home_dir() + "/.screencrab/hotkeys.json";
     let file_path = Path::new(&path);
     fs::write(file_path, input.hotkeyData.to_string()).map_err(|e| e.to_string())
+
 }
 

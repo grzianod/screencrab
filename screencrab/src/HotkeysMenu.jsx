@@ -1,13 +1,13 @@
 import React, {useState, useEffect, useRef} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {Container, Form, FormText, Table} from "react-bootstrap";
+import {Button, Container, Form, FormText, Table} from "react-bootstrap";
 import {invoke} from '@tauri-apps/api/tauri';
 import "./App.css";
 
 function saveData(data, setFeedback) {
     invoke('write_to_json', {input: {hotkeyData: data}})  // Nest data under 'input' and 'hotkeyData'
         .then(() => {
-            setFeedback("Data written successfully");
+            setFeedback("Hotkeys written successfully");
         })
         .catch((err) => {
             setFeedback("Failed to write data: " + err);
@@ -142,7 +142,7 @@ function HotkeyForm({hotkeys, setHotkeys}) {
                     ))}
                     </tbody>
                 </Table>
-                <button type="submit">Update Hotkeys and Restart</button>
+                <Button variant={"primary"} type="submit">Update Hotkeys and Restart</Button>
             </Form>
             {feedback && <p>{feedback}</p>}
         </Container>
