@@ -2,14 +2,16 @@
 #![cfg_attr(all(not(debug_assertions), target_os = "macos"), windows_subsystem = "console")]
 
 use chrono::prelude::*;
-use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition, App};
+use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition};
 use std::path::Path;
-use crate::menu::{create_context_menu, Hotkeys};
+use crate::menu::{create_context_menu};
 use tauri::{Manager, SystemTray, SystemTrayEvent};
+
+
 mod menu;
 
 
-use std::fs;
+use std::{env, fs};
 use serde_json;
 
 #[derive(serde::Deserialize)]
@@ -126,41 +128,21 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
     }
 }
 
-pub fn load_hotkeys(filename: &str) -> Result<Hotkeys, Box<dyn std::error::Error>> {
-    let contents = fs::read_to_string(filename)?;
-    let hotkeys = serde_json::from_str(&contents)?;
-    Ok(hotkeys)
+#[tauri::command]
+fn get_home_dir() -> String {
+    env::var("HOME").unwrap()
 }
 
-fn open_new_window(app: tauri::AppHandle) {
-    let new_window = tauri::WindowBuilder::new(
-        &app,
-        "new_window",
-        tauri::WindowUrl::App("hotkeys_menu.html".into()))
-        .title("Change Hotkeys")
-        .build()
-        .unwrap();
-
-    new_window.show().unwrap();
+#[tauri::command]
+async fn load_hotkeys() -> String {
+    menu::hotkeys()
 }
-
-
 
 fn main() {
-
-    let hotkeys = load_hotkeys("src/hotkeys.json").expect("Failed to read the file");
-
     tauri::Builder::default()
-        .menu(create_context_menu(&hotkeys))
+        .menu(create_context_menu())
         .on_menu_event(|event| {
-            match event.menu_item_id() {
-                "change_hotkeys" => {
-                    open_new_window(event.window().app_handle().clone());
-                },
-                _ => {
-                    event.window().emit_all(event.menu_item_id(), {}).unwrap();
-                }
-            }
+            event.window().emit_all(event.menu_item_id(), {}).unwrap();
         })        
         .setup(|app| {
             
@@ -170,6 +152,7 @@ fn main() {
             app.handle().windows().get("main").unwrap().set_size(PhysicalSize::new(width, height)).unwrap();
             app.handle().windows().get("main").unwrap().set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
             app.handle().windows().get("main").unwrap().set_resizable(false).unwrap();
+
             #[cfg(target_os="macos")]
             let area = tauri::WindowBuilder::new(
                 app,
@@ -229,7 +212,7 @@ fn main() {
             },
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -242,6 +225,8 @@ fn log_message(args: CmdArgs) {
 
 #[tauri::command]
 fn write_to_json(input: HotkeyInput) -> Result<(), String> {
-    let file_path = Path::new("src/hotkeys.json");
+    let path = get_home_dir() + "./screencrab/hotkeys.json";
+    let file_path = Path::new(&path);
     fs::write(file_path, input.hotkeyData.to_string()).map_err(|e| e.to_string())
 }
+
