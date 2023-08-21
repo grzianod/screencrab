@@ -5,3 +5,36 @@
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafb);
 }
+
+h1 {
+  font-family: 'Arial, sans-serif';
+  color: #4a90e2;
+}
+
+button {
+  background-color: #4a90e2;
+  border: none;
+  padding: 10px 20px;
+  color: #ffffff;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #357abd;
+}
+
+form {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+input {
+  margin-bottom: 10px;
+}
+
+.selected-cell {
+  border: 2px solid blue !important;
+}
