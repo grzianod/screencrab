@@ -23,16 +23,16 @@ pub fn hotkeys() -> String {
     let file = dir.clone() + "/hotkeys.json";
     if let Ok(result) = fs::create_dir(dir) {
         let json_content = r#"{
-        "capture_custom": "CmdOrCtrl+C",
-        "capture_fullscreen": "Control+f",
+        "custom_capture": "CmdOrCtrl+C",
+        "fullscreen_capture": "Control+f",
         "capture_mouse_pointer": "Control+m",
         "copy_to_clipboard": "Option+C",
-        "open_capture": "Command+O",
-        "open_record": "Option+O",
-        "record_custom": "CmdOrCtrl+Option+C",
+        "edit_after_capture": "CmdOrCtrl+O",
+        "open_after_record": "Option+O",
+        "custom_record": "CmdOrCtrl+Option+C",
         "record_external_audio": "Option+A",
-        "record_fullscreen": "CmdOrCtrl+Option+F",
-        "stop_record": "CmdOrCtrl+Option+S"
+        "fullscreen_record": "CmdOrCtrl+Option+F",
+        "stop_recording": "CmdOrCtrl+Option+S"
     }"#;
 
         // Create a new file and open it for writing
