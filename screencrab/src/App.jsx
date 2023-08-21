@@ -171,20 +171,26 @@ function App() {
     });
 
     useEffect(() => {
-        const promise = listen("open", () => {
+        const promise = listen("open_after_record", () => {
+            setOpenFile((openFile) => !openFile);
+        });
+        return () => promise.then(remove => remove());
+    });
+    useEffect(() => {
+        const promise = listen("edit_after_capture", () => {
             setOpenFile((openFile) => !openFile);
         });
         return () => promise.then(remove => remove());
     });
 
     useEffect(() => {
-        const promise = listen("capture_fullscreen", async () => {
+        const promise = listen("fullscreen_capture", async () => {
             setCaptureFullscreen().then(async () => await capture("capture", "fullscreen", duration, pointer, filePath, captureType, clipboard, openFile));
         });
             return () => promise.then(remove => remove());
         });
     useEffect(() => {
-        const promise = listen("capture_custom", async () => {
+        const promise = listen("custom_capture", async () => {
             WebviewWindow.getByLabel('selector').isVisible().then( async (value) => {
                 if(value) await capture("capture", "custom", duration, pointer, filePath, captureType, clipboard, openFile);
                 else await setCaptureCustom();
@@ -193,13 +199,13 @@ function App() {
         return () => promise.then(remove => remove());
     });
     useEffect(() => {
-        const promise = listen("record_fullscreen", async () => {
+        const promise = listen("fullscreen_record", async () => {
             setRecordFullscreen().then(async () => await capture("record", "fullscreen", duration, pointer, filePath, recordType, clipboard, openFile));
         });
         return () => promise.then(remove => remove());
     });
     useEffect(() => {
-        const promise = listen("record_custom", async () => {
+        const promise = listen("custom_record", async () => {
             WebviewWindow.getByLabel('selector').isVisible().then( async (value) => {
                 if(value) await capture("record", "custom", duration, pointer, filePath, recordType, clipboard, openFile);
                 else await setRecordCustom();
@@ -208,7 +214,7 @@ function App() {
         return () => promise.then(remove => remove());
     });
     useEffect(() => {
-        const promise = listen("stop_record", async () => await stopCapture() );
+        const promise = listen("stop_recording", async () => await stopCapture() );
         return () => promise.then(remove => remove());
     });
     useEffect(() => {
