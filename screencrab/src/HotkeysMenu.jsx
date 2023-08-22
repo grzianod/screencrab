@@ -4,6 +4,7 @@ import {Button, Container, Form, FormText, Table} from "react-bootstrap";
 import {invoke} from '@tauri-apps/api/tauri';
 import "./App.css";
 
+
 function saveData(data, setFeedback) {
     invoke('write_to_json', {input: {hotkeyData: data}})  // Nest data under 'input' and 'hotkeyData'
         .then(() => {
@@ -12,6 +13,10 @@ function saveData(data, setFeedback) {
         .catch((err) => {
             setFeedback("Failed to write data: " + err);
         });
+}
+
+function isHotkeyDuplicate(hotkeys, hotkey) {
+    return Object.values(hotkeys).includes(hotkey);
 }
 
 function KeyCaptureInput({value, onChange, name}) {
@@ -80,6 +85,7 @@ function HotkeyForm({hotkeys, setHotkeys}) {
     const [feedback, setFeedback] = useState(null);  // for feedback messages
     const [currentKeys, setCurrentKeys] = useState([]);
     const [selectedCommand, setSelectedCommand] = useState(null);
+    const [duplicateHotkey, setDuplicateHotkey] = useState(false);
 
     const handleKeyDown = (event, command) => {
         event.preventDefault(); // Prevent default action of the keypress
@@ -97,7 +103,13 @@ function HotkeyForm({hotkeys, setHotkeys}) {
     const handleChange = (event) => {
         const {name, value} = event.target;
         setInputs({...inputs, [name]: value});
+        
+        // Check for duplicates
+        const tempHotkeys = {...inputs, [name]: value};
+        delete tempHotkeys[name];  // Remove current hotkey to not compare with itself
+        setDuplicateHotkey(isHotkeyDuplicate(tempHotkeys, value));
     };
+    
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -156,7 +168,8 @@ function HotkeyForm({hotkeys, setHotkeys}) {
                     ))}
                     </tbody>
                 </Table>
-                <Button variant={"primary"} type="submit">Update Hotkeys and Restart</Button>
+                {duplicateHotkey && <p className="text-danger">This hotkey combination is already used by another command!</p>}
+                <Button variant={"primary"} type="submit" disabled={duplicateHotkey}>Update Hotkeys and Restart</Button>
             </Form>
             {feedback && <p>{feedback}</p>}
         </Container>

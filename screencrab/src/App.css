@@ -38,3 +38,7 @@ input {
 .selected-cell {
   border: 2px solid blue !important;
 }
+
+.conflict-row {
+  background-color: #ffe0e0; /* A light red to indicate conflict */
+}
