@@ -14,16 +14,36 @@ function saveData(data, setFeedback) {
         });
 }
 
+
+function isHotkeyDuplicate(hotkeys, hotkey) {
+    return Object.values(hotkeys).includes(hotkey);
+}
+
+
 function KeyCaptureInput({value, onChange, name}) {
     const [currentKeys, setCurrentKeys] = useState([]);
     const inputRef = useRef(null);
 
     const handleKeyDown = (event) => {
         event.preventDefault();
-        let capturedKey = event.key;
+        let capturedKey = event.code;
 
-        if (capturedKey === "Meta") {
-            capturedKey = "CmdOrCtrl";  // Replace "meta" with "command"
+        if (capturedKey.startsWith("Key")) {
+            capturedKey = capturedKey.slice(3);
+        } else if (capturedKey.startsWith("Digit")) {
+            capturedKey = capturedKey.slice(5);
+        } else {
+            switch (capturedKey) {
+                case "MetaLeft":
+                case "MetaRight":
+                    capturedKey = "CmdOrCtrl";
+                    break;
+                case "AltLeft":
+                case "AltRight":
+                    capturedKey = "Option";
+                    break;
+                // Add other cases as needed
+            }
         }
 
         if (!currentKeys.includes(capturedKey)) {
@@ -67,6 +87,7 @@ function HotkeyForm({hotkeys, setHotkeys}) {
     const [feedback, setFeedback] = useState(null);  // for feedback messages
     const [currentKeys, setCurrentKeys] = useState([]);
     const [selectedCommand, setSelectedCommand] = useState(null);
+    const [duplicateHotkey, setDuplicateHotkey] = useState(false);
 
     const handleKeyDown = (event, command) => {
         event.preventDefault(); // Prevent default action of the keypress
@@ -84,6 +105,12 @@ function HotkeyForm({hotkeys, setHotkeys}) {
     const handleChange = (event) => {
         const {name, value} = event.target;
         setInputs({...inputs, [name]: value});
+
+        // Check for duplicates
+        const tempHotkeys = {...inputs, [name]: value};
+        delete tempHotkeys[name];  // Remove current hotkey to not compare with itself
+        setDuplicateHotkey(isHotkeyDuplicate(tempHotkeys, value));
+
     };
 
     const handleSubmit = (event) => {
@@ -108,7 +135,8 @@ function HotkeyForm({hotkeys, setHotkeys}) {
         command = command.replace("CmdOrCtrl", String.fromCharCode(0x2318));
         command = command.replace("Control", String.fromCharCode(0x2303));
         command = command.replace("Option", String.fromCharCode(0x2325));
-        command = command.replace("Shift", String.fromCharCode(0x21E7));
+        command = command.replace("ShiftLeft", String.fromCharCode(0x21E7));
+        command = command.replace("ShiftLRight", String.fromCharCode(0x21E7));
         command = command.replace("Tab", String.fromCharCode(0x2192));
         command = command.replace("CapsLock", String.fromCharCode(0x21EA));
         command = command.replace(/\+/g, "");
@@ -145,7 +173,9 @@ function HotkeyForm({hotkeys, setHotkeys}) {
                     ))}
                     </tbody>
                 </Table>
-                <Button className={"m-3"} variant={"primary"} type="submit">Save and Restart</Button>
+                {duplicateHotkey && <p className="text-danger">This hotkey combination is already used by another command!</p>}
+                {!duplicateHotkey && <Button className={"m-3"} variant={"primary"} type="submit">Save and Restart</Button> }
+
             </Form>
 
             {feedback && <p>{feedback}</p>}
