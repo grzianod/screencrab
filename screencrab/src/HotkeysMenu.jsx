@@ -109,6 +109,8 @@ function HotkeyForm({hotkeys, setHotkeys}) {
         command = command.replace("Control", String.fromCharCode(0x2303));
         command = command.replace("Option", String.fromCharCode(0x2325));
         command = command.replace("Shift", String.fromCharCode(0x21E7));
+        command = command.replace("Tab", String.fromCharCode(0x2192));
+        command = command.replace("CapsLock", String.fromCharCode(0x21EA));
         command = command.replace(/\+/g, "");
         command = command.toUpperCase();
         return command;
