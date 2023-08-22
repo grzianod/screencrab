@@ -4,8 +4,8 @@
 use chrono::prelude::*;
 use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition};
 use std::path::Path;
-use crate::menu::{create_context_menu};
-use tauri::{Manager, SystemTray, SystemTrayEvent};
+use crate::menu::{create_context_menu, create_selector_menu};
+use tauri::{Manager, SystemTray, SystemTrayEvent, api::process};
 use std::cell::Cell;
 
 
@@ -149,17 +149,19 @@ fn main() {
                 app,
                 "selector",
                 tauri::WindowUrl::App("./blank.html".into()))
+                .menu(create_selector_menu())
                 .title_bar_style(TitleBarStyle::Overlay)
                 .decorations(false)
                 .transparent(true)
                 .resizable(true)
                 .always_on_top(true)
+                .skip_taskbar(true)
                 .center()
                 .title("")
-                .content_protected(true)
                 .always_on_top(true)
+                .content_protected(true)
                 .minimizable(false)
-                .focused(true)
+                .focused(false)
                 .build()
                 .unwrap();
 
@@ -169,16 +171,18 @@ fn main() {
                 app,
                 "selector",
                 tauri::WindowUrl::App("./blank.html".into()))
+                .menu(create_selector_menu())
                 .decorations(false)
                 .transparent(true)
+                .always_on_top(true)
                 .resizable(true)
                 .always_on_top(true)
+                .skip_taskbar(true)
                 .center()
                 .title("")
                 .content_protected(true)
-                .always_on_top(true)
                 .minimizable(false)
-                .focused(true)
+                .focused(false)
                 .build()
                 .unwrap();
 
@@ -188,6 +192,13 @@ fn main() {
 
                 area.set_size(PhysicalSize::new(width/2, height)).unwrap();
                 area.hide().unwrap();
+
+                let capture_mouse_pointer = Cell::new(false);
+                let copy_to_clipboard = Cell::new(false);
+                let edit_after_capture = Cell::new(true);
+                let record_external_audio = Cell::new(false);
+                let open_after_record = Cell::new(true);
+
 
             let main_window = tauri::WindowBuilder::new(
                 app,
@@ -205,14 +216,11 @@ fn main() {
                 .build()
                 .unwrap();
 
+
+
                 main_window.set_size(PhysicalSize::new(width, height)).unwrap();
                 main_window.set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
 
-                let capture_mouse_pointer = Cell::new(false);
-                let copy_to_clipboard = Cell::new(false);
-                let edit_after_capture = Cell::new(true);
-                let record_external_audio = Cell::new(false);
-                let open_after_record = Cell::new(true);
 
                 let window_ = main_window.clone();
                 main_window.on_menu_event(move |event| {
@@ -234,11 +242,11 @@ fn main() {
                             window_.menu_handle().get_item(event.menu_item_id()).set_selected(edit_after_capture.get()).unwrap();
                         }
                         "record_external_audio" => {
-                            record_external_audio.set(!capture_mouse_pointer.get());
+                            record_external_audio.set(!record_external_audio.get());
                             window_.menu_handle().get_item(event.menu_item_id()).set_selected(record_external_audio.get()).unwrap();
                         }
                         "open_after_record" => {
-                            open_after_record.set(!capture_mouse_pointer.get());
+                            open_after_record.set(!open_after_record.get());
                             window_.menu_handle().get_item(event.menu_item_id()).set_selected(open_after_record.get()).unwrap();
                         }
                         _ => {}
@@ -278,10 +286,10 @@ fn log_message(args: CmdArgs) {
 }
 
 #[tauri::command]
-fn write_to_json(input: HotkeyInput) -> Result<(), String> {
+fn write_to_json(app: AppHandle, input: HotkeyInput) {
     let path = get_home_dir() + "/.screencrab/hotkeys.json";
     let file_path = Path::new(&path);
-    fs::write(file_path, input.hotkeyData.to_string()).map_err(|e| e.to_string())
-
+    fs::write(file_path, input.hotkeyData.to_string());
+    process::restart(&app.env())
 }
 

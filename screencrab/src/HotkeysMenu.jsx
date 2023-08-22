@@ -50,9 +50,10 @@ function KeyCaptureInput({value, onChange, name}) {
     }, [currentKeys]);
 
     return (
-        <input
+        <Form.Control
             ref={inputRef}
-            className="w-100"
+            style={{width: "5rem", textAlign: "center"}}
+            className={"mb-0"}
             type="text"
             name={name}
             value={value}
@@ -120,17 +121,17 @@ function HotkeyForm({hotkeys, setHotkeys}) {
     <Container className={"flex-row justify-content-center p-0 m-0 w-100"}>
         <div className={"col-4"}></div>
         <Container style={{zIndex: "2", position: "relative"}} className={"w-100 align-items-center"}>
-            <strong style={{fontSize: "1.5rem"}} className={"m-2 mb-3"}>Shortcut Keys</strong>
+            <strong style={{fontSize: "1.5rem"}} className={"m-2 mb-0"}>Shortcut Keys</strong>
+            <Form.Text className={"mb-3"}>Click on a shortcut and tap a new keys combination</Form.Text>
             <Form onSubmit={handleSubmit}>
-                <Table className="table table-bordered">
+                <Table className="table">
                     <tbody>
                     {Object.keys(hotkeys).map((command) => (
-                        <tr key={command} >
-                            <td style={{width: '50%', textAlign: "center", verticalAlign: "middle"}}>
+                        <tr key={command}>
+                            <td style={{ textAlign: "center", verticalAlign: "middle" }}> {/* Removed width */}
                                 <label>{formatLabel(command)}</label>
                             </td>
-                            <td style={{width: '50%', textAlign: "center", verticalAlign: "middle"}}
-                                className={command === selectedCommand ? 'selected-cell' : ''}
+                            <td style={{ textAlign: "center", verticalAlign: "middle" }}
                                 onClick={() => setSelectedCommand(command)}>
                                 <KeyCaptureInput
                                     name={command}
@@ -142,8 +143,9 @@ function HotkeyForm({hotkeys, setHotkeys}) {
                     ))}
                     </tbody>
                 </Table>
-                <Button variant={"primary"} type="submit">Update Hotkeys and Restart</Button>
+                <Button className={"m-3"} variant={"primary"} type="submit">Save and Restart</Button>
             </Form>
+
             {feedback && <p>{feedback}</p>}
         </Container>
     </Container>

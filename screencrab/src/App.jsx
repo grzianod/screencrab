@@ -127,7 +127,7 @@ function App() {
     async function setCaptureCustom() {
         setMode("capture");
         setView("custom");
-        await WebviewWindow.getByLabel('selector').show()
+        await WebviewWindow.getByLabel('selector').show();
     }
 
     async function setRecordFullscreen() {
@@ -251,7 +251,7 @@ function App() {
     return (hotkeys ?
             <>
             <HotkeysMenu></HotkeysMenu>
-                <Button style={{position:"absolute", top: "1rem", right: "1rem"}} variant={"light"} className={"mx-2"} onClick={() => {setHotkeys((hotkeys) => !hotkeys);
+                <Button style={{zIndex: "3", position:"absolute", top: "0.5rem", right: "0.5rem"}} variant={"light"} className={"mx-2"} onClick={() => {setHotkeys((hotkeys) => !hotkeys);
 
                     } }>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -263,7 +263,7 @@ function App() {
                 </>
             :
             <>
-            <Button style={{zIndex: "3", position:"absolute", top: "1rem", right: "1rem"}} variant={"light"} className={"mx-2"} onClick={() => setHotkeys((hotkeys) => !hotkeys)}>
+            <Button style={{zIndex: "3", position:"absolute", top: "0.5rem", right: "0.5rem"}} variant={"light"} className={"mx-2"} onClick={() => setHotkeys((hotkeys) => !hotkeys)}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                      className="bi bi-sliders2" viewBox="0 0 16 16">
                     <path fill-rule="evenodd"
