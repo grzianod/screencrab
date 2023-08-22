@@ -71,21 +71,6 @@
     },
     "security": {
       "csp": null
-    },
-    "windows": [
-      {
-        "label": "main",
-        "fullscreen": false,
-        "resizable": false,
-        "closable": true,
-        "minimizable": true,
-        "focus": true,
-        "title": "Screen Crab",
-        "width": 1200,
-        "height": 260,
-        "contentProtected": true,
-        "decorations": true
-      }
-    ]
+    }
   }
 }

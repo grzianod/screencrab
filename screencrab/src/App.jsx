@@ -5,7 +5,7 @@ import {emit, listen, once} from '@tauri-apps/api/event'
 import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
-import { WebviewWindow } from '@tauri-apps/api/window';
+import {PhysicalSize, WebviewWindow} from '@tauri-apps/api/window';
 import HotkeysMenu from "./HotkeysMenu.jsx";
 
 function App() {
@@ -251,7 +251,9 @@ function App() {
     return (hotkeys ?
             <>
             <HotkeysMenu></HotkeysMenu>
-                <Button style={{position:"absolute", top: "1rem", right: "1rem"}} variant={"light"} className={"mx-2"} onClick={() => setHotkeys((hotkeys) => !hotkeys)}>
+                <Button style={{position:"absolute", top: "1rem", right: "1rem"}} variant={"light"} className={"mx-2"} onClick={() => {setHotkeys((hotkeys) => !hotkeys);
+
+                    } }>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                          className="bi bi-arrow-left" viewBox="0 0 16 16">
                         <path fillRule="evenodd"
@@ -261,24 +263,24 @@ function App() {
                 </>
             :
             <>
-            <Button style={{position:"absolute", top: "1rem", right: "1rem"}} variant={"light"} className={"mx-2"} onClick={() => setHotkeys((hotkeys) => !hotkeys)}>
+            <Button style={{zIndex: "3", position:"absolute", top: "1rem", right: "1rem"}} variant={"light"} className={"mx-2"} onClick={() => setHotkeys((hotkeys) => !hotkeys)}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                     className="bi bi-sliders" viewBox="0 0 16 16">
-                    <path fillRule="evenodd"
-                          d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3h9.05zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8h2.05zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1h9.05z"/>
+                     className="bi bi-sliders2" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                          d="M10.5 1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4H1.5a.5.5 0 0 1 0-1H10V1.5a.5.5 0 0 1 .5-.5ZM12 3.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5Zm-6.5 2A.5.5 0 0 1 6 6v1.5h8.5a.5.5 0 0 1 0 1H6V10a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5ZM1 8a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2A.5.5 0 0 1 1 8Zm9.5 2a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V13H1.5a.5.5 0 0 1 0-1H10v-1.5a.5.5 0 0 1 .5-.5Zm1.5 2.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5Z"/>
                 </svg>
             </Button>
 
                 <Container className="background-container p-0 m-0"></Container>
 
                 <Container className={"flex-row justify-content-center p-0 m-0 w-100"}>
-                    <div className={"col-2"}></div>
+                    <div className={"col-4"}></div>
 
-                    <Container style={{zIndex: "2", position: "relative"}} className={"w-100 align-items-center"}>
+                    <Container style={{zIndex: "2", position: "relative"}} className={"w-100 col-9 align-items-center"}>
                         <Container className={"flex-row align-items-center w-100 mb-2 justify-content-center"}>
                             <FormText>Save to:</FormText>
                                     <Form.Control
-                                        className={"mx-2"}
+                                        className={"mx-2 mb-0"}
                                         style={{width: "30rem"}}
                                         type="text"
                                         value={clipboard ? "Clipboard" : filePath}
@@ -372,7 +374,7 @@ function App() {
                                     step={1}
                                     min={0}
                                     value={countdown > 0 ? countdown : duration}
-                                    className={countdown > 0 ? "blink" : ""}
+                                    className={ countdown > 0 ? "blink mb-0" : "mb-0"}
                                     style={{
                                         display: "inline-block", textAlign: "center", maxWidth: "7rem"
                                     }}
@@ -478,7 +480,7 @@ function App() {
                             </Container>
 
 
-                            <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2 w-auto"}>
+                            <Container className={"d-none flex-column align-items-center justify-content-center p-0 mx-2 w-auto"}>
                                 <FormText className={countdown > 0 ? "blink" : ""}>&nbsp;</FormText>
                                 <Dropdown drop={"down-centered"}>
                                     <Dropdown.Toggle className={"mx-2"} disabled={capturing} variant="light" id="dropdown-basic">

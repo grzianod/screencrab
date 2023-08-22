@@ -64,14 +64,14 @@ pub fn create_context_menu() -> Menu {
                                   .add_native_item(MenuItem::Separator)
                                   .add_item(CustomMenuItem::new("capture_mouse_pointer".to_string(), "Capture Mouse Pointer").accelerator(&hotkeys.capture_mouse_pointer))
                                   .add_item(CustomMenuItem::new("copy_to_clipboard".to_string(), "Copy To Clipboard").accelerator(&hotkeys.copy_to_clipboard))
-                                  .add_item(CustomMenuItem::new("edit_after_capture".to_string(), "Edit After Capture").accelerator(&hotkeys.edit_after_capture)));
+                                  .add_item(CustomMenuItem::new("edit_after_capture".to_string(), "Edit After Capture").selected().accelerator(&hotkeys.edit_after_capture)));
     let record = Submenu::new("Record",
                               Menu::new().add_item(CustomMenuItem::new("fullscreen_record".to_string(), "Fullscreen Record").accelerator(&hotkeys.fullscreen_record))
                                   .add_item(CustomMenuItem::new("custom_record".to_string(), "Custom Record").accelerator(&hotkeys.custom_record))
-                                  .add_item(CustomMenuItem::new("stop_recording".to_string(), "Stop Recording").accelerator(&hotkeys.stop_recording))
+                                  .add_item(CustomMenuItem::new("stop_recording".to_string(), "Stop Recording").disabled().accelerator(&hotkeys.stop_recording))
                                   .add_native_item(MenuItem::Separator)
                                   .add_item(CustomMenuItem::new("record_external_audio".to_string(), "Record External Audio").accelerator(&hotkeys.record_external_audio))
-                                  .add_item(CustomMenuItem::new("open_after_record".to_string(), "Open After Record").accelerator(&hotkeys.open_after_record)));
+                                  .add_item(CustomMenuItem::new("open_after_record".to_string(), "Open After Record").selected().accelerator(&hotkeys.open_after_record)));
     let settings = Submenu::new("Settings",
     Menu::new().add_item(CustomMenuItem::new("change_hotkeys".to_string(), "Change Shortcut Keys")));
     let help = Submenu::new("Help",
@@ -86,4 +86,5 @@ pub fn create_context_menu() -> Menu {
 
 
 }
+
 

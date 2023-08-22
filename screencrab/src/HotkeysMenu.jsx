@@ -118,7 +118,7 @@ function HotkeyForm({hotkeys, setHotkeys}) {
         <Container className="background-container p-0 m-0"></Container>
 
     <Container className={"flex-row justify-content-center p-0 m-0 w-100"}>
-        <div className={"col-2"}></div>
+        <div className={"col-4"}></div>
         <Container style={{zIndex: "2", position: "relative"}} className={"w-100 align-items-center"}>
             <strong style={{fontSize: "1.5rem"}} className={"m-2 mb-3"}>Shortcut Keys</strong>
             <Form onSubmit={handleSubmit}>
