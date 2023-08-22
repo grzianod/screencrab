@@ -140,6 +140,26 @@ async fn load_hotkeys() -> String {
     menu::hotkeys()
 }
 
+#[tauri::command]
+fn resize_window_hotkeys(window: Window) {
+    let monitor_size = window.current_monitor().unwrap().unwrap().size().to_owned();
+    let width = monitor_size.width*60/100;
+    let height = monitor_size.height*80/100;
+
+    window.set_size(PhysicalSize::new(width, height)).unwrap();
+    window.set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*12/10)).unwrap();
+}
+
+#[tauri::command]
+fn resize_window_default(window: Window) {
+    let monitor_size = window.current_monitor().unwrap().unwrap().size().to_owned();
+    let width = monitor_size.width*60/100;
+    let height = monitor_size.height*23/100;
+
+    window.set_size(PhysicalSize::new(width, height)).unwrap();
+    window.set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
+}
+
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
@@ -274,7 +294,7 @@ fn main() {
             },
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, resize_window_hotkeys, resize_window_default])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

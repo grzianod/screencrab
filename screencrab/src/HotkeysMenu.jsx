@@ -122,7 +122,7 @@ function HotkeyForm({hotkeys, setHotkeys}) {
 
     <Container className={"flex-row justify-content-center p-0 m-0 w-100"}>
         <div className={"col-4"}></div>
-        <Container style={{zIndex: "2", position: "relative"}} className={"w-100 align-items-center"}>
+        <Container style={{zIndex: "2", position: "relative"}} className={"w-100 align-items-center p-1"}>
             <strong style={{fontSize: "1.5rem"}} className={"m-2 mb-0"}>Shortcut Keys</strong>
             <Form.Text className={"mb-3"}>Click on a shortcut and tap a new keys combination</Form.Text>
             <Form onSubmit={handleSubmit}>
