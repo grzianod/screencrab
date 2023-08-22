@@ -20,12 +20,26 @@ function KeyCaptureInput({value, onChange, name}) {
 
     const handleKeyDown = (event) => {
         event.preventDefault();
-        let capturedKey = event.key;
-
-        if (capturedKey === "Meta") {
-            capturedKey = "CmdOrCtrl";  // Replace "meta" with "command"
+        let capturedKey = event.code;
+    
+        if (capturedKey.startsWith("Key")) {
+            capturedKey = capturedKey.slice(3);
+        } else if (capturedKey.startsWith("Digit")) {
+            capturedKey = capturedKey.slice(5);
+        } else {
+            switch (capturedKey) {
+                case "MetaLeft":
+                case "MetaRight":
+                    capturedKey = "CmdOrCtrl";
+                    break;
+                case "AltLeft":
+                case "AltRight":
+                    capturedKey = "Option";
+                    break;
+                // Add other cases as needed
+            }
         }
-
+    
         if (!currentKeys.includes(capturedKey)) {
             setCurrentKeys((prevKeys) => [...prevKeys, capturedKey]);
         }
