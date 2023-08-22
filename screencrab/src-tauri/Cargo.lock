@@ -3013,6 +3013,7 @@ name = "screen-crab"
 version = "1.0.0"
 dependencies = [
  "chrono",
+ "once_cell",
  "serde",
  "serde_json",
  "tauri",

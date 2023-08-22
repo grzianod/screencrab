@@ -25,7 +25,6 @@ function App() {
   const [externalAudio, setExternalAudio] = useState(false);
   const [hotkeys, setHotkeys] = useState(false);
 
-
     async function capture(mode, view, duration, pointer, filePath, fileType, clipboard, openFile) {
         let selector = WebviewWindow.getByLabel('selector');
         let area = "";
@@ -251,19 +250,20 @@ function App() {
     return (hotkeys ?
             <>
             <HotkeysMenu></HotkeysMenu>
-                <Button style={{position:"absolute", top: "1rem", right: "1rem"}} variant={"light"} className={"mx-2"} onClick={() => {setHotkeys((hotkeys) => !hotkeys);
-
-                    } }>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                         className="bi bi-arrow-left" viewBox="0 0 16 16">
-                        <path fillRule="evenodd"
-                              d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-                    </svg>
-                </Button>
+            <Button style={{zIndex: "3", position:"absolute", top: "0.5rem", right: "0.5rem"}} variant={"light"} className={"mx-2"} onClick={() => {setHotkeys((hotkeys) => !hotkeys);
+            window.__TAURI__.invoke('resize_window_default').catch(e => console.error(e));
+            } }>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    className="bi bi-arrow-left" viewBox="0 0 16 16">
+                    <path fillRule="evenodd"
+                        d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+            </Button>
                 </>
             :
             <>
-            <Button style={{zIndex: "3", position:"absolute", top: "1rem", right: "1rem"}} variant={"light"} className={"mx-2"} onClick={() => setHotkeys((hotkeys) => !hotkeys)}>
+            <Button style={{zIndex: "3", position:"absolute", top: "1rem", right: "1rem"}} variant={"light"} className={"mx-2"} onClick={() => {setHotkeys((hotkeys) => !hotkeys); 
+            window.__TAURI__.invoke('resize_window_hotkeys').catch(e => console.error(e));}}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                      className="bi bi-sliders2" viewBox="0 0 16 16">
                     <path fill-rule="evenodd"

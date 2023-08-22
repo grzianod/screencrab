@@ -7,14 +7,19 @@ use std::path::Path;
 use crate::menu::{create_context_menu};
 use tauri::{Manager, SystemTray, SystemTrayEvent};
 use std::cell::Cell;
-
-
+use std::sync::{Arc, RwLock};
+use once_cell::sync::Lazy;
 
 mod menu;
 
-
 use std::{env, fs};
 use serde_json;
+use tauri::Size;
+use tauri::LogicalSize;
+
+static INITIAL_WINDOW_POSITION: Lazy<Arc<RwLock<Option<PhysicalPosition<i32>>>>> = Lazy::new(|| {
+    Arc::new(RwLock::new(None))
+});
 
 #[derive(serde::Deserialize)]
 struct HotkeyInput {
@@ -266,7 +271,7 @@ fn main() {
             },
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, resize_window_hotkeys, resize_window_default])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -285,3 +290,41 @@ fn write_to_json(input: HotkeyInput) -> Result<(), String> {
 
 }
 
+#[tauri::command]
+fn resize_window_hotkeys(window: tauri::Window) {
+    // Before resizing, check if we've stored the initial position already
+    {
+        let mut lock = INITIAL_WINDOW_POSITION.write().unwrap();
+        if lock.is_none() {
+            let current_position = window.inner_position().expect("failed to get window position");
+            *lock = Some(current_position);
+        }
+    }
+    let window_width = 500;
+    let window_height = 800;
+
+    window.set_size(LogicalSize::new(window_width, window_height)).expect("failed to resize window");
+
+    // Fetch the size of the current monitor
+    let monitor_size = window.current_monitor().unwrap().unwrap().size().to_owned();
+
+    // Calculate the position to center the window
+    let x_pos = (monitor_size.width - window_width) / 4;
+    let y_pos = (monitor_size.height - window_height) / 8;
+
+    window.set_position(PhysicalPosition::new(x_pos, y_pos)).unwrap();
+}
+
+#[tauri::command]
+fn resize_window_default(window: tauri::Window) {
+    let size: Size = LogicalSize::new(1000, 250).into();
+    window.set_size(size).expect("failed to resize window");
+
+    // Set the window to its original position, if available
+    {
+        let lock = INITIAL_WINDOW_POSITION.read().unwrap();
+        if let Some(original_position) = &*lock {
+            window.set_position(original_position.clone()).expect("failed to set window position");
+        }
+    }
+}
