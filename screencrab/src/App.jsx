@@ -220,6 +220,10 @@ function App() {
     useEffect(() => {
         const promise = listen("change_hotkeys", () => {
             setHotkeys((hotkeys) => !hotkeys);
+            if(hotkeys)
+                invoke("resize_window_default", {}).then( () => {});
+            else
+                invoke("resize_window_hotkeys", {}).then( () => {});
         });
         return () => promise.then(remove => remove());
     });
