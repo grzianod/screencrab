@@ -1,3 +1,8 @@
+Write-Host "Filename: $filename"
+Write-Host "Timer: $timer"
+Write-Host "Audio: $audio"
+Write-Host "Open File: $openfile"
+
 param(
     [string]$filename,
     [int]$timer,

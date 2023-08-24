@@ -174,6 +174,8 @@ pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename
 
 pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     let output = Command::new("powershell")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
         .arg("-File")
         .arg("src/record_full_script.ps1")  // Name of the screen recording script
         .arg("-filename")
