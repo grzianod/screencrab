@@ -173,8 +173,42 @@ pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename
 
 
 pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
-    return Response { response: Some(format!("Screen Crab taken!")), error: None };
+    let output = Command::new("powershell")
+        .arg("-File")
+        .arg("src/record_full_script.ps1")  // Name of the screen recording script
+        .arg("-filename")
+        .arg(filename)
+        .arg("-timer")
+        .arg(timer.to_string())  // Convert u64 to String
+        .arg("-audio")
+        .arg(if audio { "1" } else { "0" })  // Convert to "1" or "0"
+        .arg("-openfile")
+        .arg(if open_file { "1" } else { "0" })  // Convert to "1" or "0"
+        .output()
+        .await;
+
+    match output {
+        Ok(o) => {
+            if o.status.success() {
+                Response {
+                    response: Some("Screen recording captured successfully!".to_string()),
+                    error: None,
+                }
+            } else {
+                let error_message = String::from_utf8_lossy(&o.stderr);
+                Response {
+                    response: None,
+                    error: Some(format!("Failed to capture screen recording: {}", error_message)),
+                }
+            }
+        }
+        Err(e) => Response {
+            response: None,
+            error: Some(format!("Failed to run PowerShell script: {}", e)),
+        },
+    }
 }
+
 
 pub async fn record_custom(app: AppHandle, window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     return Response { response: Some(format!("Screen Crab taken!")), error: None };

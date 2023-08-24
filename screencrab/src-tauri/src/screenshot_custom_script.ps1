@@ -1,3 +1,6 @@
+# IMPORTANT
+# SOLVE FULL CUSTOM AREA, NOW ONLY PARTIAL 
+
 param (
     [string]$filename,
     [string]$filetype,
@@ -5,7 +8,8 @@ param (
     [int]$timer,
     [string]$pointer,
     [string]$clipboard,
-    [string]$openfile
+    [string]$openfile,
+    [bool]$debug = $false
 )
 
 # Convert the string values to boolean
@@ -19,6 +23,19 @@ $x1 = [int]$coordinates[0]
 $y1 = [int]$coordinates[1]
 $x2 = [int]$coordinates[2]
 $y2 = [int]$coordinates[3]
+
+# Ensure that x1,y1 is top-left and x2,y2 is bottom-right
+if ($x1 -gt $x2) {
+    $temp = $x1
+    $x1 = $x2
+    $x2 = $temp
+}
+
+if ($y1 -gt $y2) {
+    $temp = $y1
+    $y1 = $y2
+    $y2 = $temp
+}
 
 # Width and Height of custom capture area
 $Width = $x2 - $x1
@@ -40,6 +57,10 @@ Add-Type -TypeDefinition @"
 
 if ($timer -gt 0) {
     Start-Sleep -Seconds $timer
+}
+
+if ($debug) {
+    Write-Host "Coordinates: $x1, $y1 to $x2, $y2 with Width: $Width and Height: $Height"
 }
 
 # Create a bitmap only for the custom capture area
