@@ -84,7 +84,32 @@ fn get_current_monitor_index(window: &Window) -> usize {
 }
 
 pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
-   return Response { response: Some(format!("Screen Crab taken!")), error: None };
+    let output = Command::new("powershell")
+        .arg("-File")
+        .arg("src/screenshot_script.ps1")
+        .output()
+        .await;
+
+    match output {
+        Ok(o) => {
+            if o.status.success() {
+                Response {
+                    response: Some("Screenshot captured successfully!".to_string()),
+                    error: None,
+                }
+            } else {
+                let error_message = String::from_utf8_lossy(&o.stderr);
+                Response {
+                    response: None,
+                    error: Some(format!("Failed to capture screenshot: {}", error_message)),
+                }
+            }
+        }
+        Err(e) => Response {
+            response: None,
+            error: Some(format!("Failed to run PowerShell script: {}", e)),
+        },
+    }
 }
 
 pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
