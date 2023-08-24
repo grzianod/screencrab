@@ -86,7 +86,21 @@ fn get_current_monitor_index(window: &Window) -> usize {
 pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     let output = Command::new("powershell")
         .arg("-File")
-        .arg("src/screenshot_script.ps1")
+        .arg("src/screenshot_full_script.ps1")
+        .arg("-filename")
+        .arg(filename)
+        .arg("-filetype")
+        .arg(file_type)
+        .arg("-timer")
+        .arg(timer.to_string())
+        .arg("-pointer")
+        .arg(if pointer { "1" } else { "0" })  // Convert to "1" or "0"
+        .arg("-clipboard")
+        .arg(if clipboard { "1" } else { "0" })  // Convert to "1" or "0"
+        //.arg("-audio")
+        //.arg(if audio { "1" } else { "0" })  // Convert to "1" or "0"
+        .arg("-openfile")
+        .arg(if open_file { "1" } else { "0" })  // Convert to "1" or "0"
         .output()
         .await;
 
@@ -113,8 +127,50 @@ pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, 
 }
 
 pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
-    return Response { response: Some(format!("Screen Crab taken!")), error: None };
+    let output = Command::new("powershell")
+        .arg("-File")
+        .arg("src/screenshot_custom_script.ps1")  // Assuming there's a custom script for this.
+        .arg("-area")
+        .arg(area)  // Pass the custom area string
+        .arg("-filename")
+        .arg(filename)
+        .arg("-filetype")
+        .arg(file_type)
+        .arg("-timer")
+        .arg(timer.to_string())
+        .arg("-pointer")
+        .arg(if pointer { "1" } else { "0" })  // Convert to "1" or "0"
+        .arg("-clipboard")
+        .arg(if clipboard { "1" } else { "0" })  // Convert to "1" or "0"
+        //.arg("-audio")
+        //.arg(if audio { "1" } else { "0" })  // Convert to "1" or "0" - Uncomment if you need audio support.
+        .arg("-openfile")
+        .arg(if open_file { "1" } else { "0" })  // Convert to "1" or "0"
+        .output()
+        .await;
+
+    match output {
+        Ok(o) => {
+            if o.status.success() {
+                Response {
+                    response: Some("Screenshot of custom area captured successfully!".to_string()),
+                    error: None,
+                }
+            } else {
+                let error_message = String::from_utf8_lossy(&o.stderr);
+                Response {
+                    response: None,
+                    error: Some(format!("Failed to capture custom area screenshot: {}", error_message)),
+                }
+            }
+        }
+        Err(e) => Response {
+            response: None,
+            error: Some(format!("Failed to run PowerShell script: {}", e)),
+        },
+    }
 }
+
 
 pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     return Response { response: Some(format!("Screen Crab taken!")), error: None };
