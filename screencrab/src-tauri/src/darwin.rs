@@ -227,6 +227,10 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
     let _stdin = process.stdin.take().unwrap();  //do not release process stdin at wait(), capture it to send SIGTERM to recording process
     let pid = process.id().unwrap();
 
+    window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
+    window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
+    window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
+
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
             let _output = Command::new("kill")
@@ -237,6 +241,7 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
         });
     });
 
+    let window_ = window.clone();
     window.listen_global("stop", move |_event| {
         tokio::task::spawn(async move {
             let _output = Command::new("kill")
@@ -245,6 +250,9 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
                 .output()
                 .await;
         });
+        window_.menu_handle().get_item("stop_recording").set_enabled(false).unwrap();
+        window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
+        window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
     });
 
     let output = process.wait().await.unwrap();
@@ -286,6 +294,10 @@ pub async fn record_custom(app: AppHandle, window: Window, area: &str, filename:
     let mut _stdin = process.stdin.take().unwrap();  //do not release process stdin at wait(), capture it to send SIGTERM to recording process
     let pid = process.id().unwrap();
 
+    window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
+    window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
+    window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
+
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
             let _output = Command::new("kill")
@@ -296,6 +308,7 @@ pub async fn record_custom(app: AppHandle, window: Window, area: &str, filename:
         });
     });
 
+    let window_ = window.clone();
     window.listen_global("stop", move |_event| {
         tokio::task::spawn(async move {
             let _output = Command::new("kill")
@@ -304,6 +317,9 @@ pub async fn record_custom(app: AppHandle, window: Window, area: &str, filename:
                 .output()
                 .await;
         });
+        window_.menu_handle().get_item("stop_reording").set_enabled(false).unwrap();
+        window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
+        window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
     });
 
     let output = process.wait().await.unwrap();

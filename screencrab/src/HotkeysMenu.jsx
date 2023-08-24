@@ -42,7 +42,8 @@ function KeyCaptureInput({value, onChange, name}) {
                 case "AltRight":
                     capturedKey = "Option";
                     break;
-                // Add other cases as needed
+                default: capturedKey = "";
+                break;
             }
         }
 
