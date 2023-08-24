@@ -29,7 +29,7 @@ impl Response {
 }
 
 pub async fn current_default_path() -> Response {
-    result = env::var("HOME").unwrap().to_string();
+    let result = env::var("HOME").unwrap().to_string();
 
     return Response { response: Some(result), error: None };
 }

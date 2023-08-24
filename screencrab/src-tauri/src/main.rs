@@ -53,6 +53,8 @@ async fn folder_dialog(handle: AppHandle) -> Response {
     return darwin::folder_dialog(handle).await;
     #[cfg(target_os = "linux")]
     return linux::folder_dialog(handle).await;
+    #[cfg(target_os = "windows")]
+    return windows::folder_dialog(handle).await;
 }
 
 #[tauri::command]
@@ -61,6 +63,8 @@ async fn current_default_path() -> Response {
     return darwin::current_default_path().await;
     #[cfg(target_os = "linux")]
     return linux::current_default_path().await;
+    #[cfg(target_os = "windows")]
+    return windows::current_default_path().await;
 }
 
 
@@ -205,6 +209,26 @@ fn main() {
                 .focused(false)
                 .build()
                 .unwrap();
+
+                #[cfg(target_os="windows")]
+                let area = tauri::WindowBuilder::new(
+                    app,
+                    "selector",
+                    tauri::WindowUrl::App("./blank.html".into()))
+                    .menu(create_selector_menu())
+                    .decorations(false)
+                    .transparent(true)
+                    .always_on_top(true)
+                    .resizable(true)
+                    .always_on_top(true)
+                    .skip_taskbar(true)
+                    .center()
+                    .title("")
+                    .content_protected(true)
+                    .minimizable(false)
+                    .focused(false)
+                    .build()
+                    .unwrap();
 
                 let monitor_size = area.current_monitor().unwrap().unwrap().size().to_owned();
                 let width = monitor_size.width*60/100;
