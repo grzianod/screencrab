@@ -4,7 +4,7 @@
 use chrono::prelude::*;
 use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition};
 use std::path::Path;
-use crate::menu::{create_context_menu, create_selector_menu};
+use crate::menu::{create_context_menu};
 use tauri::{Manager, SystemTray, SystemTrayEvent, api::process};
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -174,7 +174,7 @@ fn main() {
                 app,
                 "selector",
                 tauri::WindowUrl::App("./blank.html".into()))
-                .menu(create_selector_menu())
+                .menu(create_context_menu())
                 .title_bar_style(TitleBarStyle::Overlay)
                 .decorations(false)
                 .transparent(true)
