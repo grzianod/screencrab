@@ -356,7 +356,7 @@ fn main() {
                 size: _,
                 ..
             } => {
-                let window = app.get_window("main").unwrap();
+                let window = app.get_window("main_window").unwrap();
                 // toggle application window
                 if window.is_visible().unwrap() {
                     window.hide().unwrap();
