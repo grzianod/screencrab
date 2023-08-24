@@ -50,7 +50,7 @@ pub async fn folder_dialog(handle: AppHandle) -> Response {
         FileDialogBuilder::new().pick_folder(move |folder_path| {
             let result = match folder_path {
                 Some(path) => Response {
-                    response: Some(format!("{}/", path.to_string_lossy().to_string())),
+                    response: Some(format!("{}\\", path.to_string_lossy().to_string())),
                     error: None,
                 },
                 None => Response {
