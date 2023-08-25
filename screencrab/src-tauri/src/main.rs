@@ -230,12 +230,20 @@ fn main() {
                     .unwrap();
 
                 let monitor_size = area.current_monitor().unwrap().unwrap().size().to_owned();
-                let width = monitor_size.width*60/100;
-                let height = monitor_size.height*23/100;
+                let mut width;
+                let mut height;
+                if cfg!(target_os="windows") {
+                    width = monitor_size.width * 65 / 100;
+                    height = monitor_size.height * 25 / 100;
+                }
+                else {
+                    width = monitor_size.width * 60 / 100;
+                    height = monitor_size.height * 23 / 100;
+                }
+
 
                 area.set_size(PhysicalSize::new(width/2, height)).unwrap();
                 area.hide().unwrap();
-                area.menu_handle().get_item("capture_mouse_pointer").set_enabled(false).unwrap();
 
             let main_window = tauri::WindowBuilder::new(
                 app,
@@ -305,47 +313,49 @@ fn main() {
                     window_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
                 });
 
-                let area_ = area.clone();
-                let mut capture_mouse_pointer_ = capture_mouse_pointer.clone();
-                let mut copy_to_clipboard_ = copy_to_clipboard.clone();
-                let mut edit_after_capture_ = edit_after_capture.clone();
-                let mut record_external_audio_ = record_external_audio.clone();
-                let mut open_after_record_ = open_after_record.clone();
+                #[cfg(target_os="macos")] {
+                    let area_ = area.clone();
+                    let mut capture_mouse_pointer_ = capture_mouse_pointer.clone();
+                    let mut copy_to_clipboard_ = copy_to_clipboard.clone();
+                    let mut edit_after_capture_ = edit_after_capture.clone();
+                    let mut record_external_audio_ = record_external_audio.clone();
+                    let mut open_after_record_ = open_after_record.clone();
 
-                area.on_menu_event(move |event| {
-                    match event.menu_item_id() {
-                        "capture_mouse_pointer" => {
-                            let mut data = capture_mouse_pointer_.lock().unwrap();
-                            *data = !*data;
-                            area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                    area.on_menu_event(move |event| {
+                        match event.menu_item_id() {
+                            "capture_mouse_pointer" => {
+                                let mut data = capture_mouse_pointer_.lock().unwrap();
+                                *data = !*data;
+                                area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            }
+                            "copy_to_clipboard" => {
+                                let mut data = copy_to_clipboard_.lock().unwrap();
+                                *data = !*data;
+                                let mut value = edit_after_capture_.lock().unwrap();
+                                *value = !*data;
+                                area_.windows().get("main_window").unwrap().menu_handle().get_item("copy_to_clipboard").set_selected(*data).unwrap();
+                                area_.windows().get("main_window").unwrap().menu_handle().get_item("edit_after_capture").set_enabled(!*data).unwrap();
+                            }
+                            "edit_after_capture" => {
+                                let mut data = edit_after_capture_.lock().unwrap();
+                                *data = !*data;
+                                area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            }
+                            "record_external_audio" => {
+                                let mut data = record_external_audio_.lock().unwrap();
+                                *data = !*data;
+                                area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            }
+                            "open_after_record" => {
+                                let mut data = open_after_record_.lock().unwrap();
+                                *data = !*data;
+                                area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            }
+                            _ => {}
                         }
-                        "copy_to_clipboard" => {
-                            let mut data = copy_to_clipboard_.lock().unwrap();
-                            *data = !*data;
-                            let mut value = edit_after_capture_.lock().unwrap();
-                            *value = !*data;
-                            area_.windows().get("main_window").unwrap().menu_handle().get_item("copy_to_clipboard").set_selected(*data).unwrap();
-                            area_.windows().get("main_window").unwrap().menu_handle().get_item("edit_after_capture").set_enabled(!*data).unwrap();
-                        }
-                        "edit_after_capture" => {
-                            let mut data = edit_after_capture_.lock().unwrap();
-                            *data = !*data;
-                            area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
-                        }
-                        "record_external_audio" => {
-                            let mut data = record_external_audio_.lock().unwrap();
-                            *data = !*data;
-                            area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
-                        }
-                        "open_after_record" => {
-                            let mut data = open_after_record_.lock().unwrap();
-                            *data = !*data;
-                            area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
-                        }
-                        _ => {}
-                    }
-                    area_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
-                });
+                        area_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
+                    });
+                }
 
             Ok(())
         })
