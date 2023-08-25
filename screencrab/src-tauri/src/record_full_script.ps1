@@ -1,25 +1,44 @@
-Write-Host "Filename: $filename"
-Write-Host "Timer: $timer"
-Write-Host "Audio: $audio"
-Write-Host "Open File: $openfile"
-
 param(
     [string]$filename,
     [int]$timer,
-    [int]$audio,
-    [int]$openfile
+    [string]$audio,
+    [string]$openfile
 )
+
+# ffmpeg -list_devices true -f dshow -i dummy
+# Command to get current I/O devices
+
+# powershell -ExecutionPolicy Bypass -File C:\Users\Antonio\Downloads\screencrab\screencrab\src-tauri\src\record_full_script.ps1 -filename "C:\Users\Antonio\Downloads\test.mp4" -timer 10 -audio "true" -openfile "true"
+# Command by which script runs
 
 # Set up recording parameters
 $video_option = "gdigrab"
 $video_input = "desktop"
-$audio_option = if ($audio -eq 1) { "dshow" } else { "an" }
-$audio_input = if ($audio -eq 1) { "audio=Microphone" } else { "" } # Change 'Microphone' to the correct device name if different
+$audio = [System.Boolean]::Parse($audio)
+$openfile = [System.Boolean]::Parse($openfile)
+
+
+# Check if audio needs to be recorded
+if ($audio) {
+    $audio_option = "dshow"
+    $audio_input = "audio=Microphone (High Definition Audio Device)" # Change 'Microphone' to the correct device name if different
+} else {
+    $audio_option = "an"
+    $audio_input = $null
+}
+
+# Construct the ffmpeg command
+$ffmpeg_cmd = @("-y", "-f", $video_option, "-i", $video_input, "-t", $timer, $filename)
+
+# Add audio options if needed
+if ($audio) {
+    $ffmpeg_cmd += "-f", $audio_option, "-i", $audio_input
+}
 
 # Start the recording
-& ffmpeg -y -f $video_option -i $video_input -f $audio_option -i $audio_input -t $timer $filename
+& ffmpeg $ffmpeg_cmd
 
 # Open the file if required
-if ($openfile -eq 1) {
+if ($openfile) {
     Start-Process $filename
 }

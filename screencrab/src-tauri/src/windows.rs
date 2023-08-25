@@ -87,15 +87,17 @@ fn get_current_monitor_index(window: &Window) -> usize {
 }
 
 pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
-    const SCRIPT: &[u8] = include_bytes!(r".\src\screenshot_full_script.ps1");
+    const SCRIPT: &[u8] = include_bytes!("screenshot_full_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("screenshot_full_script.ps1");
     let mut temp_file = fs::File::create(&temp_file_path).unwrap();
-    temp_file.write_all(SCRIPT.as_bytes()).unwrap();
+    temp_file.write_all(SCRIPT).unwrap();
 
     let output = Command::new("powershell")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
         .arg("-File")
-        .arg(temp_file_path)
+        .arg(temp_file_path.clone())
         .arg("-filename")
         .arg(filename)
         .arg("-filetype")
@@ -138,15 +140,17 @@ pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, 
 }
 
 pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
-    const SCRIPT: &[u8] = include_bytes!(r".\src\screenshot_custom_script.ps1");
+    const SCRIPT: &[u8] = include_bytes!("screenshot_custom_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("screenshot_custom_script.ps1");
     let mut temp_file = fs::File::create(&temp_file_path).unwrap();
-    temp_file.write_all(SCRIPT.as_bytes()).unwrap();
+    temp_file.write_all(SCRIPT).unwrap();
 
     let output = Command::new("powershell")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
         .arg("-File")
-        .arg(temp_file_path)  // Assuming there's a custom script for this.
+        .arg(temp_file_path.clone())  // Assuming there's a custom script for this.
         .arg("-area")
         .arg(area)  // Pass the custom area string
         .arg("-filename")
