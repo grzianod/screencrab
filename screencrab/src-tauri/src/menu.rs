@@ -77,13 +77,22 @@ pub fn create_context_menu() -> Menu {
     let help = Submenu::new("Help",
                             Menu::new().add_item(CustomMenuItem::new("learn_more", "Learn More")));
 
-    Menu::new()
-    .add_submenu(about)
-    .add_submenu(capture)
-    .add_submenu(record)
-    .add_submenu(settings)
-    .add_submenu(help)
+    #[cfg(not(target_os = "macos"))] {
+        Menu::new()
+            .add_submenu(capture)
+            .add_submenu(record)
+            .add_submenu(settings)
+            .add_submenu(help)
+    }
 
+    #[cfg(target_os="macos")] {
+        Menu::new()
+            .add_submenu(about)
+            .add_submenu(capture)
+            .add_submenu(record)
+            .add_submenu(settings)
+            .add_submenu(help)
+    }
 }
 
 

@@ -158,8 +158,16 @@ fn resize_window_hotkeys(window: Window) {
 #[tauri::command]
 fn resize_window_default(window: Window) {
     let monitor_size = window.current_monitor().unwrap().unwrap().size().to_owned();
-    let width = monitor_size.width*60/100;
-    let height = monitor_size.height*23/100;
+    let mut height;
+    let mut width;
+    if cfg!(target_os="windows") {
+        width = monitor_size.width*65/100;
+        height = monitor_size.height*25/100;
+    }
+    else {
+        width = monitor_size.width*60/100;
+        height = monitor_size.height*23/100;
+    }
 
     window.set_size(PhysicalSize::new(width, height)).unwrap();
     window.set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
