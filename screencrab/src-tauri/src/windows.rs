@@ -90,8 +90,12 @@ pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, 
     const SCRIPT: &[u8] = include_bytes!("screenshot_full_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("screenshot_full_script.ps1");
-    let mut temp_file = fs::File::create(&temp_file_path).unwrap();
-    temp_file.write_all(SCRIPT).unwrap();
+
+    {
+        let mut temp_file = fs::File::create(&temp_file_path).unwrap();
+        temp_file.write_all(SCRIPT).unwrap();
+    }
+
 
     let output = Command::new("powershell")
         .arg("-ExecutionPolicy")
@@ -143,8 +147,11 @@ pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename
     const SCRIPT: &[u8] = include_bytes!("screenshot_custom_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("screenshot_custom_script.ps1");
-    let mut temp_file = fs::File::create(&temp_file_path).unwrap();
-    temp_file.write_all(SCRIPT).unwrap();
+
+    {
+        let mut temp_file = fs::File::create(&temp_file_path).unwrap();
+        temp_file.write_all(SCRIPT).unwrap();
+    }
 
     let output = Command::new("powershell")
         .arg("-ExecutionPolicy")
