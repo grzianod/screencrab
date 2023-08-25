@@ -230,8 +230,17 @@ fn main() {
                     .unwrap();
 
                 let monitor_size = area.current_monitor().unwrap().unwrap().size().to_owned();
-                let width = monitor_size.width*60/100;
-                let height = monitor_size.height*23/100;
+                let mut width;
+                let mut height;
+                if cfg!(target_os="windows") {
+                    width = monitor_size.width * 65 / 100;
+                    height = monitor_size.height * 25 / 100;
+                }
+                else {
+                    width = monitor_size.width * 60 / 100;
+                    height = monitor_size.height * 23 / 100;
+                }
+
 
                 area.set_size(PhysicalSize::new(width/2, height)).unwrap();
                 area.hide().unwrap();
