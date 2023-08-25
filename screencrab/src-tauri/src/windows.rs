@@ -203,11 +203,20 @@ pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename
 
 
 pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
+    const SCRIPT: &[u8] = include_bytes!("record_full_script.ps1");
+    let temp_dir = std::env::temp_dir();
+    let temp_file_path = temp_dir.join("record_full_script.ps1");
+
+    {
+        let mut temp_file = fs::File::create(&temp_file_path).unwrap();
+        temp_file.write_all(SCRIPT).unwrap();
+    }
+
     let output = Command::new("powershell")
         .arg("-ExecutionPolicy")
         .arg("Bypass")
         .arg("-File")
-        .arg("src/record_full_script.ps1")  // Name of the screen recording script
+        .arg(temp_file_path.clone())  // Name of the screen recording script
         .arg("-filename")
         .arg(filename)
         .arg("-timer")
