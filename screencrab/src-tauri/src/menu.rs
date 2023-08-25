@@ -86,25 +86,4 @@ pub fn create_context_menu() -> Menu {
 
 }
 
-pub fn create_selector_menu() -> Menu {
-    let about = Submenu::new("Selector",
-                             Menu::new()
-                                 .add_native_item(MenuItem::Services)
-                                 .add_native_item(MenuItem::Separator)
-                                 .add_native_item(MenuItem::Hide)
-                                 .add_native_item(MenuItem::HideOthers)
-                                 .add_native_item(MenuItem::ShowAll)
-                                 .add_native_item(MenuItem::Separator)
-                                 .add_native_item(MenuItem::Quit));
-    let settings = Submenu::new("Settings",
-                                Menu::new().add_item(CustomMenuItem::new("change_hotkeys".to_string(), "Change Shortcut Keys")));
-    let help = Submenu::new("Help",
-                            Menu::new().add_item(CustomMenuItem::new("learn_more", "Learn More")));
-
-    Menu::new()
-        .add_submenu(about)
-        .add_submenu(settings)
-        .add_submenu(help)
-}
-
 

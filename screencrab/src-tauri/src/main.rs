@@ -4,9 +4,10 @@
 use chrono::prelude::*;
 use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition};
 use std::path::Path;
-use crate::menu::{create_context_menu, create_selector_menu};
+use crate::menu::{create_context_menu};
 use tauri::{Manager, SystemTray, SystemTrayEvent, api::process};
-use std::cell::Cell;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 
 
@@ -173,7 +174,7 @@ fn main() {
                 app,
                 "selector",
                 tauri::WindowUrl::App("./blank.html".into()))
-                .menu(create_selector_menu())
+                .menu(create_context_menu())
                 .title_bar_style(TitleBarStyle::Overlay)
                 .decorations(false)
                 .transparent(true)
@@ -195,7 +196,6 @@ fn main() {
                 app,
                 "selector",
                 tauri::WindowUrl::App("./blank.html".into()))
-                .menu(create_selector_menu())
                 .decorations(false)
                 .transparent(true)
                 .always_on_top(true)
@@ -215,7 +215,6 @@ fn main() {
                     app,
                     "selector",
                     tauri::WindowUrl::App("./blank.html".into()))
-                    .menu(create_selector_menu())
                     .decorations(false)
                     .transparent(true)
                     .always_on_top(true)
@@ -236,13 +235,7 @@ fn main() {
 
                 area.set_size(PhysicalSize::new(width/2, height)).unwrap();
                 area.hide().unwrap();
-
-                let capture_mouse_pointer = Cell::new(false);
-                let copy_to_clipboard = Cell::new(false);
-                let edit_after_capture = Cell::new(true);
-                let record_external_audio = Cell::new(false);
-                let open_after_record = Cell::new(true);
-
+                area.menu_handle().get_item("capture_mouse_pointer").set_enabled(false).unwrap();
 
             let main_window = tauri::WindowBuilder::new(
                 app,
@@ -260,42 +253,98 @@ fn main() {
                 .build()
                 .unwrap();
 
-
-
                 main_window.set_size(PhysicalSize::new(width, height)).unwrap();
                 main_window.set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
 
+                let capture_mouse_pointer = Arc::new(Mutex::new(false));
+                let copy_to_clipboard = Arc::new(Mutex::new(false));
+                let edit_after_capture = Arc::new(Mutex::new(false));
+                let record_external_audio = Arc::new(Mutex::new(false));
+                let open_after_record = Arc::new(Mutex::new(false));
+
 
                 let window_ = main_window.clone();
+                let mut capture_mouse_pointer_ = capture_mouse_pointer.clone();
+                let mut copy_to_clipboard_ = copy_to_clipboard.clone();
+                let mut edit_after_capture_ = edit_after_capture.clone();
+                let mut record_external_audio_ = record_external_audio.clone();
+                let mut open_after_record_ = open_after_record.clone();
+
                 main_window.on_menu_event(move |event| {
                     match event.menu_item_id() {
                         "capture_mouse_pointer" => {
-                            capture_mouse_pointer.set(!capture_mouse_pointer.get());
-                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(capture_mouse_pointer.get()).unwrap();
+                            let mut data = capture_mouse_pointer_.lock().unwrap();
+                            *data = !*data;
+                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
                         }
                         "copy_to_clipboard" => {
-                            copy_to_clipboard.set(!copy_to_clipboard.get());
-                                edit_after_capture.set(!copy_to_clipboard.get());
-                                window_.menu_handle().get_item("edit_after_capture").set_selected(!copy_to_clipboard.get()).unwrap();
-                                window_.menu_handle().get_item("edit_after_capture").set_enabled(!copy_to_clipboard.get()).unwrap();
-
-                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(copy_to_clipboard.get()).unwrap();
+                            let mut data = copy_to_clipboard_.lock().unwrap();
+                            *data = !*data;
+                            let mut value = edit_after_capture_.lock().unwrap();
+                            *value = !*data;
+                            window_.menu_handle().get_item("copy_to_clipboard").set_selected(*data).unwrap();
+                            window_.menu_handle().get_item("edit_after_capture").set_enabled(!*data).unwrap();
                         }
                         "edit_after_capture" => {
-                            edit_after_capture.set(!edit_after_capture.get());
-                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(edit_after_capture.get()).unwrap();
+                            let mut data = edit_after_capture_.lock().unwrap();
+                            *data = !*data;
+                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
                         }
                         "record_external_audio" => {
-                            record_external_audio.set(!record_external_audio.get());
-                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(record_external_audio.get()).unwrap();
+                            let mut data = record_external_audio_.lock().unwrap();
+                            *data = !*data;
+                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
                         }
                         "open_after_record" => {
-                            open_after_record.set(!open_after_record.get());
-                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(open_after_record.get()).unwrap();
+                            let mut data = open_after_record_.lock().unwrap();
+                            *data = !*data;
+                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
                         }
                         _ => {}
                     }
-                    window_.emit_all(event.menu_item_id(), {}).unwrap();
+                    window_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
+                });
+
+                let area_ = area.clone();
+                let mut capture_mouse_pointer_ = capture_mouse_pointer.clone();
+                let mut copy_to_clipboard_ = copy_to_clipboard.clone();
+                let mut edit_after_capture_ = edit_after_capture.clone();
+                let mut record_external_audio_ = record_external_audio.clone();
+                let mut open_after_record_ = open_after_record.clone();
+
+                area.on_menu_event(move |event| {
+                    match event.menu_item_id() {
+                        "capture_mouse_pointer" => {
+                            let mut data = capture_mouse_pointer_.lock().unwrap();
+                            *data = !*data;
+                            area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                        }
+                        "copy_to_clipboard" => {
+                            let mut data = copy_to_clipboard_.lock().unwrap();
+                            *data = !*data;
+                            let mut value = edit_after_capture_.lock().unwrap();
+                            *value = !*data;
+                            area_.windows().get("main_window").unwrap().menu_handle().get_item("copy_to_clipboard").set_selected(*data).unwrap();
+                            area_.windows().get("main_window").unwrap().menu_handle().get_item("edit_after_capture").set_enabled(!*data).unwrap();
+                        }
+                        "edit_after_capture" => {
+                            let mut data = edit_after_capture_.lock().unwrap();
+                            *data = !*data;
+                            area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                        }
+                        "record_external_audio" => {
+                            let mut data = record_external_audio_.lock().unwrap();
+                            *data = !*data;
+                            area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                        }
+                        "open_after_record" => {
+                            let mut data = open_after_record_.lock().unwrap();
+                            *data = !*data;
+                            area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                        }
+                        _ => {}
+                    }
+                    area_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
                 });
 
             Ok(())
@@ -307,7 +356,7 @@ fn main() {
                 size: _,
                 ..
             } => {
-                let window = app.get_window("main").unwrap();
+                let window = app.get_window("main_window").unwrap();
                 // toggle application window
                 if window.is_visible().unwrap() {
                     window.hide().unwrap();
