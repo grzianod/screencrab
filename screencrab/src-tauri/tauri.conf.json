@@ -57,6 +57,7 @@
       "active": true,
       "targets": "all",
       "identifier": "com.screencrab",
+      "category": "Productivity",
       "macOS": {
         "minimumSystemVersion": "10.13",
         "entitlements": "entitlements.plist"

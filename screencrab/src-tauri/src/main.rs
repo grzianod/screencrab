@@ -74,11 +74,11 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
     let abs_path: String;
     let fs_path = Path::new(file_path);
 
-    if !fs_path.exists() || !fs_path.is_dir() {
+    if (!cfg!(target_os="windows") && file_path.ends_with("/") && (!fs_path.exists() || !fs_path.is_dir())) || ((cfg!(target_os="windows") && file_path.ends_with("\\") && (!fs_path.exists() || !fs_path.is_dir()))) {
         return Err(format!("\"{}\" is not a valid directory.", file_path));
     }
 
-    if file_path.ends_with("/") {
+    if (!cfg!(target_os="windows") && file_path.ends_with("/")) || (cfg!(target_os="windows") && file_path.ends_with("\\")) {
         let current_date = Local::now();
         let formatted_date = current_date.format("%Y-%m-%d at %H-%M-%S").to_string();
         abs_path = format!("{}Screen Crab {}.{}", file_path, formatted_date, file_type);
@@ -225,13 +225,11 @@ fn main() {
                     tauri::WindowUrl::App("./blank.html".into()))
                     .decorations(false)
                     .transparent(true)
-                    .always_on_top(true)
                     .resizable(true)
                     .always_on_top(true)
                     .skip_taskbar(true)
                     .center()
                     .title("")
-                    .content_protected(true)
                     .minimizable(false)
                     .focused(false)
                     .build()
@@ -250,7 +248,7 @@ fn main() {
                 }
 
 
-                area.set_size(PhysicalSize::new(width/2, height)).unwrap();
+                area.set_size(PhysicalSize::new(width/2 as u32, height*2 as u32)).unwrap();
                 area.hide().unwrap();
 
             let main_window = tauri::WindowBuilder::new(

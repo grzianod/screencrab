@@ -6,7 +6,8 @@ use tokio::sync::oneshot;
 use tokio::process::Command;
 use tauri::{Window, AppHandle, Manager, PhysicalPosition};
 use tauri::PhysicalSize;
-use std::process::Stdio;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tauri::api::notification::Notification;
 use std::fs;
 use std::io::Write;
@@ -87,6 +88,7 @@ fn get_current_monitor_index(window: &Window) -> usize {
 }
 
 pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
+    
     const SCRIPT: &[u8] = include_bytes!("screenshot_full_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("screenshot_full_script.ps1");
@@ -97,7 +99,7 @@ pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, 
     }
 
 
-    let output = Command::new("powershell")
+    let mut process = Arc::new(Mutex::new(Command::new("powershell")
         .arg("-ExecutionPolicy")
         .arg("Bypass")
         .arg("-File")
@@ -112,38 +114,44 @@ pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, 
         .arg(if pointer { "1" } else { "0" })  // Convert to "1" or "0"
         .arg("-clipboard")
         .arg(if clipboard { "1" } else { "0" })  // Convert to "1" or "0"
-        //.arg("-audio")
-        //.arg(if audio { "1" } else { "0" })  // Convert to "1" or "0"
         .arg("-openfile")
         .arg(if open_file { "1" } else { "0" })  // Convert to "1" or "0"
-        .output()
-        .await;
+        .spawn()
+        .unwrap()));
 
+    let process1 = Arc::clone(&process);
+    window.listen_global("kill", move |_event| {
+        let process2 = Arc::clone(&process1);
+        tokio::task::spawn(async move {
+            let mut handle = process2.lock().await;
+            handle.kill().await.unwrap();
+        });
+    });
+
+    let mut output = process.lock().await.wait().await.unwrap();
     fs::remove_file(&temp_file_path).unwrap();
-
-    match output {
-        Ok(o) => {
-            if o.status.success() {
-                Response {
-                    response: Some("Screenshot captured successfully!".to_string()),
-                    error: None,
-                }
-            } else {
-                let error_message = String::from_utf8_lossy(&o.stderr);
-                Response {
-                    response: None,
-                    error: Some(format!("Failed to capture screenshot: {}", error_message)),
-                }
-            }
-        }
-        Err(e) => Response {
-            response: None,
-            error: Some(format!("Failed to run PowerShell script: {}", e)),
-        },
+    if output.success() {
+        if clipboard {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body("Screen Crab saved to Clipboard")
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }; }
+        else {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body(format!("Screen Crab saved to {}", filename.to_string()))
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None }; }
     }
+    Notification::new(&app.config().tauri.bundle.identifier)
+        .body("Screen Crab cancelled")
+        .icon("icons/icon.icns").show().unwrap();
+    return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }
 
 pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
+    
     const SCRIPT: &[u8] = include_bytes!("screenshot_custom_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("screenshot_custom_script.ps1");
@@ -153,7 +161,7 @@ pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename
         temp_file.write_all(SCRIPT).unwrap();
     }
 
-    let output = Command::new("powershell")
+    let process = Command::new("powershell")
         .arg("-ExecutionPolicy")
         .arg("Bypass")
         .arg("-File")
@@ -170,39 +178,49 @@ pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename
         .arg(if pointer { "1" } else { "0" })  // Convert to "1" or "0"
         .arg("-clipboard")
         .arg(if clipboard { "1" } else { "0" })  // Convert to "1" or "0"
-        //.arg("-audio")
-        //.arg(if audio { "1" } else { "0" })  // Convert to "1" or "0" - Uncomment if you need audio support.
         .arg("-openfile")
         .arg(if open_file { "1" } else { "0" })  // Convert to "1" or "0"
-        .output()
-        .await;
+        .spawn()
+        .map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
 
+
+    let pid = process.as_ref().unwrap().id().unwrap();
+
+    window.listen_global("kill", move |_event| {
+        tokio::task::spawn(async move {
+            let _output = Command::new("kill")
+                .arg("-15")
+                .arg(pid.to_string())
+                .output()
+                .await;
+        });
+    });
+
+    let output = process.unwrap().wait().await.unwrap();
     fs::remove_file(&temp_file_path).unwrap();
-
-    match output {
-        Ok(o) => {
-            if o.status.success() {
-                Response {
-                    response: Some("Screenshot of custom area captured successfully!".to_string()),
-                    error: None,
-                }
-            } else {
-                let error_message = String::from_utf8_lossy(&o.stderr);
-                Response {
-                    response: None,
-                    error: Some(format!("Failed to capture custom area screenshot: {}", error_message)),
-                }
-            }
-        }
-        Err(e) => Response {
-            response: None,
-            error: Some(format!("Failed to run PowerShell script: {}", e)),
-        },
+    if output.success() {
+        if clipboard {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body("Screen Crab saved to Clipboard")
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }; }
+        else {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body(format!("Screen Crab saved to {}", filename.to_string()))
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None }; }
     }
+    Notification::new(&app.config().tauri.bundle.identifier)
+        .body("Screen Crab cancelled")
+        .icon("icons/icon.icns").show().unwrap();
+    return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }
 
 
-pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
+pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, timer: u64, _pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
+    
     const SCRIPT: &[u8] = include_bytes!("record_full_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("record_full_script.ps1");
@@ -212,7 +230,7 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
         temp_file.write_all(SCRIPT).unwrap();
     }
 
-    let output = Command::new("powershell")
+    let process = Command::new("powershell")
         .arg("-ExecutionPolicy")
         .arg("Bypass")
         .arg("-File")
@@ -225,29 +243,59 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
         .arg(if audio { "1" } else { "0" })  // Convert to "1" or "0"
         .arg("-openfile")
         .arg(if open_file { "1" } else { "0" })  // Convert to "1" or "0"
-        .output()
-        .await;
+        .spawn()
+        .map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
 
-    match output {
-        Ok(o) => {
-            if o.status.success() {
-                Response {
-                    response: Some("Screen recording captured successfully!".to_string()),
-                    error: None,
-                }
-            } else {
-                let error_message = String::from_utf8_lossy(&o.stderr);
-                Response {
-                    response: None,
-                    error: Some(format!("Failed to capture screen recording: {}", error_message)),
-                }
-            }
-        }
-        Err(e) => Response {
-            response: None,
-            error: Some(format!("Failed to run PowerShell script: {}", e)),
-        },
+    window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
+    window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
+    window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
+
+    let pid = process.as_ref().unwrap().id().unwrap();
+
+    window.listen_global("kill", move |_event| {
+        tokio::task::spawn(async move {
+            let _output = Command::new("kill")
+                .arg("-15")
+                .arg(pid.to_string())
+                .output()
+                .await;
+        });
+    });
+
+    let window_ = window.clone();
+    window.listen_global("stop", move |_event| {
+        tokio::task::spawn(async move {
+            let _output = Command::new("kill")
+                .arg("-2")  //SIGTERM
+                .arg(pid.to_string())
+                .output()
+                .await;
+        });
+        window_.menu_handle().get_item("stop_recording").set_enabled(false).unwrap();
+        window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
+        window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
+    });
+
+    let output = process.unwrap().wait().await.unwrap();
+    fs::remove_file(&temp_file_path).unwrap();
+    if output.success() {
+        if clipboard {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body("Screen Crab saved to Clipboard")
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to Clipboard")), error: None }; }
+        else {
+            Notification::new(&app.config().tauri.bundle.identifier)
+                .title("All done!")
+                .body(format!("Screen Crab saved to {}", filename.to_string()))
+                .icon("icons/icon.icns").show().unwrap();
+            return Response { response: Some(format!("Screen Crab saved to {}", filename.to_string())), error: None }; }
     }
+    Notification::new(&app.config().tauri.bundle.identifier)
+        .body("Screen Crab cancelled")
+        .icon("icons/icon.icns").show().unwrap();
+    return Response { response: None, error: Some(format!("Screen Crab cancelled")) };
 }
 
 
