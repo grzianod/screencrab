@@ -86,7 +86,11 @@ pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, 
     let filename1 = filename.to_string();
     let index = get_current_monitor_index(&window);
 
-    let mut command = Command::new("scrot");
+    let mut command = Command::new("menyoki");
+        command.arg("-q");
+        command.arg("capture");
+        command.arg("png");
+        command.arg("save \"-\" >");
 
     let process = command.arg(filename1.as_str()).spawn().map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
     let pid = process.as_ref().unwrap().id().unwrap();
