@@ -15,6 +15,7 @@ mod menu;
 
 
 use std::{env, fs};
+use std::ptr::null;
 use serde_json;
 
 #[derive(serde::Deserialize)]
@@ -30,7 +31,7 @@ struct CmdArgs {
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
 #[cfg(target_os = "macos")]
-use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior, NSPanel};
+use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior, NSPanel, NSApplicationPresentationOptions};
 #[cfg(target_os = "macos")]
 use cocoa::appkit::{NSApplication};
 #[cfg(target_os = "macos")]
