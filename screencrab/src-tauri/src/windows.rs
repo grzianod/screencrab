@@ -6,12 +6,9 @@ use tokio::sync::oneshot;
 use tokio::process::Command;
 use tauri::{Window, AppHandle, Manager, PhysicalPosition};
 use tauri::PhysicalSize;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tauri::api::notification::Notification;
 use std::fs;
 use std::io::Write;
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
@@ -88,7 +85,7 @@ fn get_current_monitor_index(window: &Window) -> usize {
 }
 
 pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
-    
+
     const SCRIPT: &[u8] = include_bytes!("screenshot_full_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("screenshot_full_script.ps1");
@@ -99,7 +96,7 @@ pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, 
     }
 
 
-    let mut process = Arc::new(Mutex::new(Command::new("powershell")
+    let mut process = Command::new("powershell")
         .arg("-ExecutionPolicy")
         .arg("Bypass")
         .arg("-File")
@@ -117,18 +114,17 @@ pub async fn capture_fullscreen(app: AppHandle, window: Window, filename: &str, 
         .arg("-openfile")
         .arg(if open_file { "1" } else { "0" })  // Convert to "1" or "0"
         .spawn()
-        .unwrap()));
+        .unwrap();
 
-    let process1 = Arc::clone(&process);
+    let pid = process.id().unwrap();
+
     window.listen_global("kill", move |_event| {
-        let process2 = Arc::clone(&process1);
         tokio::task::spawn(async move {
-            let mut handle = process2.lock().await;
-            handle.kill().await.unwrap();
+           Command::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().await;
         });
     });
 
-    let mut output = process.lock().await.wait().await.unwrap();
+    let mut output = process.wait().await.unwrap();
     fs::remove_file(&temp_file_path).unwrap();
     if output.success() {
         if clipboard {
@@ -161,7 +157,7 @@ pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename
         temp_file.write_all(SCRIPT).unwrap();
     }
 
-    let process = Command::new("powershell")
+    let mut process = Command::new("powershell")
         .arg("-ExecutionPolicy")
         .arg("Bypass")
         .arg("-File")
@@ -181,22 +177,18 @@ pub async fn capture_custom(app: AppHandle, window: Window, area: &str, filename
         .arg("-openfile")
         .arg(if open_file { "1" } else { "0" })  // Convert to "1" or "0"
         .spawn()
-        .map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
+        .unwrap();
 
 
-    let pid = process.as_ref().unwrap().id().unwrap();
+    let pid = process.id().unwrap();
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            let _output = Command::new("kill")
-                .arg("-15")
-                .arg(pid.to_string())
-                .output()
-                .await;
+            Command::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().await;
         });
     });
 
-    let output = process.unwrap().wait().await.unwrap();
+    let output = process.wait().await.unwrap();
     fs::remove_file(&temp_file_path).unwrap();
     if output.success() {
         if clipboard {
@@ -230,7 +222,7 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
         temp_file.write_all(SCRIPT).unwrap();
     }
 
-    let process = Command::new("powershell")
+    let mut process = Command::new("powershell")
         .arg("-ExecutionPolicy")
         .arg("Bypass")
         .arg("-File")
@@ -244,39 +236,33 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
         .arg("-openfile")
         .arg(if open_file { "1" } else { "0" })  // Convert to "1" or "0"
         .spawn()
-        .map_err(|e| Response { response: None, error: Some(format!("Failed to take screenshot: {}", e)) });
+        .unwrap();
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
 
-    let pid = process.as_ref().unwrap().id().unwrap();
+    let pid = process.id().unwrap();
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            let _output = Command::new("kill")
-                .arg("-15")
-                .arg(pid.to_string())
-                .output()
-                .await;
+            Command::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().await;
         });
     });
 
     let window_ = window.clone();
+    let pid2 = process.id().unwrap();
+
     window.listen_global("stop", move |_event| {
         tokio::task::spawn(async move {
-            let _output = Command::new("kill")
-                .arg("-2")  //SIGTERM
-                .arg(pid.to_string())
-                .output()
-                .await;
+            Command::new("Stop-Process").args(&["/PID", &pid2.to_string()]).output().await;
         });
         window_.menu_handle().get_item("stop_recording").set_enabled(false).unwrap();
         window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
         window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
     });
 
-    let output = process.unwrap().wait().await.unwrap();
+    let output = process.wait().await.unwrap();
     fs::remove_file(&temp_file_path).unwrap();
     if output.success() {
         if clipboard {

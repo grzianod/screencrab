@@ -282,6 +282,7 @@ fn main() {
                 main_window.set_size(PhysicalSize::new(width, height)).unwrap();
                 main_window.set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
 
+                #[cfg(target_os = "macos")]
                 unsafe {
                     let id = main_window.ns_window().unwrap() as cocoa::base::id;
                     NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces);
