@@ -4,5 +4,7 @@
 <dict>
   <key>NSMicrophoneUsageDescription</key>
   <string>Screen Crab uses the microphone to register external audio while recording the screen</string>
+  <key>LSUIElement</key>
+  <string>1</string>
 </dict>
 </plist>

@@ -30,6 +30,15 @@ struct CmdArgs {
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
 #[cfg(target_os = "macos")]
+use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior};
+#[cfg(target_os = "macos")]
+use cocoa::appkit::NSWindowTitleVisibility;
+#[cfg(target_os = "macos")]
+use cocoa::appkit::NSWindowStyleMask;
+
+
+
+#[cfg(target_os = "macos")]
 mod darwin;
 #[cfg(target_os = "macos")]
 use crate::darwin::Response;
@@ -259,7 +268,7 @@ fn main() {
                 .fullscreen(false)
                 .resizable(false)
                 .closable(true)
-                .minimizable(true)
+                .minimizable(false)
                 .focused(true)
                 .title("Screen Crab")
                 .content_protected(true)
@@ -270,6 +279,13 @@ fn main() {
                 main_window.set_size(PhysicalSize::new(width, height)).unwrap();
                 main_window.set_position(PhysicalPosition::new((monitor_size.width-width)/2, monitor_size.height-height*16/10)).unwrap();
 
+                unsafe {
+                    let id = main_window.ns_window().unwrap() as cocoa::base::id;
+                    NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces);
+                    NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorMoveToActiveSpace);
+                    NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorTransient);
+                    NSWindow::setTitlebarAppearsTransparent_(id, cocoa::base::YES);
+                }
                 let capture_mouse_pointer = Arc::new(Mutex::new(false));
                 let copy_to_clipboard = Arc::new(Mutex::new(false));
                 let edit_after_capture = Arc::new(Mutex::new(false));
