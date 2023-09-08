@@ -255,7 +255,7 @@ pub async fn record_fullscreen(app: AppHandle, window: Window, filename: &str, t
 
     window.listen_global("stop", move |_event| {
         tokio::task::spawn(async move {
-            Command::new("Stop-Process").args(&["/PID", &pid2.to_string()]).output().await;
+            Command::new("taskkill").args(&["/PID", &pid2.to_string()]).output().await;
         });
         window_.menu_handle().get_item("stop_recording").set_enabled(false).unwrap();
         window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
