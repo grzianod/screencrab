@@ -30,7 +30,9 @@ struct CmdArgs {
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
 #[cfg(target_os = "macos")]
-use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior};
+use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior, NSPanel};
+#[cfg(target_os = "macos")]
+use cocoa::appkit::{NSApplication};
 #[cfg(target_os = "macos")]
 use cocoa::appkit::NSWindowTitleVisibility;
 #[cfg(target_os = "macos")]
@@ -183,9 +185,8 @@ fn resize_window_default(window: Window) {
 }
 
 fn main() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .setup(|app| {
-
             #[cfg(target_os="macos")]
             let area = tauri::WindowBuilder::new(
                 app,
@@ -268,6 +269,7 @@ fn main() {
                 .fullscreen(false)
                 .resizable(false)
                 .closable(true)
+                .always_on_top(false)
                 .minimizable(false)
                 .focused(true)
                 .title("Screen Crab")
@@ -284,7 +286,15 @@ fn main() {
                     NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces);
                     NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorMoveToActiveSpace);
                     NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorTransient);
-                    NSWindow::setTitlebarAppearsTransparent_(id, cocoa::base::YES);
+                    NSWindow::setMovableByWindowBackground_(id, 1);
+                    let mut style_mask = id.styleMask();
+                    style_mask.set(
+                        NSWindowStyleMask::NSFullSizeContentViewWindowMask,
+                        true,
+                    );
+                    id.setStyleMask_(style_mask);
+                    NSWindow::setTitleVisibility_(id, NSWindowTitleVisibility::NSWindowTitleHidden);
+                    NSWindow::setTitlebarAppearsTransparent_(id, 1);
                 }
                 let capture_mouse_pointer = Arc::new(Mutex::new(false));
                 let copy_to_clipboard = Arc::new(Mutex::new(false));
@@ -390,13 +400,16 @@ fn main() {
             } => {
                 let window = app.get_window("main_window").unwrap();
                 // toggle application window
-                if window.is_visible().unwrap() {
-                    window.hide().unwrap();
-                } else {
                     window.show().unwrap();
                     window.set_focus().unwrap();
-                }
+
             },
+            _ => {}
+        })
+        .on_window_event(|event| match event.event() {
+            tauri::WindowEvent::CloseRequested { .. } => {
+                event.window().app_handle().exit(0);
+            }
             _ => {}
         })
         .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, resize_window_hotkeys, resize_window_default])
