@@ -61,3 +61,7 @@ if ($audio) {
 
 # Start the recording
 ffmpeg $ffmpeg_cmd
+
+if ($openfileBool) {
+    Start-Process $filename
+}

@@ -80,6 +80,11 @@ if ($filetype -eq "pdf") {
     $Bitmap.Save($filename, $imageFormat)
 }
 
+
+if ($openfileBool) {
+    Start-Process $filename
+}
+
 # Save the screenshot to clipboard
 if ($clipboardBool) {
     [System.Windows.Forms.Clipboard]::SetImage($Bitmap)
