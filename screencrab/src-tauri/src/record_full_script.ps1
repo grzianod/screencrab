@@ -40,15 +40,19 @@ if ($audio) {
 }
 
 # Construct the ffmpeg command
-$ffmpeg_cmd = @("-y", "-f", $video_option, "-i", $video_input, "-t", $timer, $filename)
+$ffmpeg_cmd = @("-y", "-f", $video_option, "-i", $video_input, $filename)
 
 # Add audio options if needed
 if ($audio) {
     $ffmpeg_cmd += "-f", $audio_option, "-i", $audio_input
 }
 
+1..$timer | ForEach-Object {
+    Start-Sleep -Seconds 1
+}
+
 # Start the recording
-ffmpeg $ffmpeg_cmd
+& ffmpeg $ffmpeg_cmd
 
 
 if ($openfileBool) {

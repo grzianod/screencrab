@@ -52,7 +52,14 @@ pub async fn folder_picker(handle: AppHandle) -> Response {
         FileDialogBuilder::new().pick_folder(move |folder_path| {
             let result =
                 match folder_path {
-                    Some(path) => Response::new(Some(format!("{}/", path.to_string_lossy().to_string())), None),
+                        Some(path) => {
+                            if cfg!(target_os="windows") {
+                                Response::new(Some(format!("{}\\", path.to_string_lossy().to_string())), None)
+                            }
+                            else {
+                                Response::new(Some(format!("{}/", path.to_string_lossy().to_string())), None)
+                        }
+                    }
                     None => Response::new(None, Some("The path is empty.".to_string()))
                 };
 

@@ -3079,6 +3079,7 @@ dependencies = [
  "tauri-plugin-positioner",
  "tauri-runtime-wry",
  "tokio",
+ "winapi",
 ]
 
 [[package]]
