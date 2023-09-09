@@ -60,9 +60,4 @@ if ($audio) {
 }
 
 # Start the recording
-& ffmpeg $ffmpeg_cmd
-
-# Open the file if required
-if ($openfile) {
-    Start-Process $filename
-}
+ffmpeg $ffmpeg_cmd
