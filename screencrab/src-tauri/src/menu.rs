@@ -21,7 +21,7 @@ pub struct Hotkeys {
 pub fn hotkeys() -> String {
     let dir = env::var("HOME").unwrap() + "/.screencrab";
     let file = dir.clone() + "/hotkeys.json";
-    if let Ok(result) = fs::create_dir(dir) {
+    if let Ok(_result) = fs::create_dir(dir) {
         let json_content = r#"{
         "custom_capture": "CmdOrCtrl+C",
         "fullscreen_capture": "Control+f",
