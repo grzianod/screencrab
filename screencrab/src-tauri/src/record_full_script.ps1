@@ -5,6 +5,19 @@ param(
     [string]$openfile
 )
 
+# Capture the output of ffmpeg listing devices
+$ffmpegOutput = & ffmpeg -list_devices true -f dshow -i dummy 2>&1
+
+# Parse the ffmpeg output to extract the microphone's name
+$microphoneName = $ffmpegOutput | Where-Object { $_ -match '"(.+)" \(audio\)' } | ForEach-Object { $matches[1] }
+
+# If a microphone name is found, use it; otherwise, use a default one
+if (-not [string]::IsNullOrWhiteSpace($microphoneName)) {
+    $audio_input = "audio=$microphoneName"
+} else {
+    $audio_input = "audio=Microphone (High Definition Audio Device)"  # Default
+}
+
 # ffmpeg -list_devices true -f dshow -i dummy
 # Command to get current I/O devices
 
@@ -21,7 +34,6 @@ $openfile = [System.Boolean]::Parse($openfile)
 # Check if audio needs to be recorded
 if ($audio) {
     $audio_option = "dshow"
-    $audio_input = "audio=Microphone (High Definition Audio Device)" # Change 'Microphone' to the correct device name if different
 } else {
     $audio_option = "an"
     $audio_input = $null

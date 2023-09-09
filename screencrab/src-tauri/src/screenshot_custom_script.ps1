@@ -1,10 +1,7 @@
-# IMPORTANT
-# SOLVE FULL CUSTOM AREA, NOW ONLY PARTIAL 
-
 param (
     [string]$filename,
     [string]$filetype,
-    [string]$area, # Format: "x1,y1,x2,y2"
+    [string]$area, # New Format: "x,y,width,height"
     [int]$timer,
     [string]$pointer,
     [string]$clipboard,
@@ -19,27 +16,14 @@ $openfileBool = ($openfile -eq "1")
 
 # Split the area into coordinates
 $coordinates = $area -split ','
-$x1 = [int]$coordinates[0]
-$y1 = [int]$coordinates[1]
-$x2 = [int]$coordinates[2]
-$y2 = [int]$coordinates[3]
+$x = [int]$coordinates[0]
+$y = [int]$coordinates[1]
+$Width = [int]$coordinates[2]
+$Height = [int]$coordinates[3]
 
-# Ensure that x1,y1 is top-left and x2,y2 is bottom-right
-if ($x1 -gt $x2) {
-    $temp = $x1
-    $x1 = $x2
-    $x2 = $temp
-}
-
-if ($y1 -gt $y2) {
-    $temp = $y1
-    $y1 = $y2
-    $y2 = $temp
-}
-
-# Width and Height of custom capture area
-$Width = $x2 - $x1
-$Height = $y2 - $y1
+# Compute the bottom right coordinates for debugging (not necessary for capture)
+$x2 = $x + $Width
+$y2 = $y + $Height
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -60,15 +44,15 @@ if ($timer -gt 0) {
 }
 
 if ($debug) {
-    Write-Host "Coordinates: $x1, $y1 to $x2, $y2 with Width: $Width and Height: $Height"
+    Write-Host "Coordinates: $x, $y to $x2, $y2 with Width: $Width and Height: $Height"
 }
 
-# Create a bitmap only for the custom capture area
+# Create a bitmap only for the specified capture area
 $Bitmap = New-Object System.Drawing.Bitmap $Width, $Height
 $Graphics = [System.Drawing.Graphics]::FromImage($Bitmap)
 
-# Capture the custom area
-$Graphics.CopyFromScreen($x1, $y1, 0, 0, $($Bitmap.Size))
+# Capture the specified area
+$Graphics.CopyFromScreen($x, $y, 0, 0, $($Bitmap.Size))
 
 # Add the mouse pointer to the screenshot
 if ($pointerBool) {
@@ -76,16 +60,41 @@ if ($pointerBool) {
     [System.Windows.Forms.Cursors]::Default.Draw($Graphics, $cursorBounds)
 }
 
-$imageFormat = switch ($filetype) {
-    "png" { [System.Drawing.Imaging.ImageFormat]::Png }
-    "jpeg" { [System.Drawing.Imaging.ImageFormat]::Jpeg }
-    "bmp" { [System.Drawing.Imaging.ImageFormat]::Bmp }
-    "gif" { [System.Drawing.Imaging.ImageFormat]::Gif }
-    "tiff" { [System.Drawing.Imaging.ImageFormat]::Tiff }
-    default { [System.Drawing.Imaging.ImageFormat]::Png }
-}
+if ($filetype -eq "pdf") {
+    $tempImage = "$filename-temp.png"
+    $Bitmap.Save($tempImage, [System.Drawing.Imaging.ImageFormat]::Png)
+    if (-not (Test-Path $tempImage)) {
+        Write-Error "Failed to save the temporary image: $tempImage"
+        exit 1
+    }
+    
+    try {
+        # Use ImageMagick to set a white background and then convert the image to PDF
+        $output = & magick convert $tempImage -background white -alpha remove -alpha off pdf:$filename 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "ImageMagick failed with message: $output"
+            exit 1
+        }
+    } catch {
+        Write-Error "There was an issue using ImageMagick: $_. Exception details: $($_.Exception.Message)"
+        exit 1
+    } finally {
+        if (Test-Path $tempImage) {
+            Remove-Item $tempImage
+        }
+    }
+} else {
+    $imageFormat = switch ($filetype) {
+        "png" { [System.Drawing.Imaging.ImageFormat]::Png }
+        "jpeg" { [System.Drawing.Imaging.ImageFormat]::Jpeg }
+        "bmp" { [System.Drawing.Imaging.ImageFormat]::Bmp }
+        "gif" { [System.Drawing.Imaging.ImageFormat]::Gif }
+        "tiff" { [System.Drawing.Imaging.ImageFormat]::Tiff }
+        default { [System.Drawing.Imaging.ImageFormat]::Png }
+    }
 
-$Bitmap.Save($filename, $imageFormat)
+    $Bitmap.Save($filename, $imageFormat)
+}
 
 if ($openfileBool) {
     Start-Process $filename

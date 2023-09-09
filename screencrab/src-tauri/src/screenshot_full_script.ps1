@@ -12,35 +12,6 @@ $pointerBool = ($pointer -eq "1")
 $clipboardBool = ($clipboard -eq "1")
 $openfileBool = ($openfile -eq "1")
 
-# Import the iTextSharp libraries
-Add-Type -TypeDefinition @"
-    using System;
-    using System.IO;
-    using iTextSharp.text;
-    using iTextSharp.text.pdf;
-"@ -Language CSharp
-
-function SaveImageToPdf($imagePath, $pdfPath) {
-    $document = New-Object iTextSharp.text.Document
-    $writer = [iTextSharp.text.pdf.PdfWriter]::GetInstance($document, (New-Object System.IO.FileStream($pdfPath, [System.IO.FileMode]::Create)))
-
-    $document.Open()
-
-    $image = [iTextSharp.text.Image]::GetInstance($imagePath)
-    $image.ScaleToFit($document.PageSize)
-    $image.Alignment = [iTextSharp.text.Image]::MIDDLE_ALIGN
-    $document.Add($image)
-
-    $document.Close()
-}
-
-if ($filetype -eq "pdf") {
-    $tempImage = "$filename-temp.png"
-    $Bitmap.Save($tempImage, [System.Drawing.Imaging.ImageFormat]::Png)
-    SaveImageToPdf -imagePath $tempImage -pdfPath $filename
-    Remove-Item $tempImage
-}
-
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
@@ -73,16 +44,41 @@ if ($pointerBool) {
     [System.Windows.Forms.Cursors]::Default.Draw($Graphics, $cursorBounds)
 }
 
-$imageFormat = switch ($filetype) {
-    "png" { [System.Drawing.Imaging.ImageFormat]::Png }
-    "jpeg" { [System.Drawing.Imaging.ImageFormat]::Jpeg }
-    "bmp" { [System.Drawing.Imaging.ImageFormat]::Bmp }
-    "gif" { [System.Drawing.Imaging.ImageFormat]::Gif }
-    "tiff" { [System.Drawing.Imaging.ImageFormat]::Tiff }
-    default { [System.Drawing.Imaging.ImageFormat]::Png }
-}
+if ($filetype -eq "pdf") {
+    $tempImage = "$filename-temp.png"
+    $Bitmap.Save($tempImage, [System.Drawing.Imaging.ImageFormat]::Png)
+    if (-not (Test-Path $tempImage)) {
+        Write-Error "Failed to save the temporary image: $tempImage"
+        exit 1
+    }
 
-$Bitmap.Save($filename, $imageFormat)
+    try {
+        # Use ImageMagick to set a white background and then convert the image to PDF
+        $output = & magick convert $tempImage -background white -alpha remove -alpha off pdf:$filename 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "ImageMagick failed with message: $output"
+            exit 1
+        }
+    } catch {
+        Write-Error "There was an issue using ImageMagick: $_. Exception details: $($_.Exception.Message)"
+        exit 1
+    } finally {
+        if (Test-Path $tempImage) {
+            Remove-Item $tempImage
+        }
+    }
+} else {
+    $imageFormat = switch ($filetype) {
+        "png" { [System.Drawing.Imaging.ImageFormat]::Png }
+        "jpeg" { [System.Drawing.Imaging.ImageFormat]::Jpeg }
+        "bmp" { [System.Drawing.Imaging.ImageFormat]::Bmp }
+        "gif" { [System.Drawing.Imaging.ImageFormat]::Gif }
+        "tiff" { [System.Drawing.Imaging.ImageFormat]::Tiff }
+        default { [System.Drawing.Imaging.ImageFormat]::Png }
+    }
+
+    $Bitmap.Save($filename, $imageFormat)
+}
 
 if ($openfileBool) {
     Start-Process $filename
