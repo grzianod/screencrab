@@ -55,9 +55,6 @@
       }
     },
     "bundle": {
-        "externalBin": [
-          ".\\bin\\ImageMagick-7.1.1"
-        ],
       "active": true,
       "targets": "all",
       "identifier": "com.screencrab",

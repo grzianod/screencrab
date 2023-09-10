@@ -548,7 +548,7 @@ function App() {
                             <Container className={"d-flex flex-column align-items-center justify-content-center p-0 mx-2 w-auto"}>
                                 <FormText>&nbsp;</FormText>
                                 { countdown > 0 ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Cancel</Button> :
-                                    mode==="record" && capturing ? <Button className={"m-1"} variant={"danger"} onClick={stopCapture}>Stop</Button> :
+                                    mode==="record" && capturing ? <Button className={"blink m-1"} variant={"danger"} onClick={stopCapture}>Stop</Button> :
                                         (mode !== undefined && view !== undefined) ? <Button className={"m-1"} variant={mode === "capture" ? "primary" : "danger"} onClick={async () => await capture(mode, view, duration, pointer, filePath, mode==="capture" ? captureType : recordType, clipboard, openFile)}>{mode[0].toUpperCase() + mode.slice(1)}</Button> : false}
                             </Container>
 
