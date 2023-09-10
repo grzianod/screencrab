@@ -7,6 +7,7 @@ import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
 import {PhysicalSize, WebviewWindow} from '@tauri-apps/api/window';
 import HotkeysMenu from "./HotkeysMenu.jsx";
+import { Command } from "@tauri-apps/api/shell";
 
 function App() {
   const [mode, setMode] = useState("capture");
@@ -229,6 +230,9 @@ function App() {
     });
     
     useEffect( () => {
+
+            const command = Command.sidecar("ImageMagick-7.1.1");
+            const output = command.execute().then( () => {});
 
                 invoke("current_default_path")
                     .then((result) => {
