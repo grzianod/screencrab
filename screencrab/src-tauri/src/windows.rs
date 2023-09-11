@@ -14,7 +14,7 @@ use tokio::io::AsyncWriteExt;
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
 
-    const SCRIPT: &[u8] = include_bytes!("screenshot_full_script.ps1");
+    const SCRIPT: &[u8] = include_bytes!("windows/screenshot_full_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("screenshot_full_script.ps1");
 
@@ -65,7 +65,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 
 pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
 
-    const SCRIPT: &[u8] = include_bytes!("screenshot_custom_script.ps1");
+    const SCRIPT: &[u8] = include_bytes!("windows/screenshot_custom_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("screenshot_custom_script.ps1");
 
@@ -118,7 +118,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
 
 
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
-    const SCRIPT: &[u8] = include_bytes!("record_full_script.ps1");
+    const SCRIPT: &[u8] = include_bytes!("windows/record_full_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("record_full_script.ps1");
 
@@ -180,7 +180,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
 
 
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
-    const SCRIPT: &[u8] = include_bytes!("record_custom_script.ps1");
+    const SCRIPT: &[u8] = include_bytes!("windows/record_custom_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("record_custom_script.ps1");
 

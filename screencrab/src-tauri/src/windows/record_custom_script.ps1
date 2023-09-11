@@ -59,7 +59,9 @@ if ($audio) {
     $ffmpeg_cmd += "-f", $audio_option, "-i", $audio_input
 }
 
-Start-Sleep -Seconds $timer
+if ($timer -gt 0) {
+    Start-Sleep -Seconds $timer
+}
 
 # Start the recording
 ffmpeg $ffmpeg_cmd
