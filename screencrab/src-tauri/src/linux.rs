@@ -4,7 +4,7 @@ use tauri::{Window, Manager};
 use crate::utils::*;
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
-    let index = get_current_monitor_index(&window);
+    let index = get_current_monitor_index(&window) - 1;
 
     let mut sleep_command = Command::new("sleep")
         .arg(&timer.to_string())
@@ -58,7 +58,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 }
 
 pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
-    let index = get_current_monitor_index(&window);
+    let index = get_current_monitor_index(&window) - 1;
     let mut sleep_command = Command::new("sleep")
         .arg(&timer.to_string())
         .spawn()
@@ -120,7 +120,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
 }
 
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
-    let index = get_current_monitor_index(&window);
+    let index = get_current_monitor_index(&window) - 1;
     let mut sleep_command = Command::new("sleep")
         .arg(&timer.to_string())
         .spawn()
@@ -186,7 +186,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
 }
 
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
-    let index = get_current_monitor_index(&window);
+    let index = get_current_monitor_index(&window) - 1;
     let mut sleep_command = Command::new("sleep")
         .arg(&timer.to_string())
         .spawn()
