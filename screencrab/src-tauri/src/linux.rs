@@ -37,6 +37,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
         .map_err(|e| Response::new(None, Some(format!("Failed to take screenshot: {}", e))))
         .unwrap();
 
+
     let output = process.wait().await.unwrap();
     let filename1 = filename.to_string();
     if output.success() {
