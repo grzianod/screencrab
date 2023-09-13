@@ -6,7 +6,7 @@ import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
 import {PhysicalSize, WebviewWindow} from '@tauri-apps/api/window';
-import HotkeysMenu from "./HotkeysMenu.jsx";
+import HotkeysMenu from "./Hotkeys.jsx";
 import { Command } from "@tauri-apps/api/shell";
 
 function App() {
@@ -228,11 +228,8 @@ function App() {
         });
         return () => promise.then(remove => remove());
     });
-    
-    useEffect( () => {
 
-            const command = Command.sidecar("ImageMagick-7.1.1");
-            const output = command.execute().then( () => {});
+    useEffect( () => {
 
                 invoke("current_default_path")
                     .then((result) => {
@@ -256,25 +253,11 @@ function App() {
     }
 
 
-    return (hotkeys ?
-            <>
-            <HotkeysMenu></HotkeysMenu>
-                <Button style={{zIndex: "3", position:"absolute", top: "0.5rem", right: "0.5rem"}} variant={"light"} className={"mx-2"}
-                        onClick={async () => {setHotkeys((hotkeys) => !hotkeys);
-                        await invoke("resize_window_default", {});
-                    } }>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                         className="bi bi-arrow-left" viewBox="0 0 16 16">
-                        <path fillRule="evenodd"
-                              d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-                    </svg>
-                </Button>
-                </>
-            :
+    return (
             <>
             <Button style={{zIndex: "3", position:"absolute", top: "0.5rem", right: "0.5rem"}} variant={"light"} className={"mx-2"}
                     onClick={async () =>  { setHotkeys((hotkeys) => !hotkeys)
-                        await invoke("resize_window_hotkeys", {});
+                        await invoke("window_hotkeys", {});
                     } }>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                      className="bi bi-gear-wide-connected" viewBox="0 0 16 16">

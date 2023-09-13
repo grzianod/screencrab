@@ -6,7 +6,7 @@ use chrono::prelude::*;
 use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition};
 use std::path::Path;
 use crate::menu::{create_context_menu};
-use crate::utils::{Response};
+use crate::utils::{Response, utils_dir};
 use tauri::{Manager, SystemTray, SystemTrayEvent, api::process};
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -45,7 +45,6 @@ mod windows;
 #[cfg(target_os = "linux")]
 mod linux;
 
-
 #[tauri::command]
 async fn folder_dialog(handle: AppHandle) -> Response {
     return utils::folder_picker(handle).await;
@@ -69,6 +68,23 @@ fn write_to_json(app: AppHandle, input: HotkeyInput) {
     process::restart(&app.env())
 }
 
+#[tauri::command(rename_all = "snake_case")]
+fn check_requirements(app: AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "macos")] {
+        app.windows().get("splashscreen").unwrap().hide().unwrap();
+        app.windows().get("main_window").unwrap().show().unwrap();
+        fs::write(utils_dir()+"/marker.json", b"1").unwrap();
+        Ok(())
+    }
+    #[cfg(target_os = "windows")] {
+        //TODO: ffmpeg check or installation
+        Ok(())
+    }
+    #[cfg(target_os = "linux")] {
+        //TODO: ffmpeg check or installation
+        Ok(())
+    }
+}
 
 #[tauri::command(rename_all = "snake_case")]
 async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &str, timer: u64, pointer: bool, file_path: &str, file_type: &str, clipboard: bool, audio: bool, open_file: bool) -> Result<Response, String> {
@@ -168,39 +184,46 @@ fn get_home_dir() -> String {
 
 #[tauri::command]
 async fn load_hotkeys() -> String {
-    menu::hotkeys()
+    utils::hotkeys()
 }
 
 #[tauri::command]
-fn resize_window_hotkeys(window: Window) {
-    let monitor_size = window.current_monitor().unwrap().unwrap().size().to_owned();
-    let width = monitor_size.width * 60 / 100;
-    let height = monitor_size.height * 80 / 100;
-
-    window.set_size(PhysicalSize::new(width, height)).unwrap();
-    window.set_position(PhysicalPosition::new((monitor_size.width - width) / 2, monitor_size.height - height * 12 / 10)).unwrap();
+fn window_hotkeys(app: AppHandle) {
+    app.windows().get("hotkeys").unwrap().show().unwrap();
 }
 
 #[tauri::command]
-fn resize_window_default(window: Window) {
-    let monitor_size = window.current_monitor().unwrap().unwrap().size().to_owned();
-    let height;
-    let width;
-    if cfg!(target_os="windows") {
-        width = monitor_size.width * 65 / 100;
-        height = monitor_size.height * 25 / 100;
-    } else {
-        width = monitor_size.width * 60 / 100;
-        height = monitor_size.height * 23 / 100;
+fn close_hotkeys(app: AppHandle) {
+    app.windows().get("hotkeys").unwrap().hide().unwrap();
+}
+
+fn splashscreen() -> bool {
+    let path = utils_dir()+"/marker.json";
+    match fs::metadata(path.clone()) {
+        Ok(_) => { false }
+        Err(_) => { true }
     }
-
-    window.set_size(PhysicalSize::new(width, height)).unwrap();
-    window.set_position(PhysicalPosition::new((monitor_size.width - width) / 2, monitor_size.height - height * 16 / 10)).unwrap();
 }
 
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
+            let hotkeys = tauri::WindowBuilder::new(
+                app,
+                "hotkeys",
+                tauri::WindowUrl::App("./hotkeys.html".into()))
+                .decorations(true)
+                .resizable(false)
+                .closable(false)
+                .always_on_top(true)
+                .title("Shortcut Keys")
+                .minimizable(false)
+                .focused(true)
+                .build()
+                .unwrap();
+            hotkeys.set_size(PhysicalSize::new(1600, 1500)).unwrap();
+            hotkeys.hide().unwrap();
+
             #[cfg(target_os = "macos")]
                 let area = tauri::WindowBuilder::new(
                 app,
@@ -211,7 +234,6 @@ fn main() {
                 .decorations(false)
                 .transparent(true)
                 .resizable(true)
-                .always_on_top(true)
                 .skip_taskbar(true)
                 .center()
                 .title("")
@@ -279,6 +301,7 @@ fn main() {
                 "main_window",
                 tauri::WindowUrl::App("./index.html".into()))
                 .menu(create_context_menu())
+                .visible(false)
                 .fullscreen(false)
                 .resizable(false)
                 .closable(true)
@@ -293,6 +316,25 @@ fn main() {
 
             main_window.set_size(PhysicalSize::new(width, height)).unwrap();
             main_window.set_position(PhysicalPosition::new((monitor_size.width - width) / 2, monitor_size.height - height * 16 / 10)).unwrap();
+
+            if splashscreen() {
+                let splash = tauri::WindowBuilder::new(
+                    app,
+                    "splashscreen",
+                    tauri::WindowUrl::App("./splashscreen.html".into()))
+                    .decorations(true)
+                    .resizable(false)
+                    .always_on_top(false)
+                    .title("Screen Crab")
+                    .minimizable(true)
+                    .focused(true)
+                    .build()
+                    .unwrap();
+                splash.set_size(PhysicalSize::new(1100, 1500)).unwrap();
+                splash.show().unwrap();
+                main_window.hide().unwrap();
+            }
+            else { main_window.show().unwrap(); }
 
             #[cfg(target_os = "macos")]
             unsafe {
@@ -425,7 +467,7 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, resize_window_hotkeys, resize_window_default])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

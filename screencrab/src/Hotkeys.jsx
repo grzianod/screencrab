@@ -5,7 +5,7 @@ import {invoke} from '@tauri-apps/api/tauri';
 import "./App.css";
 
 function saveData(data, setFeedback) {
-    invoke('write_to_json', {input: {hotkeyData: data}})  // Nest data under 'input' and 'hotkeyData'
+    invoke('write_to_json', {input: {hotkey_data: data}})  // Nest data under 'input' and 'hotkeyData'
         .then(() => {
             setFeedback("Hotkeys written successfully");
         })
@@ -150,10 +150,9 @@ function HotkeyForm({hotkeys, setHotkeys}) {
         <Container className="background-container p-0 m-0"></Container>
 
     <Container className={"flex-row justify-content-center p-0 m-0 w-100"}>
-        <div className={"col-4"}></div>
+        <div className={"col-3"}></div>
         <Container style={{zIndex: "2", position: "relative"}} className={"w-100 align-items-center p-1"}>
-            <strong style={{fontSize: "1.5rem"}} className={"m-2 mb-0"}>Shortcut Keys</strong>
-            <Form.Text className={"mb-3"}>Click on a shortcut and tap a new keys combination</Form.Text>
+            <strong><p style={{margin: "2rem"}}>Click on a shortcut and tap a new keys combination</p></strong>
             <Form onSubmit={handleSubmit}>
                 <Table className="table">
                     <tbody>
@@ -175,7 +174,8 @@ function HotkeyForm({hotkeys, setHotkeys}) {
                     </tbody>
                 </Table>
                 {duplicateHotkey && <p className="text-danger">This hotkey combination is already used by another command!</p>}
-                {!duplicateHotkey && <Button className={"m-3"} variant={"primary"} type="submit">Save and Restart</Button> }
+                <Button className={"m-3"} variant={"outline-danger"} onClick={async () => await invoke("close_hotkeys", {})}>Cancel</Button>
+                {!duplicateHotkey && <Button className={"m-3"} variant={"outline-dark"} type="submit">Save and Restart</Button> }
 
             </Form>
 
@@ -186,7 +186,7 @@ function HotkeyForm({hotkeys, setHotkeys}) {
     );
 }
 
-function App() {
+function Hotkeys() {
     const [hotkeys, setHotkeys] = useState({});
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -222,4 +222,4 @@ function App() {
 }
 
 
-export default App;
+export default Hotkeys;

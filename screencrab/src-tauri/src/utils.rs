@@ -1,10 +1,12 @@
 use serde::{Serialize, Deserialize};
 use tokio::sync::oneshot;
-use std::{env};
 use tauri::api::dialog::FileDialogBuilder;
 use tokio::task;
 use tokio::process::Command;
 use tauri::{AppHandle, Window, Manager};
+use std::{env, fs};
+use std::fs::File;
+use std::io::Write;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Response {
@@ -36,6 +38,50 @@ impl Response {
 
 }
 
+#[derive(Deserialize)]
+pub struct Hotkeys {
+    pub fullscreen_capture: String,
+    pub custom_capture: String,
+    pub capture_mouse_pointer: String,
+    pub copy_to_clipboard: String,
+    pub edit_after_capture: String,
+    pub fullscreen_record: String,
+    pub custom_record: String,
+    pub stop_recording: String,
+    pub record_external_audio: String,
+    pub open_after_record : String
+}
+
+pub fn utils_dir() -> String {
+    if !cfg!(target_os="windows") { env::var("HOME").unwrap() + "/.screencrab" }
+    else { env::var("APPDATA").unwrap() + "/.screencrab" }
+}
+
+pub fn hotkeys() -> String {
+    let file = utils_dir() + "/hotkeys.json";
+    if let Ok(_result) = fs::create_dir(utils_dir()) {
+        let json_content = r#"{
+        "custom_capture": "CmdOrCtrl+C",
+        "fullscreen_capture": "Control+f",
+        "capture_mouse_pointer": "Control+m",
+        "copy_to_clipboard": "Option+C",
+        "edit_after_capture": "CmdOrCtrl+O",
+        "open_after_record": "Option+O",
+        "custom_record": "CmdOrCtrl+Option+C",
+        "record_external_audio": "Option+A",
+        "fullscreen_record": "CmdOrCtrl+Option+F",
+        "stop_recording": "CmdOrCtrl+Option+S"
+    }"#;
+
+        // Create a new file and open it for writing
+        let mut file = File::create(file.to_string()).unwrap();
+
+        // Write the JSON content to the file
+        file.write_all(json_content.as_bytes()).unwrap();
+    }
+    fs::read_to_string(file).unwrap()
+}
+
 pub async fn folder_picker(handle: AppHandle) -> Response {
     let mut visible = false;
     // Create a channel to receive the result from the pick_folder closure
@@ -52,12 +98,12 @@ pub async fn folder_picker(handle: AppHandle) -> Response {
         FileDialogBuilder::new().pick_folder(move |folder_path| {
             let result =
                 match folder_path {
-                        Some(path) => {
-                            if cfg!(target_os="windows") {
-                                Response::new(Some(format!("{}\\", path.to_string_lossy().to_string())), None)
-                            }
-                            else {
-                                Response::new(Some(format!("{}/", path.to_string_lossy().to_string())), None)
+                    Some(path) => {
+                        if cfg!(target_os="windows") {
+                            Response::new(Some(format!("{}\\", path.to_string_lossy().to_string())), None)
+                        }
+                        else {
+                            Response::new(Some(format!("{}/", path.to_string_lossy().to_string())), None)
                         }
                     }
                     None => Response::new(None, Some("The path is empty.".to_string()))
@@ -79,7 +125,7 @@ pub async fn folder_picker(handle: AppHandle) -> Response {
 pub async fn current_default_path() -> Response {
     let mut result;
     #[cfg(target_os = "windows")] {
-        result = format!("{}\\", env::home_dir().unwrap().display());
+        result = format!("{}\\", env::var("HOME").unwrap().to_string());
     }
     #[cfg(target_os = "linux")] {
         result = format!("{}/", env::var("HOME").unwrap().to_string());
@@ -110,4 +156,3 @@ pub fn get_current_monitor_index(window: &Window) -> usize {
         .position(|item| item.name().unwrap().eq(window.current_monitor().unwrap().unwrap().name().unwrap()))
         .unwrap_or(0) + 1
 }
-
