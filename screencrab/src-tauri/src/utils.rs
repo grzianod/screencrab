@@ -8,6 +8,18 @@ use std::{env, fs};
 use std::fs::File;
 use std::io::Write;
 
+
+// the payload type must implement `Serialize` and `Clone`.
+#[derive(Clone, serde::Serialize)]
+pub struct Payload {
+    path: String
+}
+
+impl Payload {
+    pub fn new(path: String) -> Payload {
+        Payload { path }
+    }
+}
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Response {
     response: Option<String>,

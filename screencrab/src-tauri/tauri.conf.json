@@ -21,6 +21,19 @@
       "os": {
         "all": true
       },
+      "fs": {
+        "scope": ["/*/**"],
+        "all": true,
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true,
+        "copyFile": true,
+        "createDir": true,
+        "removeDir": true,
+        "removeFile": true,
+        "renameFile": true,
+        "exists": true
+      },
       "globalShortcut": {
         "all": true
       },
@@ -38,7 +51,8 @@
         "unminimize": true,
         "startDragging": true,
         "setResizable": true,
-        "setCursorGrab": true
+        "setCursorGrab": true,
+        "setCursorIcon": true
       },
       "dialog": {
         "all": true,

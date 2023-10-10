@@ -74,3 +74,17 @@ body {
 .blink {
   animation: blink 1s infinite;
 }
+
+.loading-spinner {
+
+  border: 1rem solid #f3f3f3; /* Light grey */
+  border-top: 1rem solid darkred; /* Blue */
+  border-radius: 50%;
+  animation: spinner 1.3s linear infinite;
+}
+
+.spinner-container {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+}

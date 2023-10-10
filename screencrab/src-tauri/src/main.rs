@@ -3,7 +3,7 @@ mod menu;
 mod utils;
 
 use chrono::prelude::*;
-use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition};
+use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition, Icon, CursorIcon};
 use std::path::Path;
 use crate::menu::{create_context_menu};
 use crate::utils::{Response, utils_dir};
@@ -13,6 +13,17 @@ use std::sync::Mutex;
 use tauri::api::notification::Notification;
 use std::{env, fs};
 use serde_json;
+use tauri::{LogicalPosition, LogicalSize};
+
+
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
+use sdl2::mouse::{MouseState, SystemCursor};
+use sdl2::rect::{Point, Rect};
+use sdl2::render::{Canvas, RenderTarget, CanvasBuilder};
+use sdl2::video::Window as OtherWindow;
+use sdl2::video::FullscreenType;
+
 
 #[derive(serde::Deserialize)]
 struct HotkeyInput {
@@ -27,11 +38,13 @@ struct CmdArgs {
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
 # [cfg(target_os = "macos")]
-use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior};
+use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior, NSCursor};
 # [cfg(target_os = "macos")]
 use cocoa::appkit::NSWindowTitleVisibility;
 # [cfg(target_os = "macos")]
 use cocoa::appkit::NSWindowStyleMask;
+use tauri_plugin_positioner::WindowExt;
+
 # [cfg(target_os = "macos")]
 mod darwin;
 
@@ -61,6 +74,87 @@ fn log_message(args: CmdArgs) {
 }
 
 #[tauri::command]
+fn click_and_drag(app: AppHandle) {
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
+    let monitor = app.windows().get("main_window").unwrap().current_monitor().unwrap().unwrap();
+    let size = monitor.size();
+
+    let mut window = video_subsystem
+        .window("", size.width, size.height)
+        .borderless()
+        .maximized()
+        .build()
+        .unwrap();
+
+    let position = window.position();
+    window.set_size(size.width - position.0 as u32, size.height - position.1 as u32).unwrap();
+    window.set_opacity(0.05).unwrap();
+    let mut canvas = window.into_canvas().build().unwrap();
+    sdl2::mouse::Cursor::from_system(SystemCursor::Crosshair).unwrap().set();
+
+    let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut dragging = false;
+    let mut start_point = Point::new(0, 0);
+    let mut end_point = Point::new(0, 0);
+
+    loop {
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => continue,
+                Event::MouseButtonDown { x, y, .. } => {
+                    dragging = true;
+                    app.windows().get("selector").unwrap().hide().unwrap();
+                    start_point = Point::new(x, y);
+                    end_point = Point::new(x, y);
+                }
+                Event::MouseButtonUp { .. } => {
+                    if dragging {
+                        app.windows().get("selector").unwrap().set_size(LogicalSize::new(end_point.x - start_point.x, end_point.y - start_point.y)).unwrap();
+                        app.windows().get("selector").unwrap().set_position(LogicalPosition::new(start_point.x + position.0, start_point.y + position.1)).unwrap();
+                        app.windows().get("selector").unwrap().show().unwrap();
+                        canvas.window_mut().hide();
+                        dragging = false;
+
+                        sdl2::mouse::Cursor::from_system(SystemCursor::Arrow).unwrap().set();
+                        return;
+                    }
+                }
+                Event::MouseMotion { x, y, .. } => {
+                    if dragging {
+                        end_point = Point::new(x, y);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Clear the canvas
+        canvas.set_draw_color(sdl2::pixels::Color::RGBA(255, 255, 255, 0));
+        canvas.clear();
+
+        // Draw the selected area rectangle if dragging
+        if dragging {
+            canvas.set_draw_color(sdl2::pixels::Color::RGBA(0, 0, 0, 255));
+            let rect = Rect::new(
+                start_point.x,
+                start_point.y,
+                (end_point.x - start_point.x) as u32,
+                (end_point.y - start_point.y) as u32,
+            );
+            canvas.draw_rect(rect).unwrap();
+        }
+
+        // Present the canvas
+        canvas.present();
+    }
+}
+
+#[tauri::command]
 fn write_to_json(app: AppHandle, input: HotkeyInput) {
     let path = get_home_dir() + "/.screencrab/hotkeys.json";
     let file_path = Path::new(&path);
@@ -74,16 +168,17 @@ fn check_requirements(app: AppHandle) -> Result<(), String> {
         app.windows().get("splashscreen").unwrap().hide().unwrap();
         app.windows().get("main_window").unwrap().show().unwrap();
         fs::write(utils_dir()+"/marker.json", b"1").unwrap();
-        Ok(())
+
     }
     #[cfg(target_os = "windows")] {
         //TODO: ffmpeg check or installation
-        Ok(())
+
     }
     #[cfg(target_os = "linux")] {
         //TODO: ffmpeg check or installation
-        Ok(())
+
     }
+    Ok(())
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -208,6 +303,7 @@ fn splashscreen() -> bool {
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
+
             let hotkeys = tauri::WindowBuilder::new(
                 app,
                 "hotkeys",
@@ -282,6 +378,7 @@ fn main() {
                 .unwrap();
 
             let monitor_size = area.current_monitor().unwrap().unwrap().size().to_owned();
+
             let width;
             let height;
             if cfg!(target_os="windows") {
@@ -292,8 +389,6 @@ fn main() {
                 height = monitor_size.height * 23 / 100;
             }
 
-
-            area.set_size(PhysicalSize::new(width / 2 as u32, height * 2 as u32)).unwrap();
             area.hide().unwrap();
 
             let main_window = tauri::WindowBuilder::new(
@@ -334,7 +429,29 @@ fn main() {
                 splash.show().unwrap();
                 main_window.hide().unwrap();
             }
-            else { main_window.show().unwrap(); }
+            else {
+                main_window.show().unwrap();
+            }
+
+            let annotation_tools = tauri::WindowBuilder::new(
+                app,
+                "annotation_tools",
+                tauri::WindowUrl::App("./annotation_tools.html".into()))
+                .menu(create_context_menu())
+                .closable(false)
+                .resizable(false)
+                .minimizable(false)
+                .title("Annotation Tools")
+                .decorations(true)
+                .resizable(true)
+                .center()
+                .minimizable(true)
+                .focused(false)
+                .build()
+                .unwrap();
+
+            annotation_tools.hide().unwrap();
+            annotation_tools.set_size(PhysicalSize::new(monitor_size.width * 8/10, monitor_size.height * 8/10)).unwrap();
 
             #[cfg(target_os = "macos")]
             unsafe {
@@ -352,6 +469,7 @@ fn main() {
                 NSWindow::setTitleVisibility_(id, NSWindowTitleVisibility::NSWindowTitleHidden);
                 NSWindow::setTitlebarAppearsTransparent_(id, 1);
             }
+
             let capture_mouse_pointer = Arc::new(Mutex::new(false));
             let copy_to_clipboard = Arc::new(Mutex::new(false));
             let edit_after_capture = Arc::new(Mutex::new(false));
@@ -467,7 +585,7 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, click_and_drag])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

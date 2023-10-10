@@ -1,13 +1,11 @@
 import {useEffect, useState} from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { invoke } from "@tauri-apps/api/tauri";
-import {emit, listen, once} from '@tauri-apps/api/event'
+import {emit, listen} from '@tauri-apps/api/event'
 import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
-import {PhysicalSize, WebviewWindow} from '@tauri-apps/api/window';
-import HotkeysMenu from "./Hotkeys.jsx";
-import { Command } from "@tauri-apps/api/shell";
+import {WebviewWindow} from '@tauri-apps/api/window';
 
 function App() {
   const [mode, setMode] = useState("capture");
@@ -128,7 +126,8 @@ function App() {
     async function setCaptureCustom() {
         setMode("capture");
         setView("custom");
-        await WebviewWindow.getByLabel('selector').show();
+        await WebviewWindow.getByLabel("selector").hide();
+        await invoke("click_and_drag", {}).then( () => {});
     }
 
     async function setRecordFullscreen() {
@@ -141,7 +140,8 @@ function App() {
     async function setRecordCustom() {
         setMode("record");
         setView("custom");
-        await WebviewWindow.getByLabel('selector').show()
+        await WebviewWindow.getByLabel("selector").hide();
+        await invoke("click_and_drag", {}).then( () => {});
         setClipboard(false);
     }
 

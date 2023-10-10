@@ -35,7 +35,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
         if !clipboard && open_file {
             // Use tokio::task::spawn to execute the opening
             let _open_task = task::spawn(async move {
-                let _open = Command::new("open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e))));
+                let _open = Command::new("open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
             });
         }
         if clipboard {
@@ -60,7 +60,6 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     command.args(&["-t", file_type]);
     command.args(&["-T", timer.to_string().as_str()]);
     command.args(&["-D", index.to_string().as_str()]);
-
 
     let process = command.arg(filename1.as_str()).spawn().map_err(|e| Response::new(None,Some(format!("Failed to take screenshot: {}", e)) ));
     let pid = process.as_ref().unwrap().id().unwrap();

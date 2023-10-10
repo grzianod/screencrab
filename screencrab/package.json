@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tauri-apps/plugin-dialog": "^2.0.0-alpha.0",
+    "@tldraw/tldraw": "1.29.2",
     "bootstrap": "^5.3.0",
     "bootstrap-icons": "^1.10.5",
     "dayjs": "^1.11.9",
@@ -19,6 +20,8 @@
     "react-countdown": "^2.3.5",
     "react-dom": "^18.2.0",
     "react-file-picker": "^0.0.6",
+    "react-native": "^0.72.4",
+    "react-native-fs": "^2.20.0",
     "tauri-plugin-spotlight-api": "^0.1.2",
     "validator": "^13.9.0"
   },
