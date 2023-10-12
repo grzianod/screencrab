@@ -17,15 +17,6 @@ use serde_json;
 use tauri::{LogicalPosition, LogicalSize};
 
 
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use sdl2::mouse::{MouseState, SystemCursor};
-use sdl2::rect::{Point, Rect};
-use sdl2::render::{Canvas, RenderTarget, CanvasBuilder};
-use sdl2::video::Window as OtherWindow;
-use sdl2::video::FullscreenType;
-
-
 #[derive(serde::Deserialize)]
 struct HotkeyInput {
     hotkey_data: serde_json::Value,
@@ -36,8 +27,9 @@ struct CmdArgs {
     message: String,
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(target_os="macos")]
 use tauri::TitleBarStyle;
+use tauri::utils::TitleBarStyle;
 #[cfg(target_os = "macos")]
 use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior, NSCursor};
 #[cfg(target_os = "macos")]
@@ -78,10 +70,11 @@ fn custom_area_selection(app: AppHandle, x: f64, y: f64, width: f64, height: f64
     let offset = LogicalPosition::new(app.windows().get("helper").unwrap().inner_position().unwrap().x as f64,app.windows().get("helper").unwrap().outer_position().unwrap().y as f64);
     let pos = LogicalPosition::new(x + offset.x/2f64, y + offset.y/2f64);
 
+    app.windows().get("helper").unwrap().hide().unwrap();
     app.windows().get("selector").unwrap().set_size(LogicalSize::new(width, height)).unwrap();
     app.windows().get("selector").unwrap().set_position(pos).unwrap();
     app.windows().get("selector").unwrap().show().unwrap();
-    app.windows().get("helper").unwrap().hide().unwrap();
+    app.windows().get("helper").unwrap().minimize().unwrap();
 }
 
 #[tauri::command]
@@ -100,6 +93,9 @@ fn check_requirements(app: AppHandle) -> Result<(), String> {
         fs::write(utils_dir() + "/marker.json", b"1").unwrap();
     }
     #[cfg(target_os = "windows")] {
+        app.windows().get("splashscreen").unwrap().hide().unwrap();
+        app.windows().get("main_window").unwrap().show().unwrap();
+        fs::write(utils_dir() + "/marker.json", b"1").unwrap();
         //TODO: ffmpeg check or installation
     }
     #[cfg(target_os = "linux")] {
@@ -303,19 +299,48 @@ fn main() {
                 .build()
                 .unwrap();
 
+            #[cfg(target_os = "macos")]
             let helper = tauri::WindowBuilder::new(
                 app,
                 "helper",
                 tauri::WindowUrl::App("./helper.html".into()))
+                .title_bar_style(TitleBar::Overlay)
                 .menu(create_context_menu())
-                .title_bar_style(TitleBarStyle::Overlay)
+                .decorations(false)
+                .transparent(true)
+                .resizable(false)
+                .always_on_top(true)
+                .minimizable(false)
+                .maximized(true)
+                .focused(true)
+                .build()
+                .unwrap();
+
+            #[cfg(target_os = "windows")]
+            let helper = tauri::WindowBuilder::new(
+                app,
+                "helper",
+                tauri::WindowUrl::App("./helper.html".into()))
                 .decorations(false)
                 .transparent(true)
                 .resizable(false)
                 .always_on_top(true)
                 .minimizable(false)
                 .focused(true)
-                .maximized(true)
+                .build()
+                .unwrap();
+
+            #[cfg(target_os = "linux")]
+                let helper = tauri::WindowBuilder::new(
+                app,
+                "helper",
+                tauri::WindowUrl::App("./helper.html".into()))
+                .decorations(false)
+                .transparent(true)
+                .resizable(false)
+                .always_on_top(true)
+                .minimizable(false)
+                .focused(true)
                 .build()
                 .unwrap();
 

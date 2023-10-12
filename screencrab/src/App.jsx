@@ -121,6 +121,7 @@ function App() {
         setMode("capture");
         setView("fullscreen");
         await WebviewWindow.getByLabel('helper').hide();
+        await WebviewWindow.getByLabel("helper").minimize();
         await WebviewWindow.getByLabel('selector').hide();
     }
 
@@ -128,6 +129,7 @@ function App() {
         setMode("capture");
         setView("custom");
         await WebviewWindow.getByLabel('helper').show();
+        await WebviewWindow.getByLabel("helper").maximize();
         await WebviewWindow.getByLabel('selector').hide();
     }
 
@@ -135,6 +137,7 @@ function App() {
         setMode("record");
         setView("fullscreen");
         await WebviewWindow.getByLabel('helper').hide();
+        await WebviewWindow.getByLabel("helper").minimize();
         await WebviewWindow.getByLabel('selector').hide();
         setClipboard(false);
     }
@@ -143,6 +146,7 @@ function App() {
         setMode("record");
         setView("custom");
         await WebviewWindow.getByLabel('helper').show();
+        await WebviewWindow.getByLabel("helper").maximize();
         await WebviewWindow.getByLabel('selector').hide();
         setClipboard(false);
     }
