@@ -1,4 +1,5 @@
 #![cfg_attr(all(not(debug_assertions), target_os = "macos"), windows_subsystem = "console")]
+
 mod menu;
 mod utils;
 
@@ -37,23 +38,21 @@ struct CmdArgs {
 
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
-# [cfg(target_os = "macos")]
+#[cfg(target_os = "macos")]
 use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior, NSCursor};
-# [cfg(target_os = "macos")]
+#[cfg(target_os = "macos")]
 use cocoa::appkit::NSWindowTitleVisibility;
-# [cfg(target_os = "macos")]
+#[cfg(target_os = "macos")]
 use cocoa::appkit::NSWindowStyleMask;
 use tauri_plugin_positioner::WindowExt;
 
 
-# [cfg(target_os = "macos")]
+#[cfg(target_os = "macos")]
 mod darwin;
-
 
 
 #[cfg(target_os = "windows")]
 mod windows;
-
 
 
 #[cfg(target_os = "linux")]
@@ -75,84 +74,14 @@ fn log_message(args: CmdArgs) {
 }
 
 #[tauri::command]
-fn click_and_drag(app: AppHandle) {
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-    let monitor = app.windows().get("main_window").unwrap().current_monitor().unwrap().unwrap();
-    let size = monitor.size();
+fn custom_area_selection(app: AppHandle, x: f64, y: f64, width: f64, height: f64) {
+    let offset = LogicalPosition::new(app.windows().get("helper").unwrap().inner_position().unwrap().x as f64,app.windows().get("helper").unwrap().outer_position().unwrap().y as f64);
+    let pos = LogicalPosition::new(x + offset.x/2f64, y + offset.y/2f64);
 
-    let mut window = video_subsystem
-        .window("", size.width, size.height)
-        .borderless()
-        .maximized()
-        .build()
-        .unwrap();
-
-    let position = window.position();
-    window.set_size(size.width - position.0 as u32, size.height - position.1 as u32).unwrap();
-    window.set_opacity(0.05).unwrap();
-    let mut canvas = window.into_canvas().build().unwrap();
-    sdl2::mouse::Cursor::from_system(SystemCursor::Crosshair).unwrap().set();
-
-    let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut dragging = false;
-    let mut start_point = Point::new(0, 0);
-    let mut end_point = Point::new(0, 0);
-
-    loop {
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => continue,
-                Event::MouseButtonDown { x, y, .. } => {
-                    dragging = true;
-                    app.windows().get("selector").unwrap().hide().unwrap();
-                    start_point = Point::new(x, y);
-                    end_point = Point::new(x, y);
-                }
-                Event::MouseButtonUp { .. } => {
-                    if dragging {
-                        app.windows().get("selector").unwrap().set_size(LogicalSize::new(end_point.x - start_point.x, end_point.y - start_point.y)).unwrap();
-                        app.windows().get("selector").unwrap().set_position(LogicalPosition::new(start_point.x + position.0, start_point.y + position.1)).unwrap();
-                        app.windows().get("selector").unwrap().show().unwrap();
-                        canvas.window_mut().hide();
-                        dragging = false;
-
-                        sdl2::mouse::Cursor::from_system(SystemCursor::Arrow).unwrap().set();
-                        return;
-                    }
-                }
-                Event::MouseMotion { x, y, .. } => {
-                    if dragging {
-                        end_point = Point::new(x, y);
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // Clear the canvas
-        canvas.set_draw_color(sdl2::pixels::Color::RGBA(255, 255, 255, 0));
-        canvas.clear();
-
-        // Draw the selected area rectangle if dragging
-        if dragging {
-            canvas.set_draw_color(sdl2::pixels::Color::RGBA(0, 0, 0, 255));
-            let rect = Rect::new(
-                start_point.x,
-                start_point.y,
-                (end_point.x - start_point.x) as u32,
-                (end_point.y - start_point.y) as u32,
-            );
-            canvas.draw_rect(rect).unwrap();
-        }
-
-        // Present the canvas
-        canvas.present();
-    }
+    app.windows().get("selector").unwrap().set_size(LogicalSize::new(width, height)).unwrap();
+    app.windows().get("selector").unwrap().set_position(pos).unwrap();
+    app.windows().get("selector").unwrap().show().unwrap();
+    app.windows().get("helper").unwrap().hide().unwrap();
 }
 
 #[tauri::command]
@@ -168,16 +97,13 @@ fn check_requirements(app: AppHandle) -> Result<(), String> {
     #[cfg(target_os = "macos")] {
         app.windows().get("splashscreen").unwrap().hide().unwrap();
         app.windows().get("main_window").unwrap().show().unwrap();
-        fs::write(utils_dir()+"/marker.json", b"1").unwrap();
-
+        fs::write(utils_dir() + "/marker.json", b"1").unwrap();
     }
     #[cfg(target_os = "windows")] {
         //TODO: ffmpeg check or installation
-
     }
     #[cfg(target_os = "linux")] {
         //TODO: ffmpeg check or installation
-
     }
     Ok(())
 }
@@ -294,7 +220,7 @@ fn close_hotkeys(app: AppHandle) {
 }
 
 fn splashscreen() -> bool {
-    let path = utils_dir()+"/marker.json";
+    let path = utils_dir() + "/marker.json";
     match fs::metadata(path.clone()) {
         Ok(_) => { false }
         Err(_) => { true }
@@ -304,7 +230,6 @@ fn splashscreen() -> bool {
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
-
             let hotkeys = tauri::WindowBuilder::new(
                 app,
                 "hotkeys",
@@ -378,6 +303,24 @@ fn main() {
                 .build()
                 .unwrap();
 
+            let helper = tauri::WindowBuilder::new(
+                app,
+                "helper",
+                tauri::WindowUrl::App("./helper.html".into()))
+                .menu(create_context_menu())
+                .title_bar_style(TitleBarStyle::Overlay)
+                .decorations(false)
+                .transparent(true)
+                .resizable(false)
+                .always_on_top(true)
+                .minimizable(false)
+                .focused(true)
+                .maximized(true)
+                .build()
+                .unwrap();
+
+            helper.hide().unwrap();
+
             let monitor_size = area.current_monitor().unwrap().unwrap().size().to_owned();
 
             let width;
@@ -429,30 +372,9 @@ fn main() {
                 splash.set_size(PhysicalSize::new(1100, 1500)).unwrap();
                 splash.show().unwrap();
                 main_window.hide().unwrap();
-            }
-            else {
+            } else {
                 main_window.show().unwrap();
             }
-
-            let annotation_tools = tauri::WindowBuilder::new(
-                app,
-                "annotation_tools",
-                tauri::WindowUrl::App("./annotation_tools.html".into()))
-                .menu(create_context_menu())
-                .closable(false)
-                .resizable(false)
-                .minimizable(false)
-                .title("Annotation Tools")
-                .decorations(true)
-                .resizable(true)
-                .center()
-                .minimizable(true)
-                .focused(false)
-                .build()
-                .unwrap();
-
-            annotation_tools.hide().unwrap();
-            annotation_tools.set_size(PhysicalSize::new(monitor_size.width * 8/10, monitor_size.height * 8/10)).unwrap();
 
             #[cfg(target_os = "macos")]
             unsafe {
@@ -562,6 +484,47 @@ fn main() {
                     }
                     area_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
                 });
+
+                let helper_ = helper.clone();
+                let capture_mouse_pointer_ = capture_mouse_pointer.clone();
+                let copy_to_clipboard_ = copy_to_clipboard.clone();
+                let edit_after_capture_ = edit_after_capture.clone();
+                let record_external_audio_ = record_external_audio.clone();
+                let open_after_record_ = open_after_record.clone();
+                helper.on_menu_event(move |event| {
+                    match event.menu_item_id() {
+                        "capture_mouse_pointer" => {
+                            let mut data = capture_mouse_pointer_.lock().unwrap();
+                            *data = !*data;
+                            helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                        }
+                        "copy_to_clipboard" => {
+                            let mut data = copy_to_clipboard_.lock().unwrap();
+                            *data = !*data;
+                            let mut value = edit_after_capture_.lock().unwrap();
+                            *value = !*data;
+                            helper_.windows().get("main_window").unwrap().menu_handle().get_item("copy_to_clipboard").set_selected(*data).unwrap();
+                            helper_.windows().get("main_window").unwrap().menu_handle().get_item("edit_after_capture").set_enabled(!*data).unwrap();
+                        }
+                        "edit_after_capture" => {
+                            let mut data = edit_after_capture_.lock().unwrap();
+                            *data = !*data;
+                            helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                        }
+                        "record_external_audio" => {
+                            let mut data = record_external_audio_.lock().unwrap();
+                            *data = !*data;
+                            helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                        }
+                        "open_after_record" => {
+                            let mut data = open_after_record_.lock().unwrap();
+                            *data = !*data;
+                            helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                        }
+                        _ => {}
+                    }
+                    helper_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
+                });
             }
 
             Ok(())
@@ -586,7 +549,7 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, click_and_drag])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, custom_area_selection])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

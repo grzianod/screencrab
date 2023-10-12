@@ -5,7 +5,7 @@ import {emit, listen} from '@tauri-apps/api/event'
 import {Container, Button, FormText, Form, Dropdown} from "react-bootstrap";
 import "./App.css";
 import isEmpty from "validator/es/lib/isEmpty.js";
-import {WebviewWindow} from '@tauri-apps/api/window';
+import {LogicalPosition, LogicalSize, WebviewWindow} from '@tauri-apps/api/window';
 
 function App() {
   const [mode, setMode] = useState("capture");
@@ -120,28 +120,30 @@ function App() {
     async function setCaptureFullscreen() {
         setMode("capture");
         setView("fullscreen");
+        await WebviewWindow.getByLabel('helper').hide();
         await WebviewWindow.getByLabel('selector').hide();
     }
 
     async function setCaptureCustom() {
         setMode("capture");
         setView("custom");
-        await WebviewWindow.getByLabel("selector").hide();
-        await invoke("click_and_drag", {}).then( () => {});
+        await WebviewWindow.getByLabel('helper').show();
+        await WebviewWindow.getByLabel('selector').hide();
     }
 
     async function setRecordFullscreen() {
         setMode("record");
         setView("fullscreen");
-        await WebviewWindow.getByLabel('selector').hide()
+        await WebviewWindow.getByLabel('helper').hide();
+        await WebviewWindow.getByLabel('selector').hide();
         setClipboard(false);
     }
 
     async function setRecordCustom() {
         setMode("record");
         setView("custom");
-        await WebviewWindow.getByLabel("selector").hide();
-        await invoke("click_and_drag", {}).then( () => {});
+        await WebviewWindow.getByLabel('helper').show();
+        await WebviewWindow.getByLabel('selector').hide();
         setClipboard(false);
     }
 
