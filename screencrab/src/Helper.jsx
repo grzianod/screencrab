@@ -29,8 +29,8 @@ function Helper({ imagePath }) {
         setPosition( { x: 0, y:0 });
     }
 
-    return (<>
-        <button style={{
+    return (
+        <div style={{
             position: "fixed",
             width: "100%",
             height: "100%",
@@ -38,22 +38,19 @@ function Helper({ imagePath }) {
             padding: 0,
             overflow: "hidden",
             backgroundColor: "rgba(0, 0, 0, 0.01)",
-            border: "0px dotted transparent",
             cursor: "crosshair",
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}></button>
+        onMouseUp={handleMouseUp}>
         <rect style={{
             position: "fixed",
             top: position.y,
             left: position.x,
             backgroundColor: "rgba(255,255,255,0.1)", width: size.width, height: size.height,
             cursor: "crosshair"}}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
         ></rect>
-    </>);
+    </div>);
 }
 
 export default Helper;

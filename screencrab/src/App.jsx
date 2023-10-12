@@ -538,9 +538,6 @@ function App() {
                             </Container>
 
                         </Container>
-                        <Container className={"justify-content-center p-0 m-1"}>
-                            <FormText>{text}</FormText>
-                        </Container>
                     </Container>
 
 

@@ -22,6 +22,7 @@ export default defineConfig(async () => ({
         index: "./index.html",
         splashscreen: "./splashscreen.html",
         hotkeys: "./hotkeys.html",
+        helper: "./helper.html",
       },
     },
     // Tauri supports es2021
