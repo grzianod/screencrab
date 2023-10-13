@@ -3,6 +3,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import {Button, Container, Form, FormText, Table} from "react-bootstrap";
 import {invoke} from '@tauri-apps/api/tauri';
 import "./App.css";
+import {tauri} from "@tauri-apps/api";
+import {platform} from "@tauri-apps/api/os";
 
 function saveData(data, setFeedback) {
     invoke('write_to_json', {input: {hotkey_data: data}})  // Nest data under 'input' and 'hotkeyData'
@@ -77,7 +79,7 @@ function KeyCaptureInput({value, onChange, name}) {
             className={"mb-0"}
             type="text"
             name={name}
-            value={value}
+            placeholder={value}
             readOnly
         />
     );
@@ -131,16 +133,38 @@ function HotkeyForm({hotkeys, setHotkeys}) {
         return words.join(' ');
     }
 
-    function formatInput(str) {
+    async function formatInput(str) {
         let command = str;
-        command = command.replace("CmdOrCtrl", String.fromCharCode(0x2318));
-        command = command.replace("Control", String.fromCharCode(0x2303));
-        command = command.replace("Option", String.fromCharCode(0x2325));
-        command = command.replace("ShiftLeft", String.fromCharCode(0x21E7));
-        command = command.replace("ShiftLRight", String.fromCharCode(0x21E7));
-        command = command.replace("Tab", String.fromCharCode(0x2192));
-        command = command.replace("CapsLock", String.fromCharCode(0x21EA));
-        command = command.replace(/\+/g, "");
+        const platformName = await platform();
+        if(platformName === "darwin") {
+            command = command.replace("CmdOrCtrl", String.fromCharCode(0x2318));
+            command = command.replace("Control", String.fromCharCode(0x2303));
+            command = command.replace("Option", String.fromCharCode(0x2325));
+            command = command.replace("ShiftLeft", String.fromCharCode(0x21E7));
+            command = command.replace("ShiftLRight", String.fromCharCode(0x21E7));
+            command = command.replace("Tab", String.fromCharCode(0x2192));
+            command = command.replace("CapsLock", String.fromCharCode(0x21EA));
+            command = command.replace(/\+/g, "");
+        }
+        if(platformName === "win32") {
+            command = command.replace("CmdOrCtrl", "Ctrl");
+            command = command.replace("Control", "Ctrl");
+            command = command.replace("Option", "Alt");
+            command = command.replace("ShiftLeft", "Shift");
+            command = command.replace("ShiftLRight", "Shift");
+            command = command.replace("Tab", "Tab");
+            command = command.replace("CapsLock", "CapsLock");
+        }
+        if(platformName === "linux") {
+            command = command.replace("CmdOrCtrl", "Ctrl");
+            command = command.replace("Control", "Ctrl");
+            command = command.replace("Option", "Alt");
+            command = command.replace("ShiftLeft", "Shift");
+            command = command.replace("ShiftLRight", "Shift");
+            command = command.replace("Tab", "Tab");
+            command = command.replace("CapsLock", "CapsLock");
+        }
+
         command = command.toUpperCase();
         return command;
     }

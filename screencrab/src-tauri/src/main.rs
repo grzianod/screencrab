@@ -423,6 +423,7 @@ fn main() {
             let edit_after_capture = Arc::new(Mutex::new(false));
             let record_external_audio = Arc::new(Mutex::new(false));
             let open_after_record = Arc::new(Mutex::new(false));
+            let hotkeys_ = hotkeys.clone();
 
 
             let window_ = main_window.clone();
@@ -462,6 +463,9 @@ fn main() {
                         *data = !*data;
                         window_.menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
                     }
+                    "change_hotkeys" => {
+                        hotkeys_.show().unwrap();
+                    }
                     _ => {}
                 }
                 window_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
@@ -474,6 +478,7 @@ fn main() {
                 let edit_after_capture_ = edit_after_capture.clone();
                 let record_external_audio_ = record_external_audio.clone();
                 let open_after_record_ = open_after_record.clone();
+                let hotkeys_ = hotkeys.clone();
 
                 area.on_menu_event(move |event| {
                     match event.menu_item_id() {
@@ -505,6 +510,9 @@ fn main() {
                             *data = !*data;
                             area_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
                         }
+                        "change_hotkeys" => {
+                            hotkeys_.show().unwrap();
+                        }
                         _ => {}
                     }
                     area_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
@@ -516,6 +524,8 @@ fn main() {
                 let edit_after_capture_ = edit_after_capture.clone();
                 let record_external_audio_ = record_external_audio.clone();
                 let open_after_record_ = open_after_record.clone();
+                let hotkeys_ = hotkeys.clone();
+
                 helper.on_menu_event(move |event| {
                     match event.menu_item_id() {
                         "capture_mouse_pointer" => {
@@ -545,6 +555,9 @@ fn main() {
                             let mut data = open_after_record_.lock().unwrap();
                             *data = !*data;
                             helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                        }
+                        "change_hotkeys" => {
+                            hotkeys_.show().unwrap();
                         }
                         _ => {}
                     }

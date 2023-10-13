@@ -30,7 +30,7 @@ pub fn create_context_menu() -> Menu {
                                   .add_item(CustomMenuItem::new("record_external_audio".to_string(), "Record External Audio").accelerator(&hotkeys.record_external_audio))
                                   .add_item(CustomMenuItem::new("open_after_record".to_string(), "Open After Record").selected().accelerator(&hotkeys.open_after_record)));
     let settings = Submenu::new("Settings",
-                                Menu::new().add_item(CustomMenuItem::new("change_hotkeys".to_string(), "Change Shortcut Keys")));
+                                Menu::new().add_item(CustomMenuItem::new("change_hotkeys".to_string(), "Shortcut Keys")));
     let help = Submenu::new("Help",
                             Menu::new().add_item(CustomMenuItem::new("learn_more", "Learn More")));
 
