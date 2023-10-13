@@ -28,7 +28,6 @@ struct CmdArgs {
 }
 
 #[cfg(target_os="macos")]
-use tauri::TitleBarStyle;
 use tauri::utils::TitleBarStyle;
 #[cfg(target_os = "macos")]
 use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior, NSCursor};
@@ -304,7 +303,7 @@ fn main() {
                 app,
                 "helper",
                 tauri::WindowUrl::App("./helper.html".into()))
-                .title_bar_style(TitleBar::Overlay)
+                .title_bar_style(TitleBarStyle::Overlay)
                 .menu(create_context_menu())
                 .decorations(false)
                 .transparent(true)

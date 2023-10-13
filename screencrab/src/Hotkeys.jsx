@@ -3,7 +3,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import {Button, Container, Form, FormText, Table} from "react-bootstrap";
 import {invoke} from '@tauri-apps/api/tauri';
 import "./App.css";
-import {tauri} from "@tauri-apps/api";
 import {platform} from "@tauri-apps/api/os";
 
 function saveData(data, setFeedback) {
@@ -23,8 +22,45 @@ function isHotkeyDuplicate(hotkeys, hotkey) {
 
 
 function KeyCaptureInput({value, onChange, name}) {
+    const [displayedValue, setDisplayedValue] = useState("null");
     const [currentKeys, setCurrentKeys] = useState([]);
     const inputRef = useRef(null);
+
+    useEffect(() => {
+        platform().then((os) => {
+            let command = value;
+            if(os === "darwin") {
+                command = command.replace("CmdOrCtrl", String.fromCharCode(0x2318));
+                command = command.replace("Control", String.fromCharCode(0x2303));
+                command = command.replace("Option", String.fromCharCode(0x2325));
+                command = command.replace("ShiftLeft", String.fromCharCode(0x21E7));
+                command = command.replace("ShiftLRight", String.fromCharCode(0x21E7));
+                command = command.replace("Tab", String.fromCharCode(0x2192));
+                command = command.replace("CapsLock", String.fromCharCode(0x21EA));
+                command = command.replace(/\+/g, "");
+            }
+            if(os === "win32") {
+                command = command.replace("CmdOrCtrl", "Ctrl");
+                command = command.replace("Control", String.fromCharCode(0x2756));
+                command = command.replace("Option", "Alt");
+                command = command.replace("ShiftLeft", "Shift");
+                command = command.replace("ShiftLRight", "Shift");
+                command = command.replace("Tab", "Tab");
+                command = command.replace("CapsLock", "CapsLock");
+            }
+            if(os === "linux") {
+                command = command.replace("CmdOrCtrl", "Ctrl");
+                command = command.replace("Control", "Ctrl");
+                command = command.replace("Option", "Alt");
+                command = command.replace("ShiftLeft", "Shift");
+                command = command.replace("ShiftLRight", "Shift");
+                command = command.replace("Tab", "Tab");
+                command = command.replace("CapsLock", "CapsLock");
+            }
+            command = command.toUpperCase();
+            setDisplayedValue(command);
+        });
+    }, [value]);
 
     const handleKeyDown = (event) => {
         event.preventDefault();
@@ -45,7 +81,7 @@ function KeyCaptureInput({value, onChange, name}) {
                     capturedKey = "Option";
                     break;
                 default: capturedKey = "";
-                break;
+                    break;
             }
         }
 
@@ -79,7 +115,7 @@ function KeyCaptureInput({value, onChange, name}) {
             className={"mb-0"}
             type="text"
             name={name}
-            placeholder={value}
+            value={displayedValue}
             readOnly
         />
     );
@@ -133,79 +169,43 @@ function HotkeyForm({hotkeys, setHotkeys}) {
         return words.join(' ');
     }
 
-    async function formatInput(str) {
-        let command = str;
-        const platformName = await platform();
-        if(platformName === "darwin") {
-            command = command.replace("CmdOrCtrl", String.fromCharCode(0x2318));
-            command = command.replace("Control", String.fromCharCode(0x2303));
-            command = command.replace("Option", String.fromCharCode(0x2325));
-            command = command.replace("ShiftLeft", String.fromCharCode(0x21E7));
-            command = command.replace("ShiftLRight", String.fromCharCode(0x21E7));
-            command = command.replace("Tab", String.fromCharCode(0x2192));
-            command = command.replace("CapsLock", String.fromCharCode(0x21EA));
-            command = command.replace(/\+/g, "");
-        }
-        if(platformName === "win32") {
-            command = command.replace("CmdOrCtrl", "Ctrl");
-            command = command.replace("Control", "Ctrl");
-            command = command.replace("Option", "Alt");
-            command = command.replace("ShiftLeft", "Shift");
-            command = command.replace("ShiftLRight", "Shift");
-            command = command.replace("Tab", "Tab");
-            command = command.replace("CapsLock", "CapsLock");
-        }
-        if(platformName === "linux") {
-            command = command.replace("CmdOrCtrl", "Ctrl");
-            command = command.replace("Control", "Ctrl");
-            command = command.replace("Option", "Alt");
-            command = command.replace("ShiftLeft", "Shift");
-            command = command.replace("ShiftLRight", "Shift");
-            command = command.replace("Tab", "Tab");
-            command = command.replace("CapsLock", "CapsLock");
-        }
-
-        command = command.toUpperCase();
-        return command;
-    }
-
     return (
         <>
-        <Container className="background-container p-0 m-0"></Container>
+            <Container className="background-container p-0 m-0"></Container>
 
-    <Container className={"flex-row justify-content-center p-0 m-0 w-100"}>
-        <div className={"col-3"}></div>
-        <Container style={{zIndex: "2", position: "relative"}} className={"w-100 align-items-center p-1"}>
-            <strong><p style={{margin: "2rem"}}>Click on a shortcut and tap a new keys combination</p></strong>
-            <Form onSubmit={handleSubmit}>
-                <Table className="table">
-                    <tbody>
-                    {Object.keys(hotkeys).map((command) => (
-                        <tr key={command}>
-                            <td style={{ textAlign: "center", verticalAlign: "middle" }}> {/* Removed width */}
-                                <label>{formatLabel(command)}</label>
-                            </td>
-                            <td style={{ textAlign: "center", verticalAlign: "middle" }}
-                                onClick={() => setSelectedCommand(command)}>
-                                <KeyCaptureInput
-                                    name={command}
-                                    value={formatInput(inputs[command])}
-                                    onChange={handleChange}
-                                />
-                            </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </Table>
-                {duplicateHotkey && <p className="text-danger">This hotkey combination is already used by another command!</p>}
-                <Button className={"m-3"} variant={"outline-danger"} onClick={async () => await invoke("close_hotkeys", {})}>Cancel</Button>
-                {!duplicateHotkey && <Button className={"m-3"} variant={"outline-dark"} type="submit">Save and Restart</Button> }
+            <Container className={"flex-row justify-content-center p-0 m-0 w-100"}>
+                <div className={"col-3"}></div>
+                <Container style={{zIndex: "2", position: "relative"}} className={"w-100 align-items-center p-1"}>
+                    <strong><p style={{margin: "2rem"}}>Click on a shortcut and tap a new keys combination</p></strong>
+                    <Form onSubmit={handleSubmit}>
+                        <Table className="table">
+                            <tbody>
+                            {Object.keys(hotkeys).map((command) => (
+                                <tr key={command}>
+                                    <td style={{ textAlign: "center", verticalAlign: "middle" }}> {/* Removed width */}
+                                        <label>{formatLabel(command)}</label>
+                                    </td>
+                                    <td style={{ textAlign: "center", verticalAlign: "middle" }}
+                                        onClick={() => setSelectedCommand(command)}>
+                                        <KeyCaptureInput
+                                            name={command}
+                                            value={inputs[command]}
+                                            onChange={handleChange}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </Table>
+                        {duplicateHotkey && <p className="text-danger">This hotkey combination is already used by another command!</p>}
+                        <Button className={"m-3"} variant={"outline-danger"} onClick={async () => await invoke("close_hotkeys", {})}>Cancel</Button>
+                        {!duplicateHotkey && <Button className={"m-3"} variant={"outline-dark"} type="submit">Save and Restart</Button> }
 
-            </Form>
+                    </Form>
 
-            {feedback && <p>{feedback}</p>}
-        </Container>
-    </Container>
+                    {feedback && <p>{feedback}</p>}
+                </Container>
+            </Container>
         </>
     );
 }
@@ -218,12 +218,12 @@ function Hotkeys() {
     // Fetch JSON data when component mounts
     useEffect(() => {
         invoke("load_hotkeys", {})
-                    .then(response => {
-                        setHotkeys(JSON.parse(response));
-                    })
-                    .catch(err => {
-                        setError(err.message);
-                    })
+            .then(response => {
+                setHotkeys(JSON.parse(response));
+            })
+            .catch(err => {
+                setError(err.message);
+            })
             .finally(() => setIsLoading(false));
     }, []);
 
