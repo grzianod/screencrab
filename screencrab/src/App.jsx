@@ -137,6 +137,7 @@ function App() {
                 await WebviewWindow.getByLabel('selector').hide();
                 for (let i=0; i<n; i++) {
                     await WebviewWindow.getByLabel('helper_'+i).show();
+                    await WebviewWindow.getByLabel('helper_'+i).setFocus();
                 }
             })
             .catch( (err) => console.log(err));
@@ -163,6 +164,7 @@ function App() {
                 await WebviewWindow.getByLabel('selector').hide();
                 for (let i=0; i<n; i++) {
                     await WebviewWindow.getByLabel('helper_'+i).show();
+                    await WebviewWindow.getByLabel('helper_'+i).setFocus();
                 }
             })
         setClipboard(false);

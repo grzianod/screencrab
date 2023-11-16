@@ -66,13 +66,9 @@ fn log_message(args: CmdArgs) {
 
 #[tauri::command]
 fn custom_area_selection(app: AppHandle, id: String, x: f64, y: f64, width: f64, height: f64) {
-    println!("{}", id);
-    let offset = LogicalPosition::new(app.windows().get(id.as_str()).unwrap().inner_position().unwrap().x as f64,app.windows().get("helper_0").unwrap().outer_position().unwrap().y as f64);
+    let offset = LogicalPosition::new(app.windows().get(id.as_str()).unwrap().inner_position().unwrap().x as f64,app.windows().get(id.as_str()).unwrap().outer_position().unwrap().y as f64);
     let pos = LogicalPosition::new(x + offset.x/2f64, y + offset.y/2f64);
 
-
-    println!("x:{}, y:{}", x, y);
-    println!("w:{}, h:{}", width, height);
     let n = app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
     for i in 0..n {
         app.windows().get(format!("helper_{}", i).as_str()).unwrap().hide().unwrap();

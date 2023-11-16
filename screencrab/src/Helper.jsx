@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import './styles.css';
 import {invoke} from "@tauri-apps/api/tauri";
 import {LogicalPosition, LogicalSize, WebviewWindow} from '@tauri-apps/api/window';
+import {window} from "@tauri-apps/api";
 
 function Helper({  }) {
     const [dragging, setDragging] = useState(false);
@@ -25,7 +26,8 @@ function Helper({  }) {
     async function handleMouseUp(event) {
         event.preventDefault();
         setDragging(false);
-        await invoke("custom_area_selection", {id: "helper_1", x: position.x, y: position.y, width: size.width, height: size.height}).then(() => {});
+        let window = await WebviewWindow.getFocusedWindow();
+        await invoke("custom_area_selection", {id: window.label, x: position.x, y: position.y, width: size.width, height: size.height}).then(() => {});
         setSize({ width: 0, height: 0});
         setPosition( { x: 0, y:0 });
     }
