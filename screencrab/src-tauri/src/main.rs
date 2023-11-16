@@ -309,7 +309,6 @@ fn main() {
                 .unwrap();
 
             let available_monitors = area.available_monitors().unwrap();
-            println!("{}", available_monitors.len());
             let mut helpers = Vec::with_capacity(available_monitors.len());
             for (i,monitor) in available_monitors.iter().enumerate() {
                 let monitor_size = monitor.size().to_owned();
@@ -365,6 +364,7 @@ fn main() {
                 }
 
                 helpers[i].set_position(PhysicalPosition::new(monitor.position().x, monitor.position().y)).unwrap();
+                helpers[i].set_size(LogicalSize::new(monitor.size().width, monitor.size().height)).unwrap();
                 helpers[i].hide().unwrap();
             }
 
