@@ -120,34 +120,51 @@ function App() {
     async function setCaptureFullscreen() {
         setMode("capture");
         setView("fullscreen");
-        await WebviewWindow.getByLabel('helper').hide();
-        await WebviewWindow.getByLabel("helper").minimize();
-        await WebviewWindow.getByLabel('selector').hide();
+        invoke("available_monitors", {})
+            .then(async (n) => {
+            await WebviewWindow.getByLabel('selector').hide();
+            for (let i=0; i<n; i++) {
+                await WebviewWindow.getByLabel('helper_'+i).hide();
+            }
+        })
     }
 
     async function setCaptureCustom() {
         setMode("capture");
         setView("custom");
-        await WebviewWindow.getByLabel('helper').show();
-        await WebviewWindow.getByLabel("helper").maximize();
-        await WebviewWindow.getByLabel('selector').hide();
+        invoke("available_monitors", {})
+            .then(async (n) => {
+                await WebviewWindow.getByLabel('selector').hide();
+                for (let i=0; i<n; i++) {
+                    await WebviewWindow.getByLabel('helper_'+i).show();
+                }
+            })
+            .catch( (err) => console.log(err));
     }
 
     async function setRecordFullscreen() {
         setMode("record");
         setView("fullscreen");
-        await WebviewWindow.getByLabel('helper').hide();
-        await WebviewWindow.getByLabel("helper").minimize();
-        await WebviewWindow.getByLabel('selector').hide();
+        invoke("available_monitors", {})
+            .then(async (n) => {
+                await WebviewWindow.getByLabel('selector').hide();
+                for (let i=0; i<n; i++) {
+                    await WebviewWindow.getByLabel('helper_'+i).hide();
+                }
+            })
         setClipboard(false);
     }
 
     async function setRecordCustom() {
         setMode("record");
         setView("custom");
-        await WebviewWindow.getByLabel('helper').show();
-        await WebviewWindow.getByLabel("helper").maximize();
-        await WebviewWindow.getByLabel('selector').hide();
+        invoke("available_monitors", {})
+            .then(async (n) => {
+                await WebviewWindow.getByLabel('selector').hide();
+                for (let i=0; i<n; i++) {
+                    await WebviewWindow.getByLabel('helper_'+i).show();
+                }
+            })
         setClipboard(false);
     }
 
