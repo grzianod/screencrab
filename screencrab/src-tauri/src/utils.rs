@@ -137,7 +137,7 @@ pub async fn folder_picker(handle: AppHandle) -> Response {
 pub async fn current_default_path() -> Response {
     let mut result;
     #[cfg(target_os = "windows")] {
-        result = format!("{}\\", env::var("HOME").unwrap().to_string());
+        result = format!("{}\\", env::var("USERPROFILE").unwrap().to_string());
     }
     #[cfg(target_os = "linux")] {
         result = format!("{}/", env::var("HOME").unwrap().to_string());

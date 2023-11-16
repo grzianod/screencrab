@@ -289,7 +289,7 @@ fn main() {
                 .decorations(false)
                 .transparent(true)
                 .resizable(true)
-                .always_on_top(true)
+                .always_on_top(false)
                 .skip_taskbar(true)
                 .center()
                 .title("")
@@ -393,7 +393,7 @@ fn main() {
                     .focused(true)
                     .build()
                     .unwrap();
-                splash.set_size(PhysicalSize::new(1100, 1500)).unwrap();
+                splash.set_size(PhysicalSize::new(1100, 1200)).unwrap();
                 splash.show().unwrap();
                 main_window.hide().unwrap();
             } else {
