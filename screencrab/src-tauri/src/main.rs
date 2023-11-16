@@ -308,7 +308,6 @@ fn main() {
                 .decorations(false)
                 .transparent(true)
                 .resizable(false)
-                .fullscreen(true)
                 .always_on_top(true)
                 .minimizable(false)
                 .maximized(true)
