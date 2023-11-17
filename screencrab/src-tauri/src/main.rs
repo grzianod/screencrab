@@ -74,7 +74,6 @@ fn custom_area_selection(app: AppHandle, id: String, x: f64, y: f64, width: f64,
     let n = app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
     for i in 0..n {
         app.windows().get(format!("helper_{}", i).as_str()).unwrap().hide().unwrap();
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().minimize().unwrap();
     }
 
     app.windows().get("selector").unwrap().set_size(size).unwrap();
@@ -85,8 +84,23 @@ fn custom_area_selection(app: AppHandle, id: String, x: f64, y: f64, width: f64,
 }
 
 #[tauri::command]
-fn available_monitors(app: AppHandle) -> usize {
-    return app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
+fn show_all_helpers(app: AppHandle) {
+    app.windows().get("selector").unwrap().hide().unwrap();
+    let monitors = app.windows().get("main_window").unwrap().available_monitors().unwrap();
+    for (i, monitor) in monitors.iter().enumerate() {
+        app.windows().get(format!("helper_{}", i).as_str()).unwrap().set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
+        app.windows().get(format!("helper_{}", i).as_str()).unwrap().set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
+        app.windows().get(format!("helper_{}", i).as_str()).unwrap().show().unwrap();
+    }
+}
+
+#[tauri::command]
+fn hide_all_helpers(app: AppHandle) {
+    app.windows().get("selector").unwrap().hide().unwrap();
+    let monitors = app.windows().get("main_window").unwrap().available_monitors().unwrap();
+    for (i, monitor) in monitors.iter().enumerate() {
+        app.windows().get(format!("helper_{}", i).as_str()).unwrap().hide().unwrap();
+    }
 }
 
 #[tauri::command]
@@ -322,6 +336,7 @@ fn main() {
                         tauri::WindowUrl::App("./helper.html".into()))
                         .title_bar_style(TitleBarStyle::Overlay)
                         .menu(create_context_menu())
+                        .title("Select an area to capture...")
                         .decorations(false)
                         .transparent(true)
                         .resizable(false)
@@ -340,6 +355,7 @@ fn main() {
                         format!("helper_{}", i),
                         tauri::WindowUrl::App("./helper.html".into()))
                         .decorations(false)
+                        .title("Select an area to capture...")
                         .transparent(true)
                         .resizable(false)
                         .always_on_top(true)
@@ -356,6 +372,7 @@ fn main() {
                         format!("helper_{}", i),
                         tauri::WindowUrl::App("./helper.html".into()))
                         .decorations(false)
+                        .title("Select an area to capture...")
                         .transparent(true)
                         .resizable(false)
                         .always_on_top(true)
@@ -616,7 +633,7 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, custom_area_selection, available_monitors])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, custom_area_selection, show_all_helpers, hide_all_helpers])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
