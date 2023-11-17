@@ -65,20 +65,33 @@ fn log_message(args: CmdArgs) {
 }
 
 #[tauri::command]
-fn custom_area_selection(app: AppHandle, x: f64, y: f64, width: f64, height: f64) {
-    let offset = LogicalPosition::new(app.windows().get("helper").unwrap().inner_position().unwrap().x as f64,app.windows().get("helper").unwrap().outer_position().unwrap().y as f64);
-    let pos = LogicalPosition::new(x + offset.x/2f64, y + offset.y/2f64);
+fn custom_area_selection(app: AppHandle, id: String, x: f64, y: f64, width: f64, height: f64) {
+    let offset = LogicalPosition::new(app.windows().get(id.as_str()).unwrap().outer_position().unwrap().x as f64,app.windows().get(id.as_str()).unwrap().outer_position().unwrap().y as f64);
+    let scale_factor = app.windows().get(id.as_str()).unwrap().current_monitor().unwrap().unwrap().scale_factor();
+    let position = LogicalPosition::new(x + offset.x/scale_factor, y + offset.y/scale_factor);
+    let size = LogicalSize::new(width, height);
 
-    app.windows().get("helper").unwrap().hide().unwrap();
-    app.windows().get("selector").unwrap().set_size(LogicalSize::new(width, height)).unwrap();
-    app.windows().get("selector").unwrap().set_position(pos).unwrap();
+    let n = app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
+    for i in 0..n {
+        app.windows().get(format!("helper_{}", i).as_str()).unwrap().hide().unwrap();
+        app.windows().get(format!("helper_{}", i).as_str()).unwrap().minimize().unwrap();
+    }
+
+    app.windows().get("selector").unwrap().set_size(size).unwrap();
+    app.windows().get("selector").unwrap().set_position(position).unwrap();
     app.windows().get("selector").unwrap().show().unwrap();
-    app.windows().get("helper").unwrap().minimize().unwrap();
+    app.windows().get("main_window").unwrap().set_focus().unwrap();
+
+}
+
+#[tauri::command]
+fn available_monitors(app: AppHandle) -> usize {
+    return app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
 }
 
 #[tauri::command]
 fn write_to_json(app: AppHandle, input: HotkeyInput) {
-    let path = get_home_dir() + "/.screencrab/hotkeys.json";
+    let path = utils::utils_dir() + "/.screencrab/hotkeys.json";
     let file_path = Path::new(&path);
     fs::write(file_path, input.hotkey_data.to_string()).unwrap();
     process::restart(&app.env())
@@ -230,11 +243,11 @@ fn main() {
                 "hotkeys",
                 tauri::WindowUrl::App("./hotkeys.html".into()))
                 .decorations(true)
-                .resizable(false)
+                .resizable(true)
                 .closable(false)
                 .always_on_top(true)
                 .title("Shortcut Keys")
-                .minimizable(false)
+                .minimizable(true)
                 .focused(true)
                 .build()
                 .unwrap();
@@ -298,54 +311,69 @@ fn main() {
                 .build()
                 .unwrap();
 
-            #[cfg(target_os = "macos")]
-            let helper = tauri::WindowBuilder::new(
-                app,
-                "helper",
-                tauri::WindowUrl::App("./helper.html".into()))
-                .title_bar_style(TitleBarStyle::Overlay)
-                .menu(create_context_menu())
-                .decorations(false)
-                .transparent(true)
-                .resizable(false)
-                .always_on_top(true)
-                .minimizable(false)
-                .maximized(true)
-                .focused(true)
-                .build()
-                .unwrap();
+            let available_monitors = area.available_monitors().unwrap();
+            let mut helpers = Vec::with_capacity(available_monitors.len());
+            for (i,monitor) in available_monitors.iter().enumerate() {
+                let monitor_size = monitor.size().to_owned();
+                #[cfg(target_os = "macos")] {
+                    helpers.push(tauri::WindowBuilder::new(
+                        app,
+                        format!("helper_{}", i),
+                        tauri::WindowUrl::App("./helper.html".into()))
+                        .title_bar_style(TitleBarStyle::Overlay)
+                        .menu(create_context_menu())
+                        .decorations(false)
+                        .transparent(true)
+                        .resizable(false)
+                        .always_on_top(true)
+                        .minimizable(false)
+                        .maximized(true)
+                        .focused(true)
+                        .build()
+                        .unwrap()
+                    );
+                }
 
-            #[cfg(target_os = "windows")]
-            let helper = tauri::WindowBuilder::new(
-                app,
-                "helper",
-                tauri::WindowUrl::App("./helper.html".into()))
-                .decorations(false)
-                .transparent(true)
-                .resizable(false)
-                .always_on_top(true)
-                .minimizable(false)
-                .focused(true)
-                .build()
-                .unwrap();
+                #[cfg(target_os = "windows")] {
+                    helpers.push(tauri::WindowBuilder::new(
+                        app,
+                        format!("helper_{}", i),
+                        tauri::WindowUrl::App("./helper.html".into()))
+                        .decorations(false)
+                        .transparent(true)
+                        .resizable(false)
+                        .always_on_top(true)
+                        .minimizable(false)
+                        .focused(true)
+                        .build()
+                        .unwrap()
+                    );
+                }
 
-            #[cfg(target_os = "linux")]
-                let helper = tauri::WindowBuilder::new(
-                app,
-                "helper",
-                tauri::WindowUrl::App("./helper.html".into()))
-                .decorations(false)
-                .transparent(true)
-                .resizable(false)
-                .always_on_top(true)
-                .minimizable(false)
-                .focused(true)
-                .build()
-                .unwrap();
+                #[cfg(target_os = "linux")] {
+                    helpers.push(tauri::WindowBuilder::new(
+                        app,
+                        format!("helper_{}", i),
+                        tauri::WindowUrl::App("./helper.html".into()))
+                        .decorations(false)
+                        .transparent(true)
+                        .resizable(false)
+                        .always_on_top(true)
+                        .minimizable(false)
+                        .focused(true)
+                        .build()
+                        .unwrap()
+                    );
+                }
 
-            helper.hide().unwrap();
+                helpers[i].set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
+                helpers[i].set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
+                helpers[i].hide().unwrap();
+            }
 
-            let monitor_size = area.current_monitor().unwrap().unwrap().size().to_owned();
+
+
+            let monitor_size = area.primary_monitor().unwrap().unwrap().size().to_owned();
 
             let width;
             let height;
@@ -366,10 +394,10 @@ fn main() {
                 .menu(create_context_menu())
                 .visible(false)
                 .fullscreen(false)
-                .resizable(false)
+                .resizable(true)
                 .closable(true)
-                .always_on_top(false)
-                .minimizable(false)
+                .always_on_top(true)
+                .minimizable(true)
                 .focused(true)
                 .title("Screen Crab")
                 .content_protected(true)
@@ -517,51 +545,53 @@ fn main() {
                     area_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
                 });
 
-                let helper_ = helper.clone();
-                let capture_mouse_pointer_ = capture_mouse_pointer.clone();
-                let copy_to_clipboard_ = copy_to_clipboard.clone();
-                let edit_after_capture_ = edit_after_capture.clone();
-                let record_external_audio_ = record_external_audio.clone();
-                let open_after_record_ = open_after_record.clone();
-                let hotkeys_ = hotkeys.clone();
 
-                helper.on_menu_event(move |event| {
-                    match event.menu_item_id() {
-                        "capture_mouse_pointer" => {
-                            let mut data = capture_mouse_pointer_.lock().unwrap();
-                            *data = !*data;
-                            helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                for helper in helpers {
+                    let helper_ = helper.clone();
+                    let capture_mouse_pointer_ = capture_mouse_pointer.clone();
+                    let copy_to_clipboard_ = copy_to_clipboard.clone();
+                    let edit_after_capture_ = edit_after_capture.clone();
+                    let record_external_audio_ = record_external_audio.clone();
+                    let open_after_record_ = open_after_record.clone();
+                    let hotkeys_ = hotkeys.clone();
+                    helper.on_menu_event(move |event| {
+                        match event.menu_item_id() {
+                            "capture_mouse_pointer" => {
+                                let mut data = capture_mouse_pointer_.lock().unwrap();
+                                *data = !*data;
+                                helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            }
+                            "copy_to_clipboard" => {
+                                let mut data = copy_to_clipboard_.lock().unwrap();
+                                *data = !*data;
+                                let mut value = edit_after_capture_.lock().unwrap();
+                                *value = !*data;
+                                helper_.windows().get("main_window").unwrap().menu_handle().get_item("copy_to_clipboard").set_selected(*data).unwrap();
+                                helper_.windows().get("main_window").unwrap().menu_handle().get_item("edit_after_capture").set_enabled(!*data).unwrap();
+                            }
+                            "edit_after_capture" => {
+                                let mut data = edit_after_capture_.lock().unwrap();
+                                *data = !*data;
+                                helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            }
+                            "record_external_audio" => {
+                                let mut data = record_external_audio_.lock().unwrap();
+                                *data = !*data;
+                                helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            }
+                            "open_after_record" => {
+                                let mut data = open_after_record_.lock().unwrap();
+                                *data = !*data;
+                                helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            }
+                            "change_hotkeys" => {
+                                hotkeys_.show().unwrap();
+                            }
+                            _ => {}
                         }
-                        "copy_to_clipboard" => {
-                            let mut data = copy_to_clipboard_.lock().unwrap();
-                            *data = !*data;
-                            let mut value = edit_after_capture_.lock().unwrap();
-                            *value = !*data;
-                            helper_.windows().get("main_window").unwrap().menu_handle().get_item("copy_to_clipboard").set_selected(*data).unwrap();
-                            helper_.windows().get("main_window").unwrap().menu_handle().get_item("edit_after_capture").set_enabled(!*data).unwrap();
-                        }
-                        "edit_after_capture" => {
-                            let mut data = edit_after_capture_.lock().unwrap();
-                            *data = !*data;
-                            helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
-                        }
-                        "record_external_audio" => {
-                            let mut data = record_external_audio_.lock().unwrap();
-                            *data = !*data;
-                            helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
-                        }
-                        "open_after_record" => {
-                            let mut data = open_after_record_.lock().unwrap();
-                            *data = !*data;
-                            helper_.windows().get("main_window").unwrap().menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
-                        }
-                        "change_hotkeys" => {
-                            hotkeys_.show().unwrap();
-                        }
-                        _ => {}
-                    }
-                    helper_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
-                });
+                        helper_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
+                    });
+                }
             }
 
             Ok(())
@@ -586,7 +616,7 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, custom_area_selection])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, custom_area_selection, available_monitors])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

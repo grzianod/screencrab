@@ -1,8 +1,10 @@
 import React, {useState} from 'react';
 import './styles.css';
 import {invoke} from "@tauri-apps/api/tauri";
+import {LogicalPosition, LogicalSize, WebviewWindow} from '@tauri-apps/api/window';
+import {window} from "@tauri-apps/api";
 
-function Helper({ imagePath }) {
+function Helper({  }) {
     const [dragging, setDragging] = useState(false);
     const [size, setSize] = useState({ width: 0, height: 0});
     const [position, setPosition] = useState( { x: 0, y:0 });
@@ -24,7 +26,8 @@ function Helper({ imagePath }) {
     async function handleMouseUp(event) {
         event.preventDefault();
         setDragging(false);
-        await invoke("custom_area_selection", {x: position.x, y: position.y, width: size.width, height: size.height}).then(() => {});
+        let window = await WebviewWindow.getFocusedWindow();
+        await invoke("custom_area_selection", {id: window.label, x: position.x, y: position.y, width: size.width, height: size.height}).then(() => {});
         setSize({ width: 0, height: 0});
         setPosition( { x: 0, y:0 });
     }
@@ -48,6 +51,7 @@ function Helper({ imagePath }) {
             top: position.y,
             left: position.x,
             backgroundColor: "rgba(255,255,255,0.1)", width: size.width, height: size.height,
+            border: "0.1vmin dashed antiquewhite",
             cursor: "crosshair"}}
         ></rect>
     </div>);
