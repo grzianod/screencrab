@@ -66,8 +66,10 @@ fn log_message(args: CmdArgs) {
 
 #[tauri::command]
 fn custom_area_selection(app: AppHandle, id: String, x: f64, y: f64, width: f64, height: f64) {
-    let offset = LogicalPosition::new(app.windows().get(id.as_str()).unwrap().inner_position().unwrap().x as f64,app.windows().get(id.as_str()).unwrap().outer_position().unwrap().y as f64);
-    let pos = LogicalPosition::new(x + offset.x/2f64, y + offset.y/2f64);
+    let offset = LogicalPosition::new(app.windows().get(id.as_str()).unwrap().outer_position().unwrap().x as f64,app.windows().get(id.as_str()).unwrap().outer_position().unwrap().y as f64);
+    let scale_factor = app.windows().get(id.as_str()).unwrap().current_monitor().unwrap().unwrap().scale_factor();
+    let position = LogicalPosition::new(x + offset.x/scale_factor, y + offset.y/scale_factor);
+    let size = LogicalSize::new(width, height);
 
     let n = app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
     for i in 0..n {
@@ -75,9 +77,10 @@ fn custom_area_selection(app: AppHandle, id: String, x: f64, y: f64, width: f64,
         app.windows().get(format!("helper_{}", i).as_str()).unwrap().minimize().unwrap();
     }
 
-    app.windows().get("selector").unwrap().set_size(LogicalSize::new(width, height)).unwrap();
-    app.windows().get("selector").unwrap().set_position(pos).unwrap();
+    app.windows().get("selector").unwrap().set_size(size).unwrap();
+    app.windows().get("selector").unwrap().set_position(position).unwrap();
     app.windows().get("selector").unwrap().show().unwrap();
+    app.windows().get("main_window").unwrap().set_focus().unwrap();
 
 }
 
@@ -240,11 +243,11 @@ fn main() {
                 "hotkeys",
                 tauri::WindowUrl::App("./hotkeys.html".into()))
                 .decorations(true)
-                .resizable(false)
+                .resizable(true)
                 .closable(false)
                 .always_on_top(true)
                 .title("Shortcut Keys")
-                .minimizable(false)
+                .minimizable(true)
                 .focused(true)
                 .build()
                 .unwrap();
@@ -363,14 +366,14 @@ fn main() {
                     );
                 }
 
-                helpers[i].set_position(PhysicalPosition::new(monitor.position().x, monitor.position().y)).unwrap();
-                helpers[i].set_size(LogicalSize::new(monitor.size().width, monitor.size().height)).unwrap();
+                helpers[i].set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
+                helpers[i].set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
                 helpers[i].hide().unwrap();
             }
 
 
 
-            let monitor_size = area.current_monitor().unwrap().unwrap().size().to_owned();
+            let monitor_size = area.primary_monitor().unwrap().unwrap().size().to_owned();
 
             let width;
             let height;
@@ -391,10 +394,10 @@ fn main() {
                 .menu(create_context_menu())
                 .visible(false)
                 .fullscreen(false)
-                .resizable(false)
+                .resizable(true)
                 .closable(true)
-                .always_on_top(false)
-                .minimizable(false)
+                .always_on_top(true)
+                .minimizable(true)
                 .focused(true)
                 .title("Screen Crab")
                 .content_protected(true)

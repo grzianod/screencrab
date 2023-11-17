@@ -51,6 +51,7 @@ function Helper({  }) {
             top: position.y,
             left: position.x,
             backgroundColor: "rgba(255,255,255,0.1)", width: size.width, height: size.height,
+            border: "0.1vmin dashed antiquewhite",
             cursor: "crosshair"}}
         ></rect>
     </div>);
