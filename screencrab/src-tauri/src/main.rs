@@ -222,11 +222,6 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
 }
 
 #[tauri::command]
-fn get_home_dir() -> String {
-    env::var("HOME").unwrap()
-}
-
-#[tauri::command]
 async fn load_hotkeys() -> String {
     utils::hotkeys()
 }
@@ -633,7 +628,7 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, get_home_dir, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, custom_area_selection, show_all_helpers, hide_all_helpers])
+        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, custom_area_selection, show_all_helpers, hide_all_helpers])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

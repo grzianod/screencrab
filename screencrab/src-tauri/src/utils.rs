@@ -66,7 +66,7 @@ pub struct Hotkeys {
 
 pub fn utils_dir() -> String {
     if !cfg!(target_os="windows") { env::var("HOME").unwrap() + "/.screencrab" }
-    else { env::var("APPDATA").unwrap() + "/.screencrab" }
+    else { env::var("USERPROFILE").unwrap() + "/.screencrab" }
 }
 
 pub fn hotkeys() -> String {
