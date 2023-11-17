@@ -105,7 +105,7 @@ fn hide_all_helpers(app: AppHandle) {
 
 #[tauri::command]
 fn write_to_json(app: AppHandle, input: HotkeyInput) {
-    let path = utils::utils_dir() + "/.screencrab/hotkeys.json";
+    let path = utils::utils_dir() + "/hotkeys.json";
     let file_path = Path::new(&path);
     fs::write(file_path, input.hotkey_data.to_string()).unwrap();
     process::restart(&app.env())
