@@ -120,53 +120,26 @@ function App() {
     async function setCaptureFullscreen() {
         setMode("capture");
         setView("fullscreen");
-        invoke("available_monitors", {})
-            .then(async (n) => {
-            await WebviewWindow.getByLabel('selector').hide();
-            for (let i=0; i<n; i++) {
-                await WebviewWindow.getByLabel('helper_'+i).hide();
-            }
-        })
+        await invoke("hide_all_helpers", {});
     }
 
     async function setCaptureCustom() {
         setMode("capture");
         setView("custom");
-        invoke("available_monitors", {})
-            .then(async (n) => {
-                await WebviewWindow.getByLabel('selector').hide();
-                for (let i=0; i<n; i++) {
-                    await WebviewWindow.getByLabel('helper_'+i).show();
-                    await WebviewWindow.getByLabel('helper_'+i).setFocus();
-                }
-            })
-            .catch( (err) => console.log(err));
+        await invoke("show_all_helpers", {});
     }
 
     async function setRecordFullscreen() {
         setMode("record");
         setView("fullscreen");
-        invoke("available_monitors", {})
-            .then(async (n) => {
-                await WebviewWindow.getByLabel('selector').hide();
-                for (let i=0; i<n; i++) {
-                    await WebviewWindow.getByLabel('helper_'+i).hide();
-                }
-            })
+        await invoke("hide_all_helpers", {});
         setClipboard(false);
     }
 
     async function setRecordCustom() {
         setMode("record");
         setView("custom");
-        invoke("available_monitors", {})
-            .then(async (n) => {
-                await WebviewWindow.getByLabel('selector').hide();
-                for (let i=0; i<n; i++) {
-                    await WebviewWindow.getByLabel('helper_'+i).show();
-                    await WebviewWindow.getByLabel('helper_'+i).setFocus();
-                }
-            })
+        await invoke("show_all_helpers", {});
         setClipboard(false);
     }
 
