@@ -177,6 +177,6 @@ pub fn monitor_dialog(app: AppHandle) {
         .buttons(MessageDialogButtons::OkCancelWithLabels("Restart".to_string(), "Quit".to_string()))
         .show(move |value| {
             if value { app.restart(); }
-            else { app.exit(0); }
+            else { app.exit(0);  }
         });
 }
