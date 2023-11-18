@@ -8,6 +8,7 @@ use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition, Icon, CursorIcon}
 use std::path::Path;
 use crate::menu::{create_context_menu};
 use crate::utils::{Response, utils_dir};
+use crate::utils::monitor_dialog;
 use tauri::{Manager, SystemTray, SystemTrayEvent, api::process};
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -73,7 +74,12 @@ fn custom_area_selection(app: AppHandle, id: String, left: f64, top: f64, width:
 
     let n = app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
     for i in 0..n {
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().hide().unwrap();
+        let _app = app.clone();
+        if let Some(helper) = app.windows().get(format!("helper_{}", i).as_str()) {
+            helper.hide().unwrap();
+        } else {
+            monitor_dialog(app.clone());
+        }
     }
 
     app.windows().get("selector").unwrap().set_size(size).unwrap();
@@ -88,9 +94,14 @@ fn show_all_helpers(app: AppHandle) {
     app.windows().get("selector").unwrap().hide().unwrap();
     let monitors = app.windows().get("main_window").unwrap().available_monitors().unwrap();
     for (i, monitor) in monitors.iter().enumerate() {
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().show().unwrap();
+        let _app = app.clone();
+        if let Some(helper) = app.windows().get(format!("helper_{}", i).as_str()) {
+            helper.set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
+            helper.set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
+            helper.show().unwrap();
+        } else {
+            monitor_dialog(app.clone());
+        }
     }
 }
 
@@ -99,7 +110,12 @@ fn hide_all_helpers(app: AppHandle) {
     app.windows().get("selector").unwrap().hide().unwrap();
     let monitors = app.windows().get("main_window").unwrap().available_monitors().unwrap();
     for (i, monitor) in monitors.iter().enumerate() {
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().hide().unwrap();
+        let _app = app.clone();
+        if let Some(helper) = app.windows().get(format!("helper_{}", i).as_str()) {
+            helper.hide().unwrap();
+        } else {
+            monitor_dialog(app.clone());
+        }
     }
 }
 
@@ -114,18 +130,21 @@ fn write_to_json(app: AppHandle, input: HotkeyInput) {
 #[tauri::command(rename_all = "snake_case")]
 fn check_requirements(app: AppHandle) -> Result<(), String> {
     #[cfg(target_os = "macos")] {
-        app.windows().get("splashscreen").unwrap().hide().unwrap();
-        app.windows().get("main_window").unwrap().show().unwrap();
-        fs::write(utils_dir() + "/marker.json", b"1").unwrap();
+        start_application(app);
     }
     #[cfg(target_os = "windows")] {
-        app.windows().get("splashscreen").unwrap().hide().unwrap();
-        app.windows().get("main_window").unwrap().show().unwrap();
-        fs::write(utils_dir() + "/marker.json", b"1").unwrap();
+        let requirements = true;
         //TODO: ffmpeg check or installation
+        if requirements {
+            start_application(app);
+        }
     }
     #[cfg(target_os = "linux")] {
+        let requirements = true;
         //TODO: ffmpeg check or installation
+        if requirements {
+            start_application(app);
+        }
     }
     Ok(())
 }
@@ -244,9 +263,49 @@ fn splashscreen() -> bool {
     }
 }
 
+fn start_application(app: AppHandle) {
+    app.windows().get("splashscreen").unwrap().hide().unwrap();
+    app.windows().get("main_window").unwrap().show().unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("fullscreen_capture").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("custom_capture").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("capture_mouse_pointer").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("copy_to_clipboard").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("edit_after_capture").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("custom_record").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("record_external_audio").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("open_after_record").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("change_hotkeys").set_enabled(true).unwrap();
+    app.windows().get("main_window").unwrap().menu_handle().get_item("learn_more").set_enabled(true).unwrap();
+    fs::write(utils_dir() + "/marker.json", b"1").unwrap();
+}
+
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
+
+            //Create the first splashscreen window
+            let splash = tauri::WindowBuilder::new(
+                app,
+                "splashscreen",
+                tauri::WindowUrl::App("./splashscreen.html".into()))
+                .decorations(true)
+                .resizable(true)
+                .always_on_top(false)
+                .title("Screen Crab")
+                .minimizable(true)
+                .focused(true)
+                .build()
+                .unwrap();
+                splash.set_size(PhysicalSize::new(1000, 1400)).unwrap();
+
+            //Extract information about current monitor by the splashscreen
+            let monitor = splash.current_monitor().unwrap().unwrap();
+            let monitor_size = monitor.size();
+            let scale_factor = splash.scale_factor().unwrap();
+
+            //Hotkeys configurator window
             let hotkeys = tauri::WindowBuilder::new(
                 app,
                 "hotkeys",
@@ -254,15 +313,17 @@ fn main() {
                 .decorations(true)
                 .resizable(true)
                 .closable(false)
+                .center()
                 .always_on_top(true)
                 .title("Shortcut Keys")
                 .minimizable(true)
                 .focused(true)
                 .build()
                 .unwrap();
-            hotkeys.set_size(PhysicalSize::new(800, 1000)).unwrap();
-            hotkeys.hide().unwrap();
+                hotkeys.set_size(PhysicalSize::new(monitor_size.width*3/4, monitor_size.height*9/10)).unwrap();
+                hotkeys.hide().unwrap();
 
+            //Post-drawing area selector
             #[cfg(target_os = "macos")]
                 let area = tauri::WindowBuilder::new(
                 app,
@@ -282,7 +343,6 @@ fn main() {
                 .focused(false)
                 .build()
                 .unwrap();
-
 
             #[cfg(target_os = "linux")]
                 let area = tauri::WindowBuilder::new(
@@ -319,9 +379,12 @@ fn main() {
                 .focused(false)
                 .build()
                 .unwrap();
+            area.hide().unwrap();
 
-            let available_monitors = area.available_monitors().unwrap();
+            //Scan for all monitors and build a selection window for each of them
+            let available_monitors = splash.available_monitors().unwrap();
             let mut helpers = Vec::with_capacity(available_monitors.len());
+
             for (i,monitor) in available_monitors.iter().enumerate() {
                 let monitor_size = monitor.size().to_owned();
                 #[cfg(target_os = "macos")] {
@@ -383,22 +446,6 @@ fn main() {
                 helpers[i].hide().unwrap();
             }
 
-
-
-            let monitor_size = area.primary_monitor().unwrap().unwrap().size().to_owned();
-
-            let width;
-            let height;
-            if cfg!(target_os="windows") {
-                width = monitor_size.width * 65 / 100;
-                height = monitor_size.height * 25 / 100;
-            } else {
-                width = monitor_size.width * 60 / 100;
-                height = monitor_size.height * 23 / 100;
-            }
-
-            area.hide().unwrap();
-
             let main_window = tauri::WindowBuilder::new(
                 app,
                 "main_window",
@@ -417,28 +464,8 @@ fn main() {
                 .build()
                 .unwrap();
 
-            main_window.set_size(PhysicalSize::new(width, height)).unwrap();
-            main_window.set_position(PhysicalPosition::new((monitor_size.width - width) / 2, monitor_size.height - height * 16 / 10)).unwrap();
-
-            if splashscreen() {
-                let splash = tauri::WindowBuilder::new(
-                    app,
-                    "splashscreen",
-                    tauri::WindowUrl::App("./splashscreen.html".into()))
-                    .decorations(true)
-                    .resizable(false)
-                    .always_on_top(false)
-                    .title("Screen Crab")
-                    .minimizable(true)
-                    .focused(true)
-                    .build()
-                    .unwrap();
-                splash.set_size(PhysicalSize::new(1100, 1500)).unwrap();
-                splash.show().unwrap();
-                main_window.hide().unwrap();
-            } else {
-                main_window.show().unwrap();
-            }
+            main_window.set_size(PhysicalSize::new(monitor_size.width * 60 / 100,monitor_size.height * 23 / 100)).unwrap();
+            main_window.set_position(PhysicalPosition::new((monitor_size.width) / 5, monitor_size.height * 37/100)).unwrap();
 
             #[cfg(target_os = "macos")]
             unsafe {
@@ -455,6 +482,12 @@ fn main() {
                 id.setStyleMask_(style_mask);
                 NSWindow::setTitleVisibility_(id, NSWindowTitleVisibility::NSWindowTitleHidden);
                 NSWindow::setTitlebarAppearsTransparent_(id, 1);
+            }
+
+            if splashscreen() {
+                splash.show().unwrap();
+            } else {
+                start_application(app.handle());
             }
 
             let capture_mouse_pointer = Arc::new(Mutex::new(false));
@@ -556,7 +589,6 @@ fn main() {
                     }
                     area_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
                 });
-
 
                 for helper in helpers {
                     let helper_ = helper.clone();
