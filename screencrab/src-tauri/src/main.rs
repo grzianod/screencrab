@@ -87,7 +87,7 @@ fn custom_area_selection(app: AppHandle, id: String, left: f64, top: f64, width:
     app.windows().get("selector").unwrap().set_size(size).unwrap();
     app.windows().get("selector").unwrap().set_position(position).unwrap();
     app.windows().get("selector").unwrap().show().unwrap();
-    app.windows().get("main_window").unwrap().set_focus().unwrap();
+    app.windows().get("selector").unwrap().set_focus().unwrap();
 
 }
 
@@ -293,6 +293,7 @@ fn main() {
                 "splashscreen",
                 tauri::WindowUrl::App("./splashscreen.html".into()))
                 .decorations(true)
+                .visible(false)
                 .resizable(true)
                 .always_on_top(false)
                 .title("Screen Crab")
@@ -314,6 +315,7 @@ fn main() {
                 tauri::WindowUrl::App("./hotkeys.html".into()))
                 .decorations(true)
                 .resizable(true)
+                .visible(false)
                 .closable(false)
                 .center()
                 .always_on_top(true)
@@ -337,6 +339,7 @@ fn main() {
                 .transparent(true)
                 .resizable(true)
                 .skip_taskbar(true)
+                .visible(false)
                 .center()
                 .title("")
                 .always_on_top(true)
@@ -353,6 +356,7 @@ fn main() {
                 tauri::WindowUrl::App("./blank.html".into()))
                 .decorations(false)
                 .transparent(true)
+                .visible(false)
                 .always_on_top(false)
                 .resizable(true)
                 .always_on_top(true)
@@ -372,6 +376,7 @@ fn main() {
                 tauri::WindowUrl::App("./blank.html".into()))
                 .decorations(false)
                 .transparent(true)
+                .visible(false)
                 .resizable(true)
                 .always_on_top(false)
                 .skip_taskbar(true)
@@ -411,6 +416,7 @@ fn main() {
                         .title("Select an area to capture...")
                         .decorations(false)
                         .transparent(true)
+                        .visible(false)
                         .resizable(false)
                         .always_on_top(true)
                         .minimizable(false)
@@ -430,6 +436,7 @@ fn main() {
                         .title("Select an area to capture...")
                         .transparent(true)
                         .resizable(false)
+                        .visible(false)
                         .always_on_top(true)
                         .minimizable(false)
                         .focused(true)
@@ -449,6 +456,7 @@ fn main() {
                         .resizable(false)
                         .always_on_top(true)
                         .minimizable(false)
+                        .visible(false)
                         .focused(true)
                         .build()
                         .unwrap()
@@ -479,7 +487,7 @@ fn main() {
                 .unwrap();
 
             main_window.set_size(PhysicalSize::new(monitor_size.width * 60 / 100,monitor_size.height * 23 / 100)).unwrap();
-            main_window.set_position(PhysicalPosition::new((monitor_size.width) / 5, monitor_size.height * 37/100)).unwrap();
+            main_window.set_position(PhysicalPosition::new((monitor_size.width) / 5, monitor_size.height * 67/100)).unwrap();
 
             #[cfg(target_os = "macos")]
             unsafe {
