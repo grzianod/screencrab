@@ -260,7 +260,7 @@ fn main() {
                 .focused(true)
                 .build()
                 .unwrap();
-            hotkeys.set_size(PhysicalSize::new(1600, 1500)).unwrap();
+            hotkeys.set_size(PhysicalSize::new(800, 1000)).unwrap();
             hotkeys.hide().unwrap();
 
             #[cfg(target_os = "macos")]
