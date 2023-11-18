@@ -65,10 +65,10 @@ fn log_message(args: CmdArgs) {
 }
 
 #[tauri::command]
-fn custom_area_selection(app: AppHandle, id: String, x: f64, y: f64, width: f64, height: f64) {
+fn custom_area_selection(app: AppHandle, id: String, left: f64, top: f64, width: f64, height: f64) {
     let offset = LogicalPosition::new(app.windows().get(id.as_str()).unwrap().outer_position().unwrap().x as f64,app.windows().get(id.as_str()).unwrap().outer_position().unwrap().y as f64);
     let scale_factor = app.windows().get(id.as_str()).unwrap().current_monitor().unwrap().unwrap().scale_factor();
-    let position = LogicalPosition::new(x + offset.x/scale_factor, y + offset.y/scale_factor);
+    let position = LogicalPosition::new(left + offset.x/scale_factor, top + offset.y/scale_factor);
     let size = LogicalSize::new(width, height);
 
     let n = app.windows().get("main_window").unwrap().available_monitors().unwrap().len();

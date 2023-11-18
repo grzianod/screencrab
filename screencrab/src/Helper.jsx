@@ -7,29 +7,44 @@ import {window} from "@tauri-apps/api";
 function Helper({  }) {
     const [dragging, setDragging] = useState(false);
     const [size, setSize] = useState({ width: 0, height: 0});
-    const [position, setPosition] = useState( { x: 0, y:0 });
+    const [position, setPosition] = useState( { left: 0, top: 0 });
+    const [direction, setDirection] = useState("SE");
 
     function handleMouseDown(event) {
         event.preventDefault();
         setDragging(true);
-        setPosition({ x: event.clientX, y: event.clientY } );
+        setPosition({ left: event.clientX, top: event.clientY } );
         setSize({width: 0, height: 0});
     }
 
     function handleMouseMove(event) {
         event.preventDefault();
+        if((event.clientX - position.left) > 0 && (event.clientY - position.top) < 0)
+            setDirection("NE");
+        if((event.clientX - position.left) > 0 && (event.clientY - position.top) > 0)
+            setDirection("SE");
+        if((event.clientX - position.left) < 0 && (event.clientY - position.top) > 0)
+            setDirection("SO");
+        if((event.clientX - position.left) < 0 && (event.clientY - position.top) < 0)
+            setDirection("NO");
         if(!dragging) return;
 
-        setSize({width: event.clientX - position.x, height: event.clientY - position.y})
+        setSize({width: Math.abs(event.clientX - position.left), height: Math.abs(event.clientY - position.top)})
     }
 
     async function handleMouseUp(event) {
         event.preventDefault();
         setDragging(false);
         let window = await WebviewWindow.getFocusedWindow();
-        await invoke("custom_area_selection", {id: window.label, x: position.x, y: position.y, width: size.width, height: size.height}).then(() => {});
+        await invoke("custom_area_selection", {
+            id: window.label,
+            left: (direction === "NO" || direction === "SO") ? (position.left - size.width) : position.left,
+            top: (direction === "NO" || direction === "NE") ? (position.top - size.height) :  position.top,
+            width: size.width,
+            height: size.height
+        });
         setSize({ width: 0, height: 0});
-        setPosition( { x: 0, y:0 });
+        setPosition( { left: 0, top:0 });
     }
 
     return (
@@ -46,15 +61,18 @@ function Helper({  }) {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}>
-        <rect style={{
-            position: "fixed",
-            top: position.y,
-            left: position.x,
-            backgroundColor: "rgba(255,255,255,0.1)", width: size.width, height: size.height,
-            border: "0.1vmin dashed antiquewhite",
-            cursor: "crosshair"}}
-        ></rect>
-    </div>);
+            <rect style={{
+                position: "absolute",
+                top: (direction === "NO" || direction === "NE") ? position.top - size.height : (direction === "SE" || direction === "SO") ? position.top : false,
+                left: (direction === "NO" || direction === "SO") ? position.left - size.width : (direction === "SE" || direction === "NE") ? position.left : false,
+                backgroundColor: "rgba(255,255,255,0.1)",
+                width: size.width,
+                height: size.height,
+                border: "0.1vmin dashed antiquewhite",
+                cursor: "crosshair"}}
+            ></rect>
+
+        </div>);
 }
 
 export default Helper;
