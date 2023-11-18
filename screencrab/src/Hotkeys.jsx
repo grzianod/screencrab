@@ -111,7 +111,7 @@ function KeyCaptureInput({value, onChange, name}) {
     return (
         <Form.Control
             ref={inputRef}
-            style={{width:"auto", textAlign: "center"}}
+            style={{width:"15vw", textAlign: "center"}}
             className={"mb-0"}
             type="text"
             name={name}

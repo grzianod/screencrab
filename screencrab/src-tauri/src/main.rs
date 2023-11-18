@@ -314,18 +314,19 @@ fn main() {
                 "hotkeys",
                 tauri::WindowUrl::App("./hotkeys.html".into()))
                 .decorations(true)
-                .resizable(true)
+                .resizable(false)
                 .visible(false)
                 .closable(false)
                 .center()
                 .always_on_top(true)
                 .title("Shortcut Keys")
-                .minimizable(true)
+                .minimizable(false)
                 .focused(true)
                 .build()
                 .unwrap();
-                hotkeys.set_size(PhysicalSize::new(monitor_size.width*3/4, monitor_size.height*9/10)).unwrap();
-                hotkeys.hide().unwrap();
+                hotkeys.set_size(PhysicalSize::new(monitor_size.width*3/5, monitor_size.height*4/5)).unwrap();
+
+            hotkeys.hide().unwrap();
 
             //Post-drawing area selector
             #[cfg(target_os = "macos")]
@@ -386,6 +387,8 @@ fn main() {
                 .focused(false)
                 .build()
                 .unwrap();
+
+            //Capture the selected area movement and resize in order to bring the main window on top to click "Capture" button
             let _app = app.handle().clone();
             area.on_window_event(move |event| {
                match event {
@@ -505,6 +508,13 @@ fn main() {
                 NSWindow::setTitleVisibility_(id, NSWindowTitleVisibility::NSWindowTitleHidden);
                 NSWindow::setTitlebarAppearsTransparent_(id, 1);
             }
+
+            let _app = app.handle().clone();
+            main_window.on_window_event(move |event|
+                match event {
+                WindowEvent::CloseRequested { .. } => { _app.exit(0); }
+                _ => {}
+            });
 
             if splashscreen() {
                 splash.show().unwrap();
@@ -673,12 +683,6 @@ fn main() {
                 // toggle application window
                 window.show().unwrap();
                 window.set_focus().unwrap();
-            }
-            _ => {}
-        })
-        .on_window_event(|event| match event.event() {
-            tauri::WindowEvent::CloseRequested { .. } => {
-                event.window().app_handle().exit(0);
             }
             _ => {}
         })
