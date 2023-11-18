@@ -14,8 +14,10 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::api::notification::Notification;
 use std::{env, fs};
+use std::any::Any;
 use serde_json;
 use tauri::{LogicalPosition, LogicalSize};
+use tauri::WindowEvent;
 
 
 #[derive(serde::Deserialize)]
@@ -379,6 +381,18 @@ fn main() {
                 .focused(false)
                 .build()
                 .unwrap();
+            let _app = app.handle().clone();
+            area.on_window_event(move |event| {
+               match event {
+                   WindowEvent::Moved(size) => {
+                       _app.windows().get("main_window").unwrap().set_focus().unwrap();
+                   }
+                   WindowEvent::Resized(size) => {
+                        _app.windows().get("main_window").unwrap().set_focus().unwrap();
+                   }
+                   _ => {}
+               }
+            });
             area.hide().unwrap();
 
             //Scan for all monitors and build a selection window for each of them
