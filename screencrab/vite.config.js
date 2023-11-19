@@ -20,7 +20,6 @@ export default defineConfig(async () => ({
     rollupOptions: {
       input: {
         index: "./index.html",
-        splashscreen: "./splashscreen.html",
         hotkeys: "./hotkeys.html",
         helper: "./helper.html",
       },
