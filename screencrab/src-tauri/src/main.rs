@@ -133,14 +133,18 @@ fn write_to_json(app: AppHandle, input: HotkeyInput) {
 fn check_requirements(app: AppHandle) -> Result<(), String> {
     #[cfg(target_os = "macos")] {
         fs::write(utils_dir() + "/marker.json", b"1").unwrap();
-        start_application(app);
+        app.windows().get("splashscreen").unwrap().hide().unwrap();
+        app.windows().get("main_window").unwrap().show().unwrap();
+        enable_shortcuts(app);
     }
     #[cfg(target_os = "windows")] {
         let requirements = true;
         //TODO: ffmpeg check or installation
         if requirements {
             fs::write(utils_dir() + "/marker.json", b"1").unwrap();
-            start_application(app);
+            app.windows().get("splashscreen").unwrap().hide().unwrap();
+            app.windows().get("main_window").unwrap().show().unwrap();
+            enable_shortcuts(app);
         }
     }
     #[cfg(target_os = "linux")] {
@@ -148,7 +152,9 @@ fn check_requirements(app: AppHandle) -> Result<(), String> {
         //TODO: ffmpeg check or installation
         if requirements {
             fs::write(utils_dir() + "/marker.json", b"1").unwrap();
-            start_application(app);
+            app.windows().get("splashscreen").unwrap().hide().unwrap();
+            app.windows().get("main_window").unwrap().show().unwrap();
+            enable_shortcuts(app);
         }
     }
     Ok(())
@@ -268,9 +274,7 @@ fn splashscreen() -> bool {
     }
 }
 
-fn start_application(app: AppHandle) {
-
-        app.windows().get("splashscreen").unwrap().hide().unwrap();
+fn enable_shortcuts(app: AppHandle) {
         app.windows().get("main_window").unwrap().show().unwrap();
         app.windows().get("main_window").unwrap().menu_handle().get_item("fullscreen_capture").set_enabled(true).unwrap();
         app.windows().get("main_window").unwrap().menu_handle().get_item("custom_capture").set_enabled(true).unwrap();
@@ -358,9 +362,16 @@ fn main() {
                 splash.set_position(PhysicalPosition::new(monitor_size.width/3, monitor_size.height*6/40)).unwrap();
                 splash.set_size(PhysicalSize::new(monitor_size.width/3, monitor_size.height*14/20)).unwrap();
                 main_window.minimize().unwrap();
+
+                let _app = app.handle().clone();
+                splash.on_window_event(move |event|
+                    match event {
+                        WindowEvent::CloseRequested { .. } => { _app.exit(0); }
+                        _ => {}
+                    });
             }
             else {
-                start_application(app.handle());
+                enable_shortcuts(app.handle());
             }
 
             //Hotkeys configurator window
