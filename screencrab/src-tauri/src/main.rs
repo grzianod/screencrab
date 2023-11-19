@@ -60,6 +60,13 @@ async fn current_default_path() -> Response {
 }
 
 #[tauri::command]
+fn get_image_bytes(path: String) -> Vec<u8> {
+    // Read the image file at runtime and return its bytes
+    let image_bytes = std::fs::read(path).expect("Failed to read image file");
+    image_bytes
+}
+
+#[tauri::command]
 fn log_message(args: CmdArgs) {
     println!("{}", args.message);
 }
@@ -222,10 +229,27 @@ fn main() {
         .setup(|app| {
 
             //Extract information about current monitor by the start_window defined in tauri.conf.json
-            let monitor = app.windows().get("start_window").unwrap().current_monitor().unwrap().unwrap();
+            let monitor = app.windows().get("start_window").unwrap().primary_monitor().unwrap().unwrap();
             let scale_factor = app.windows().get("start_window").unwrap().scale_factor().unwrap();
             let monitor_size = monitor.size();
 
+            let tools = tauri::WindowBuilder::new(
+                app,
+                "tools",
+                tauri::WindowUrl::App("./tools.html".into()))
+                .decorations(true)
+                .visible(false)
+                .inner_size((monitor_size.width as f64) * 0.9f64/scale_factor, (monitor_size.height as f64) * 0.8f64/scale_factor )
+                .position((monitor_size.width as f64) * 0.05f64/scale_factor, (monitor_size.height as f64) * 0.1f64/scale_factor)
+                .resizable(true)
+                .closable(true)
+                .always_on_top(true)
+                .title("ScreenCrab Tools")
+                .minimizable(true)
+                .maximizable(true)
+                .focused(true)
+                .build()
+                .unwrap();
 
             let hotkeys = tauri::WindowBuilder::new(
                 app,
@@ -407,9 +431,9 @@ fn main() {
 
             let capture_mouse_pointer = Arc::new(Mutex::new(false));
             let copy_to_clipboard = Arc::new(Mutex::new(false));
-            let edit_after_capture = Arc::new(Mutex::new(false));
+            let edit_after_capture = Arc::new(Mutex::new(true));
             let record_external_audio = Arc::new(Mutex::new(false));
-            let open_after_record = Arc::new(Mutex::new(false));
+            let open_after_record = Arc::new(Mutex::new(true));
             let hotkeys_ = hotkeys.clone();
 
             let window_ = main_window.clone();
@@ -575,7 +599,7 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, load_hotkeys, close_hotkeys, window_hotkeys, custom_area_selection, show_all_helpers, hide_all_helpers])
+        .invoke_handler(tauri::generate_handler![capture, get_image_bytes, folder_dialog, current_default_path, log_message, write_to_json, load_hotkeys, close_hotkeys, window_hotkeys, custom_area_selection, show_all_helpers, hide_all_helpers])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
