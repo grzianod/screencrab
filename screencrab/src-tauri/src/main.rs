@@ -4,7 +4,7 @@ mod menu;
 mod utils;
 
 use chrono::prelude::*;
-use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition, Icon, CursorIcon};
+use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition, Icon, CursorIcon, App};
 use std::path::Path;
 use crate::menu::{create_context_menu};
 use crate::utils::{Response, utils_dir};
@@ -132,12 +132,14 @@ fn write_to_json(app: AppHandle, input: HotkeyInput) {
 #[tauri::command(rename_all = "snake_case")]
 fn check_requirements(app: AppHandle) -> Result<(), String> {
     #[cfg(target_os = "macos")] {
+        fs::write(utils_dir() + "/marker.json", b"1").unwrap();
         start_application(app);
     }
     #[cfg(target_os = "windows")] {
         let requirements = true;
         //TODO: ffmpeg check or installation
         if requirements {
+            fs::write(utils_dir() + "/marker.json", b"1").unwrap();
             start_application(app);
         }
     }
@@ -145,6 +147,7 @@ fn check_requirements(app: AppHandle) -> Result<(), String> {
         let requirements = true;
         //TODO: ffmpeg check or installation
         if requirements {
+            fs::write(utils_dir() + "/marker.json", b"1").unwrap();
             start_application(app);
         }
     }
@@ -258,7 +261,7 @@ fn close_hotkeys(app: AppHandle) {
 }
 
 fn splashscreen() -> bool {
-    let path = utils_dir() + "/marker.json";
+    let path = utils_dir() +"/marker.json";
     match fs::metadata(path.clone()) {
         Ok(_) => { false }
         Err(_) => { true }
@@ -266,47 +269,99 @@ fn splashscreen() -> bool {
 }
 
 fn start_application(app: AppHandle) {
-    app.windows().get("splashscreen").unwrap().hide().unwrap();
-    app.windows().get("main_window").unwrap().show().unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("fullscreen_capture").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("custom_capture").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("capture_mouse_pointer").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("copy_to_clipboard").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("edit_after_capture").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("custom_record").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("record_external_audio").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("open_after_record").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("change_hotkeys").set_enabled(true).unwrap();
-    app.windows().get("main_window").unwrap().menu_handle().get_item("learn_more").set_enabled(true).unwrap();
-    fs::write(utils_dir() + "/marker.json", b"1").unwrap();
+
+        app.windows().get("splashscreen").unwrap().hide().unwrap();
+        app.windows().get("main_window").unwrap().show().unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("fullscreen_capture").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("custom_capture").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("capture_mouse_pointer").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("copy_to_clipboard").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("edit_after_capture").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("custom_record").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("record_external_audio").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("open_after_record").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("change_hotkeys").set_enabled(true).unwrap();
+        app.windows().get("main_window").unwrap().menu_handle().get_item("learn_more").set_enabled(true).unwrap();
 }
 
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
 
-            //Create the first splashscreen window
-            let splash = tauri::WindowBuilder::new(
-                app,
-                "splashscreen",
-                tauri::WindowUrl::App("./splashscreen.html".into()))
-                .decorations(true)
-                .visible(false)
-                .resizable(true)
-                .always_on_top(false)
-                .title("Screen Crab")
-                .minimizable(true)
-                .focused(true)
-                .build()
-                .unwrap();
-                splash.set_size(PhysicalSize::new(1000, 1400)).unwrap();
-
-            //Extract information about current monitor by the splashscreen
-            let monitor = splash.current_monitor().unwrap().unwrap();
+            //Extract information about current monitor by the start_window defined in tauri.conf.json
+            let monitor = app.windows().get("start_window").unwrap().current_monitor().unwrap().unwrap();
+            let scale_factor = app.windows().get("start_window").unwrap().scale_factor().unwrap();
             let monitor_size = monitor.size();
-            let scale_factor = splash.scale_factor().unwrap();
+
+           let main_window = tauri::WindowBuilder::new(
+               app,
+               "main_window",
+               tauri::WindowUrl::App("./index.html".into()))
+               .menu(create_context_menu())
+               .visible(false)
+               .fullscreen(false)
+               .resizable(true)
+               .closable(true)
+               .always_on_top(true)
+               .minimizable(true)
+               .focused(true)
+               .title("Screen Crab")
+               .content_protected(true)
+               .decorations(true)
+               .build()
+               .unwrap();
+
+            main_window.set_size(PhysicalSize::new(monitor_size.width * 60 / 100,monitor_size.height * 23 / 100)).unwrap();
+            main_window.set_position(PhysicalPosition::new((monitor_size.width) / 5, monitor_size.height * 67/100)).unwrap();
+
+            #[cfg(target_os = "macos")]
+            unsafe {
+                let id = main_window.ns_window().unwrap() as cocoa::base::id;
+                NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces);
+                NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorMoveToActiveSpace);
+                NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorTransient);
+                NSWindow::setMovableByWindowBackground_(id, 1);
+                let mut style_mask = id.styleMask();
+                style_mask.set(
+                    NSWindowStyleMask::NSFullSizeContentViewWindowMask,
+                    true,
+                );
+                id.setStyleMask_(style_mask);
+                NSWindow::setTitleVisibility_(id, NSWindowTitleVisibility::NSWindowTitleHidden);
+                NSWindow::setTitlebarAppearsTransparent_(id, 1);
+            }
+
+            let _app = app.handle().clone();
+            main_window.on_window_event(move |event|
+                match event {
+                    WindowEvent::CloseRequested { .. } => { _app.exit(0); }
+                    _ => {}
+                });
+
+            if splashscreen() {
+                //Create the splashscreen window
+                let splash = tauri::WindowBuilder::new(
+                    app,
+                    "splashscreen",
+                    tauri::WindowUrl::App("./splashscreen.html".into()))
+                    .decorations(true)
+                    .visible(true)
+                    .resizable(true)
+                    .always_on_top(false)
+                    .title("Screen Crab")
+                    .minimizable(true)
+                    .focused(true)
+                    .build()
+                    .unwrap();
+                splash.set_position(PhysicalPosition::new(monitor_size.width/3, monitor_size.height*6/40)).unwrap();
+                splash.set_size(PhysicalSize::new(monitor_size.width/3, monitor_size.height*14/20)).unwrap();
+                main_window.minimize().unwrap();
+            }
+            else {
+                start_application(app.handle());
+            }
 
             //Hotkeys configurator window
             let hotkeys = tauri::WindowBuilder::new(
@@ -324,8 +379,8 @@ fn main() {
                 .focused(true)
                 .build()
                 .unwrap();
-                hotkeys.set_size(PhysicalSize::new(monitor_size.width*3/5, monitor_size.height*4/5)).unwrap();
 
+            hotkeys.set_size(PhysicalSize::new(monitor_size.width*3/5, monitor_size.height*17/20)).unwrap();
             hotkeys.hide().unwrap();
 
             //Post-drawing area selector
@@ -404,7 +459,7 @@ fn main() {
             area.hide().unwrap();
 
             //Scan for all monitors and build a selection window for each of them
-            let available_monitors = splash.available_monitors().unwrap();
+            let available_monitors = app.windows().get("start_window").unwrap().available_monitors().unwrap();
             let mut helpers = Vec::with_capacity(available_monitors.len());
 
             for (i,monitor) in available_monitors.iter().enumerate() {
@@ -469,57 +524,6 @@ fn main() {
                 helpers[i].set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
                 helpers[i].set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
                 helpers[i].hide().unwrap();
-            }
-
-            let main_window = tauri::WindowBuilder::new(
-                app,
-                "main_window",
-                tauri::WindowUrl::App("./index.html".into()))
-                .menu(create_context_menu())
-                .visible(false)
-                .fullscreen(false)
-                .resizable(true)
-                .closable(true)
-                .always_on_top(true)
-                .minimizable(true)
-                .focused(true)
-                .title("Screen Crab")
-                .content_protected(true)
-                .decorations(true)
-                .build()
-                .unwrap();
-
-            main_window.set_size(PhysicalSize::new(monitor_size.width * 60 / 100,monitor_size.height * 23 / 100)).unwrap();
-            main_window.set_position(PhysicalPosition::new((monitor_size.width) / 5, monitor_size.height * 67/100)).unwrap();
-
-            #[cfg(target_os = "macos")]
-            unsafe {
-                let id = main_window.ns_window().unwrap() as cocoa::base::id;
-                NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces);
-                NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorMoveToActiveSpace);
-                NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorTransient);
-                NSWindow::setMovableByWindowBackground_(id, 1);
-                let mut style_mask = id.styleMask();
-                style_mask.set(
-                    NSWindowStyleMask::NSFullSizeContentViewWindowMask,
-                    true,
-                );
-                id.setStyleMask_(style_mask);
-                NSWindow::setTitleVisibility_(id, NSWindowTitleVisibility::NSWindowTitleHidden);
-                NSWindow::setTitlebarAppearsTransparent_(id, 1);
-            }
-
-            let _app = app.handle().clone();
-            main_window.on_window_event(move |event|
-                match event {
-                WindowEvent::CloseRequested { .. } => { _app.exit(0); }
-                _ => {}
-            });
-
-            if splashscreen() {
-                splash.show().unwrap();
-            } else {
-                start_application(app.handle());
             }
 
             let capture_mouse_pointer = Arc::new(Mutex::new(false));

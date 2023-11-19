@@ -87,6 +87,17 @@
     },
     "security": {
       "csp": null
-    }
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "",
+        "label": "start_window",
+        "width": 0,
+        "height": 0,
+        "visible": false
+      }
+    ]
   }
 }
