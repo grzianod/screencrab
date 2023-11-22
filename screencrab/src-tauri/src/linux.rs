@@ -2,8 +2,28 @@ use tokio::task;
 use tokio::process::Command;
 use tauri::{Window, Manager};
 use crate::utils::*;
+use std::env;
+use std::fs;
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
+    
+    // Print the current working directory
+    println!("Current working directory: {:?}", env::current_dir().unwrap());
+
+    // Define the path to the ffmpeg binary
+    let ffmpeg_path = "binaries/ffmpeg-x86_64-unknown-linux-gnu";
+
+    // Resolve the canonical path of the ffmpeg binary
+    match fs::canonicalize(&ffmpeg_path) {
+        Ok(resolved_path) => {
+            println!("Resolved ffmpeg path: {:?}", resolved_path);
+        },
+        Err(e) => {
+            println!("Error resolving ffmpeg path: {:?}", e);
+            return Response::new(None, Some(format!("Error resolving ffmpeg path: {}", e)));
+        }
+    }
+
     let index = get_current_monitor_index(&window) - 1;
 
     let mut sleep_command = Command::new("sleep")
@@ -27,17 +47,16 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
 
-    let mut process = Command::new("ffmpeg")
-        .arg("-y")
-        .args(&["-f", "x11grab"])
-        .args(&["-i", format!(":{}.0+0,0", index).as_str()])
-        .args(&["-draw_mouse", if pointer { "true" } else { "false" }])
-        .args(&["-frames:v", "1"])
-        .arg(&filename.to_string())
-        .spawn()
-        .map_err(|e| Response::new(None, Some(format!("Failed to take screenshot: {}", e))))
-        .unwrap();
-
+    let mut process = Command::new(ffmpeg_path)
+    .arg("-y")
+    .args(&["-f", "x11grab"])
+    .args(&["-i", format!(":{}.0+0,0", index).as_str()])
+    .args(&["-draw_mouse", if pointer { "true" } else { "false" }])
+    .args(&["-frames:v", "1"])
+    .arg(&filename.to_string())
+    .spawn()
+    .map_err(|e| Response::new(None, Some(format!("Failed to take screenshot: {}", e))))
+    .unwrap();
 
     let output = process.wait().await.unwrap();
     let filename1 = filename.to_string();

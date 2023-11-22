@@ -125,6 +125,9 @@ fn check_requirements(app: AppHandle) -> Result<(), String> {
         //TODO: ffmpeg check or installation
     }
     #[cfg(target_os = "linux")] {
+        app.windows().get("splashscreen").unwrap().hide().unwrap();
+        app.windows().get("main_window").unwrap().show().unwrap();
+        fs::write(utils_dir() + "/marker.json", b"1").unwrap();
         //TODO: ffmpeg check or installation
     }
     Ok(())
