@@ -77,7 +77,27 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 }
 
 pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
+    // Print the current working directory
+    println!("Current working directory: {:?}", env::current_dir().unwrap());
+
+    // Define the path to the ffmpeg binary
+    let ffmpeg_path = "binaries/ffmpeg-x86_64-unknown-linux-gnu";
+
+    // Resolve the canonical path of the ffmpeg binary
+    let ffmpeg_path = match fs::canonicalize(&ffmpeg_path) {
+        Ok(resolved_path) => {
+            println!("Resolved ffmpeg path: {:?}", resolved_path);
+            resolved_path
+        },
+        Err(e) => {
+            println!("Error resolving ffmpeg path: {:?}", e);
+            return Response::new(None, Some(format!("Error resolving ffmpeg path: {}", e)));
+        }
+    };
+
     let index = get_current_monitor_index(&window) - 1;
+
+    // Sleep command
     let mut sleep_command = Command::new("sleep")
         .arg(&timer.to_string())
         .spawn()
@@ -94,26 +114,28 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
                 .await;
         });
     });
+
     let output = sleep_command.wait_with_output().await.unwrap();
     if !output.status.success() {
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
 
+    // Parse the area coordinates
     let parts: Vec<&str> = area.split(',').collect();
-        let x = parts[0].trim().parse::<i32>().unwrap();
-        let y = parts[1].trim().parse::<i32>().unwrap();
-        let width = parts[2].trim().parse::<i32>().unwrap();
-        let height = parts[3].trim().parse::<i32>().unwrap();
+    let x = parts[0].trim().parse::<i32>().unwrap();
+    let y = parts[1].trim().parse::<i32>().unwrap();
+    let width = parts[2].trim().parse::<i32>().unwrap();
+    let height = parts[3].trim().parse::<i32>().unwrap();
 
     println!("{}, {}", width, height);
 
-
-    let mut process = Command::new("ffmpeg")
+    // FFMPEG command for custom area capture
+    let mut process = Command::new(ffmpeg_path)
         .arg("-y")
         .args(&["-f", "x11grab"])
         .args(&["-s", format!("{}x{}", width, height).as_str()])
         .args(&["-i", format!(":{}.0+{},{}", index, x.to_string(), y.to_string()).as_str()])
-        .args(&["-draw_mouse", if pointer { "true" } else { "false" }])
+        .args(&["-draw_mouse", if pointer { "1" } else { "0" }])
         .args(&["-frames:v", "1"])
         .arg(&filename.to_string())
         .spawn()
@@ -138,7 +160,26 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
 
+
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
+    // Print the current working directory
+    println!("Current working directory: {:?}", env::current_dir().unwrap());
+
+    // Define the path to the ffmpeg binary
+    let ffmpeg_path = "binaries/ffmpeg-x86_64-unknown-linux-gnu";
+
+    // Resolve the canonical path of the ffmpeg binary
+    let ffmpeg_path = match fs::canonicalize(&ffmpeg_path) {
+        Ok(resolved_path) => {
+            println!("Resolved ffmpeg path: {:?}", resolved_path);
+            resolved_path
+        },
+        Err(e) => {
+            println!("Error resolving ffmpeg path: {:?}", e);
+            return Response::new(None, Some(format!("Error resolving ffmpeg path: {}", e)));
+        }
+    };
+
     let index = get_current_monitor_index(&window) - 1;
     let mut sleep_command = Command::new("sleep")
         .arg(&timer.to_string())
@@ -161,7 +202,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
 
-    let mut process = Command::new("ffmpeg")
+    let mut process = Command::new(ffmpeg_path)
         .arg("-y")
         .args(&["-f", "x11grab"])
         .args(&["-i", format!(":{}.0+0,0", index).as_str()])
@@ -205,6 +246,24 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
 }
 
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
+    // Print the current working directory
+    println!("Current working directory: {:?}", env::current_dir().unwrap());
+
+    // Define the path to the ffmpeg binary
+    let ffmpeg_path = "binaries/ffmpeg-x86_64-unknown-linux-gnu";
+
+    // Resolve the canonical path of the ffmpeg binary
+    let ffmpeg_path = match fs::canonicalize(&ffmpeg_path) {
+        Ok(resolved_path) => {
+            println!("Resolved ffmpeg path: {:?}", resolved_path);
+            resolved_path
+        },
+        Err(e) => {
+            println!("Error resolving ffmpeg path: {:?}", e);
+            return Response::new(None, Some(format!("Error resolving ffmpeg path: {}", e)));
+        }
+    };
+
     let index = get_current_monitor_index(&window) - 1;
     let mut sleep_command = Command::new("sleep")
         .arg(&timer.to_string())
@@ -234,7 +293,7 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     let height = parts[3].trim().parse::<i32>().unwrap();
 
 
-    let mut process = Command::new("ffmpeg")
+    let mut process = Command::new(ffmpeg_path)
         .arg("-y")
         .args(&["-f", "x11grab"])
         .args(&["-s", format!("{}x{}", width, height).as_str()])
