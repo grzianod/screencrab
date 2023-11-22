@@ -1,11 +1,11 @@
 param(
     [string]$filename,
-    [string]$area,   # Add this parameter
+    [string]$area,
     [int]$timer,
     [string]$audio,
-    [string]$openfile
+    [string]$openfile,
+    [string]$ffmpegPath  # New parameter for ffmpeg binary path from the full script
 )
-
 
 # Extract the x, y, width, and height from the area string
 $areaSplit = $area -split ","
@@ -14,24 +14,17 @@ $y = $areaSplit[1]
 $width = $areaSplit[2]
 $height = $areaSplit[3]
 
-# Capture the output of ffmpeg listing devices
-$ffmpegOutput = & ffmpeg -list_devices true -f dshow -i dummy 2>&1
+# Function to list and select an audio device, similar to the full script
+function Select-AudioDevice {
+    # List available devices using the provided ffmpeg path
+    $deviceList = & $ffmpegPath -list_devices true -f dshow -i dummy 2>&1
+    Write-Host "Available devices:" -ForegroundColor Green
+    Write-Host $deviceList
 
-# Parse the ffmpeg output to extract the microphone's name
-$microphoneName = $ffmpegOutput | Where-Object { $_ -match '"(.+)" \(audio\)' } | ForEach-Object { $matches[1] }
-
-# If a microphone name is found, use it; otherwise, use a default one
-if (-not [string]::IsNullOrWhiteSpace($microphoneName)) {
-    $audio_input = "audio=$microphoneName"
-} else {
-    $audio_input = "audio=Microphone (High Definition Audio Device)"  # Default
+    # Select the first audio device found
+    $selectedDevice = $deviceList | Where-Object { $_ -match "audio devices" -and $_ -match "Alternative name" } | Select-Object -First 1
+    return $selectedDevice
 }
-
-# ffmpeg -list_devices true -f dshow -i dummy
-# Command to get current I/O devices
-
-# powershell -ExecutionPolicy Bypass -File C:\Users\Antonio\Downloads\screencrab\screencrab\src-tauri\src\record_full_script.ps1 -filename "C:\Users\Antonio\Downloads\test.mp4" -timer 10 -audio "true" -openfile "true"
-# Command by which script runs
 
 # Set up recording parameters
 $video_option = "gdigrab"
@@ -44,25 +37,19 @@ $openfile = [System.Boolean]::Parse($openfile)
 
 
 # Check if audio needs to be recorded
-if ($audio) {
+if ($audio -eq "True") {
+    $audio_device_name = Select-AudioDevice
     $audio_option = "dshow"
-} else {
-    $audio_option = "an"
-    $audio_input = $null
+    $audio_input = "audio=$audio_device_name"
+    $ffmpeg_cmd += "-f", $audio_option, "-i", $audio_input
 }
 
 # Construct the ffmpeg command
 $ffmpeg_cmd = @("-y", "-f", $video_option) + $video_input_options + @("-i", $video_input, $filename)
 
-# Add audio options if needed
-if ($audio) {
-    $ffmpeg_cmd += "-f", $audio_option, "-i", $audio_input
-}
-
 if ($timer -gt 0) {
     Start-Sleep -Seconds $timer
 }
 
-# Start the recording
-ffmpeg $ffmpeg_cmd
-
+# Start the recording with the specified ffmpeg binary
+& $ffmpegPath $ffmpeg_cmd

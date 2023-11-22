@@ -1,4 +1,5 @@
 use tauri::{Window, Manager};
+use tauri::async_runtime::spawn;
 use crate::utils::*;
 use std::fs;
 use std::io::Write;
@@ -11,6 +12,10 @@ use winapi::um::wincon::CTRL_BREAK_EVENT;
 use std::process::Stdio;
 use std::sync::{Arc, Mutex};
 use tokio::io::AsyncWriteExt;
+use tauri::api::process::{CommandEvent, CommandChild};
+use std::thread;
+use std::time::Duration;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
 
@@ -116,8 +121,23 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     return Response::new(None, Some(format!("Screen Crab cancelled")) );
 }
 
+// Global or shared reference to the CommandChild
+static mut FFMPEG_PROCESS: Option<CommandChild> = None;
+
+pub fn stop_recording() {
+    unsafe {
+        if let Some(child) = FFMPEG_PROCESS.as_mut() {
+            // Attempt to kill the process
+            let _ = child.kill();
+        }
+    }
+}
 
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
+    /* 
+    // first implementation with binary and cmd exec
+    let ffmpeg_path = "./binaries/ffmpeg-x86_64-pc-windows-msvc.exe";
+    
     const SCRIPT: &[u8] = include_bytes!("windows/record_full_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("record_full_script.ps1");
@@ -139,6 +159,8 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
         .arg(timer.to_string())  // Convert u64 to String
         .arg("-audio")
         .arg(if audio { "True" } else { "False" })  // Convert to "1" or "0"
+        .arg("-ffmpegPath")
+        .arg(ffmpeg_path)
         .spawn()
         .map_err(|e| Response::new( None, Some(format!("Failed to take screenshot: {}", e)) ));
 
@@ -175,11 +197,67 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
         return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
     }
     return Response::new(None, Some(format!("Screen Crab cancelled")) );
+    */
+    // Set up ffmpeg command arguments
+    let mut ffmpeg_args = Vec::new();
 
+    // Video capture settings
+    ffmpeg_args.push("-f".to_string());
+    ffmpeg_args.push("gdigrab".to_string()); // For screen capture on Windows
+    ffmpeg_args.push("-i".to_string());
+    ffmpeg_args.push("desktop".to_string()); // Input is the desktop
+
+    // Audio capture settings (if audio is true)
+    if audio {
+        // Example: capturing default audio device
+        ffmpeg_args.push("-f".to_string());
+        ffmpeg_args.push("dshow".to_string()); // DirectShow for Windows
+        ffmpeg_args.push("-i".to_string());
+        ffmpeg_args.push("audio=\"Your Audio Device Name\"".to_string()); // Replace with actual device name
+    }
+
+    // Output file
+    ffmpeg_args.push(filename.to_string()); // The output file path
+
+    // Create sidecar command for ffmpeg
+    let command = tauri::api::process::Command::new_sidecar("ffmpeg")
+    .expect("Failed to create ffmpeg command");
+
+    
+    let (mut rx, mut child) = command
+    .args(&ffmpeg_args)
+    .spawn()
+    .expect("Failed to spawn ffmpeg sidecar");
+
+    // Shared atomic variable to control the recording
+    let stop_recording = Arc::new(AtomicBool::new(false));
+
+    // Clone the Arc to use in the async block
+    let stop_clone = stop_recording.clone();
+
+    let (_, child) = command
+        .args(&ffmpeg_args)
+        .spawn()
+        .expect("Failed to spawn ffmpeg sidecar");
+
+    // Store the child process in the global variable
+    unsafe {
+        FFMPEG_PROCESS = Some(child);
+    }
+
+    // Additional logic if necessary
+
+    return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None );
 }
 
+async fn wait_for_stop_signal() {
+    // Implement your logic to wait for a stop signal here
+    // For example, wait for a user input, an event, or a timer
+}
 
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
+    let ffmpeg_path = "./binaries/ffmpeg-x86_64-pc-windows-msvc.exe";
+
     const SCRIPT: &[u8] = include_bytes!("windows/record_custom_script.ps1");
     let temp_dir = std::env::temp_dir();
     let temp_file_path = temp_dir.join("record_custom_script.ps1");
@@ -203,6 +281,8 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
         .arg(&area.to_string())
         .arg("-audio")
         .arg(if audio { "True" } else { "False" })  // Convert to "1" or "0"
+        .arg("-ffmpegPath")
+        .arg(ffmpeg_path)
         .spawn()
         .map_err(|e| Response::new( None, Some(format!("Failed to take screenshot: {}", e)) ));
 
