@@ -418,7 +418,10 @@ fn main() {
                 NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces);
                 NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorMoveToActiveSpace);
                 NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorTransient);
-                NSWindow::setMovableByWindowBackground_(id, 1);
+                #[cfg(target_arch = "x86_64")]
+                NSWindow::setTitlebarAppearsTransparent_(id, 1);
+                #[cfg(target_arch = "aarch64")]
+                NSWindow::setTitlebarAppearsTransparent_(id, true);
                 let mut style_mask = id.styleMask();
                 style_mask.set(
                     NSWindowStyleMask::NSFullSizeContentViewWindowMask,
@@ -426,7 +429,10 @@ fn main() {
                 );
                 id.setStyleMask_(style_mask);
                 NSWindow::setTitleVisibility_(id, NSWindowTitleVisibility::NSWindowTitleHidden);
+                #[cfg(target_arch = "x86_64")]
                 NSWindow::setTitlebarAppearsTransparent_(id, 1);
+                #[cfg(target_arch = "aarch64")]
+                NSWindow::setTitlebarAppearsTransparent_(id, true);
             }
 
             let capture_mouse_pointer = Arc::new(Mutex::new(false));
