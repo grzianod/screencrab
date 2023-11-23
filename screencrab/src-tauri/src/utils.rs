@@ -1,12 +1,14 @@
 use serde::{Serialize, Deserialize};
 use tokio::sync::oneshot;
 use tauri::api::dialog::FileDialogBuilder;
+
 use tokio::task;
 use tokio::process::Command;
 use tauri::{AppHandle, Window, Manager};
 use std::{env, fs};
 use std::fs::File;
 use std::io::Write;
+use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 
 
 // the payload type must implement `Serialize` and `Clone`.
@@ -74,16 +76,16 @@ pub fn hotkeys() -> String {
     if let Ok(_result) = fs::create_dir(utils_dir()) {
         let json_content = r#"{
         "custom_capture": "CmdOrCtrl+C",
-        "fullscreen_capture": "Control+f",
-        "capture_mouse_pointer": "Control+m",
+        "fullscreen_capture": "CmdOrCtrl+F",
+        "capture_mouse_pointer": "Option+M",
         "copy_to_clipboard": "Option+C",
-        "edit_after_capture": "CmdOrCtrl+O",
+        "edit_after_capture": "Option+E",
         "open_after_record": "Option+O",
         "custom_record": "CmdOrCtrl+Option+C",
         "record_external_audio": "Option+A",
         "fullscreen_record": "CmdOrCtrl+Option+F",
         "stop_recording": "CmdOrCtrl+Option+S"
-    }"#;
+        }"#;
 
         // Create a new file and open it for writing
         let mut file = File::create(file.to_string()).unwrap();
@@ -91,7 +93,7 @@ pub fn hotkeys() -> String {
         // Write the JSON content to the file
         file.write_all(json_content.as_bytes()).unwrap();
     }
-    fs::read_to_string(file).unwrap()
+    return fs::read_to_string(file).unwrap();
 }
 
 pub async fn folder_picker(handle: AppHandle) -> Response {
@@ -167,4 +169,14 @@ pub fn get_current_monitor_index(window: &Window) -> usize {
         .into_iter()
         .position(|item| item.name().unwrap().eq(window.current_monitor().unwrap().unwrap().name().unwrap()))
         .unwrap_or(0) + 1
+}
+
+pub fn monitor_dialog(app: AppHandle) {
+    MessageDialogBuilder::new("New Monitor Detected", "ScreenCrab detected a new monitor. Please Restart the application in order to re-index all monitors.")
+        .kind(MessageDialogKind::Error)
+        .buttons(MessageDialogButtons::OkCancelWithLabels("Restart".to_string(), "Quit".to_string()))
+        .show(move |value| {
+            if value { app.restart(); }
+            else { app.exit(0);  }
+        });
 }

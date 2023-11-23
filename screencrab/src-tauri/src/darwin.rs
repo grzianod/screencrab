@@ -33,10 +33,9 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     let output = process.unwrap().wait().await.unwrap();
     if output.success() {
         if !clipboard && open_file {
-            // Use tokio::task::spawn to execute the opening
-            let _open_task = task::spawn(async move {
-                let _open = Command::new("open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
-            });
+            window.windows().get("main_window").unwrap().minimize().unwrap();
+            window.windows().get("tools").unwrap().show().unwrap();
+            window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);

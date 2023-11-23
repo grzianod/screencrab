@@ -9,7 +9,52 @@
         }
     </style>
 </head>
-<body style="flex: 1; margin: 0; padding-bottom: 0;">
-<div data-tauri-drag-region style="height: 99.4vh; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; -webkit-app-region: drag; border: 0.1vmin dashed antiquewhite;"></div>
+<body style="flex: 1; margin: 0; padding-bottom: 0">
+<div id="draggable" data-tauri-drag-region style="overflow: hidden; cursor: grab; height: 99.4vh; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; -webkit-app-region: drag; border: 0.1vmin dashed antiquewhite;"></div>
+<script>
+    const draggableElement = document.getElementById('draggable');
+    let isDragging = false;
+
+    const startDragging = () => {
+        isDragging = true;
+        draggableElement.style.cursor = 'grabbing';
+
+        const onMouseMove = (e) => {
+            if (isDragging) {
+                // Your custom logic for movement here
+            }
+        };
+
+        const onMouseUp = () => {
+            isDragging = false;
+            draggableElement.style.cursor = 'grab';
+
+            // Remove event listeners when dragging stops
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+
+        // Add event listeners for movement and mouseup
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    };
+
+    // Change cursor to 'grabbing' on click
+    draggableElement.addEventListener('mousedown', startDragging);
+
+    // Change cursor to 'grab' on hover, unless dragging
+    draggableElement.addEventListener('mouseenter', () => {
+        if (!isDragging) {
+            draggableElement.style.cursor = 'grab';
+        }
+    });
+
+    // Change cursor back to 'grabbing' on mouse leave if dragging
+    draggableElement.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            draggableElement.style.cursor = 'grabbing';
+        }
+    });
+</script>
 </body>
 </html>

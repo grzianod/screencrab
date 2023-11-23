@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import './styles.css';
 import {invoke} from "@tauri-apps/api/tauri";
 import {LogicalPosition, LogicalSize, WebviewWindow} from '@tauri-apps/api/window';
@@ -46,6 +46,14 @@ function Helper({  }) {
         setSize({ width: 0, height: 0});
         setPosition( { left: 0, top:0 });
     }
+
+    useEffect(() => {
+        document.addEventListener("keyup", async (event) => {
+           if(event.key === "Escape") {
+               await invoke("hide_all_helpers", {});
+           }
+        });
+    }, []);
 
     return (
         <div style={{

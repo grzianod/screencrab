@@ -60,6 +60,13 @@ async fn current_default_path() -> Response {
 }
 
 #[tauri::command]
+fn get_image_bytes(path: String) -> Vec<u8> {
+    // Read the image file at runtime and return its bytes
+    let image_bytes = std::fs::read(path).expect("Failed to read image file");
+    image_bytes
+}
+
+#[tauri::command]
 fn log_message(args: CmdArgs) {
     println!("{}", args.message);
 }
@@ -109,25 +116,6 @@ fn write_to_json(app: AppHandle, input: HotkeyInput) {
     let file_path = Path::new(&path);
     fs::write(file_path, input.hotkey_data.to_string()).unwrap();
     process::restart(&app.env())
-}
-
-#[tauri::command(rename_all = "snake_case")]
-fn check_requirements(app: AppHandle) -> Result<(), String> {
-    #[cfg(target_os = "macos")] {
-        app.windows().get("splashscreen").unwrap().hide().unwrap();
-        app.windows().get("main_window").unwrap().show().unwrap();
-        fs::write(utils_dir() + "/marker.json", b"1").unwrap();
-    }
-    #[cfg(target_os = "windows")] {
-        app.windows().get("splashscreen").unwrap().hide().unwrap();
-        app.windows().get("main_window").unwrap().show().unwrap();
-        fs::write(utils_dir() + "/marker.json", b"1").unwrap();
-        //TODO: ffmpeg check or installation
-    }
-    #[cfg(target_os = "linux")] {
-        //TODO: ffmpeg check or installation
-    }
-    Ok(())
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -236,22 +224,41 @@ fn close_hotkeys(app: AppHandle) {
     app.windows().get("hotkeys").unwrap().hide().unwrap();
 }
 
-fn splashscreen() -> bool {
-    let path = utils_dir() + "/marker.json";
-    match fs::metadata(path.clone()) {
-        Ok(_) => { false }
-        Err(_) => { true }
-    }
-}
-
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
+
+            //Extract information about current monitor by the start_window defined in tauri.conf.json
+            let monitor = app.windows().get("start_window").unwrap().primary_monitor().unwrap().unwrap();
+            let scale_factor = app.windows().get("start_window").unwrap().scale_factor().unwrap();
+            let monitor_size = monitor.size();
+
+            let tools = tauri::WindowBuilder::new(
+                app,
+                "tools",
+                tauri::WindowUrl::App("./tools.html".into()))
+                .decorations(true)
+                .visible(false)
+                .inner_size((monitor_size.width as f64) * 0.9f64/scale_factor, (monitor_size.height as f64) * 0.8f64/scale_factor )
+                .position((monitor_size.width as f64) * 0.05f64/scale_factor, (monitor_size.height as f64) * 0.1f64/scale_factor)
+                .resizable(true)
+                .closable(true)
+                .always_on_top(true)
+                .title("ScreenCrab Tools")
+                .minimizable(true)
+                .maximizable(true)
+                .focused(true)
+                .build()
+                .unwrap();
+
             let hotkeys = tauri::WindowBuilder::new(
                 app,
                 "hotkeys",
                 tauri::WindowUrl::App("./hotkeys.html".into()))
                 .decorations(true)
+                .visible(false)
+                .inner_size((monitor_size.width as f64) * 0.6f64/scale_factor, (monitor_size.height as f64) * 0.9f64/scale_factor )
+                .position((monitor_size.width as f64) * 0.2f64/scale_factor, (monitor_size.height as f64) * 0.05f64/scale_factor)
                 .resizable(true)
                 .closable(false)
                 .always_on_top(true)
@@ -260,8 +267,6 @@ fn main() {
                 .focused(true)
                 .build()
                 .unwrap();
-            hotkeys.set_size(PhysicalSize::new(800, 1000)).unwrap();
-            hotkeys.hide().unwrap();
 
             #[cfg(target_os = "macos")]
                 let area = tauri::WindowBuilder::new(
@@ -271,6 +276,7 @@ fn main() {
                 .menu(create_context_menu())
                 .title_bar_style(TitleBarStyle::Overlay)
                 .decorations(false)
+                .visible(false)
                 .transparent(true)
                 .resizable(true)
                 .skip_taskbar(true)
@@ -290,6 +296,7 @@ fn main() {
                 "selector",
                 tauri::WindowUrl::App("./blank.html".into()))
                 .decorations(false)
+                .visible(false)
                 .transparent(true)
                 .always_on_top(false)
                 .resizable(true)
@@ -331,6 +338,7 @@ fn main() {
                         tauri::WindowUrl::App("./helper.html".into()))
                         .title_bar_style(TitleBarStyle::Overlay)
                         .menu(create_context_menu())
+                        .visible(false)
                         .title("Select an area to capture...")
                         .decorations(false)
                         .transparent(true)
@@ -350,6 +358,7 @@ fn main() {
                         format!("helper_{}", i),
                         tauri::WindowUrl::App("./helper.html".into()))
                         .decorations(false)
+                        .visible(false)
                         .title("Select an area to capture...")
                         .transparent(true)
                         .resizable(false)
@@ -367,6 +376,7 @@ fn main() {
                         format!("helper_{}", i),
                         tauri::WindowUrl::App("./helper.html".into()))
                         .decorations(false)
+                        .visible(false)
                         .title("Select an area to capture...")
                         .transparent(true)
                         .resizable(false)
@@ -380,32 +390,17 @@ fn main() {
 
                 helpers[i].set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
                 helpers[i].set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
-                helpers[i].hide().unwrap();
             }
-
-
-
-            let monitor_size = area.primary_monitor().unwrap().unwrap().size().to_owned();
-
-            let width;
-            let height;
-            if cfg!(target_os="windows") {
-                width = monitor_size.width * 65 / 100;
-                height = monitor_size.height * 25 / 100;
-            } else {
-                width = monitor_size.width * 60 / 100;
-                height = monitor_size.height * 23 / 100;
-            }
-
-            area.hide().unwrap();
 
             let main_window = tauri::WindowBuilder::new(
                 app,
                 "main_window",
                 tauri::WindowUrl::App("./index.html".into()))
                 .menu(create_context_menu())
-                .visible(false)
+                .visible(true)
                 .fullscreen(false)
+                .inner_size((monitor_size.width as f64) * 0.6f64/scale_factor, (monitor_size.height as f64) * 0.23f64/scale_factor )
+                .position((monitor_size.width as f64) * 0.2f64/scale_factor, (monitor_size.height as f64) * 0.67f64/scale_factor)
                 .resizable(true)
                 .closable(true)
                 .always_on_top(true)
@@ -416,29 +411,6 @@ fn main() {
                 .decorations(true)
                 .build()
                 .unwrap();
-
-            main_window.set_size(PhysicalSize::new(width, height)).unwrap();
-            main_window.set_position(PhysicalPosition::new((monitor_size.width - width) / 2, monitor_size.height - height * 16 / 10)).unwrap();
-
-            if splashscreen() {
-                let splash = tauri::WindowBuilder::new(
-                    app,
-                    "splashscreen",
-                    tauri::WindowUrl::App("./splashscreen.html".into()))
-                    .decorations(true)
-                    .resizable(false)
-                    .always_on_top(false)
-                    .title("Screen Crab")
-                    .minimizable(true)
-                    .focused(true)
-                    .build()
-                    .unwrap();
-                splash.set_size(PhysicalSize::new(1100, 1200)).unwrap();
-                splash.show().unwrap();
-                main_window.hide().unwrap();
-            } else {
-                main_window.show().unwrap();
-            }
 
             #[cfg(target_os = "macos")]
             unsafe {
@@ -459,11 +431,10 @@ fn main() {
 
             let capture_mouse_pointer = Arc::new(Mutex::new(false));
             let copy_to_clipboard = Arc::new(Mutex::new(false));
-            let edit_after_capture = Arc::new(Mutex::new(false));
+            let edit_after_capture = Arc::new(Mutex::new(true));
             let record_external_audio = Arc::new(Mutex::new(false));
-            let open_after_record = Arc::new(Mutex::new(false));
+            let open_after_record = Arc::new(Mutex::new(true));
             let hotkeys_ = hotkeys.clone();
-
 
             let window_ = main_window.clone();
             let capture_mouse_pointer_ = capture_mouse_pointer.clone();
@@ -628,8 +599,7 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, folder_dialog, current_default_path, log_message, write_to_json, load_hotkeys, close_hotkeys, window_hotkeys, check_requirements, custom_area_selection, show_all_helpers, hide_all_helpers])
+        .invoke_handler(tauri::generate_handler![capture, get_image_bytes, folder_dialog, current_default_path, log_message, write_to_json, load_hotkeys, close_hotkeys, window_hotkeys, custom_area_selection, show_all_helpers, hide_all_helpers])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
