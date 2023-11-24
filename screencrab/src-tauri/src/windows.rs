@@ -5,26 +5,31 @@ use tokio::process::Command as tokioCommand;
 use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
 use crate::utils::*;
+use winapi::um::wincon::GenerateConsoleCtrlEvent;
+use winapi::um::wincon::CTRL_BREAK_EVENT;
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
 
     let index = get_current_monitor_index(&window) - 1;
 
     if timer > 0 {
-    let mut sleep_command = tokioCommand::new("sleep")
-        .arg(&timer.to_string())
-        .spawn()
-        .unwrap();
+    let mut sleep_command = 
+        stdCommand::new("timeout")
+            .arg("/t")
+            .arg(&timer.to_string())
+            .arg("/nobreak") // Ensures that waiting cannot be skipped with a keypress
+            .spawn()
+            .unwrap();
 
-    let pid = sleep_command.id().unwrap();
+    let pid = sleep_command.id();
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            Command::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().await.unwrap();
+            stdCommand::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().unwrap();
         });
     });
 
-    let output = sleep_command.wait_with_output().await.unwrap();
+    let output = sleep_command.wait_with_output().unwrap();
     if !output.status.success() {
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
@@ -32,7 +37,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 
     let status = Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
+        .args(["-f", "gdigrab", "-i", "desktop", "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
         .status()
         .unwrap();
 
@@ -59,20 +64,23 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     let index = get_current_monitor_index(&window) - 1;
 
     if timer > 0 {
-    let mut sleep_command = tokioCommand::new("sleep")
-        .arg(&timer.to_string())
-        .spawn()
-        .unwrap();
+        let mut sleep_command = 
+        stdCommand::new("timeout")
+            .arg("/t")
+            .arg(&timer.to_string())
+            .arg("/nobreak") // Ensures that waiting cannot be skipped with a keypress
+            .spawn()
+            .unwrap();
 
-    let pid = sleep_command.id().unwrap();
+    let pid = sleep_command.id();
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            Command::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().await.unwrap();
+            stdCommand::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().unwrap();
         });
     });
 
-    let output = sleep_command.wait_with_output().await.unwrap();
+    let output = sleep_command.wait_with_output().unwrap();
     if !output.status.success() {
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
@@ -85,12 +93,21 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
         let height = parts[3].trim().parse::<i32>().unwrap();
 
 
-    let status = Command::new_sidecar("ffmpeg")
+        let status = Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "x11grab", "-video_size", format!("{},{}", width, height).as_str(), "-i", format!(":{}.0+{},{}", index, x, y).as_str(), "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
+        .args([
+            "-f", "gdigrab", 
+            "-framerate", "30", 
+            "-video_size", &format!("{},{}", width, height), 
+            "-i", "desktop", 
+            "-offset_x", &x.to_string(), 
+            "-offset_y", &y.to_string(),
+            "-draw_mouse", if pointer { "1" } else { "0" }, 
+            "-frames:v", "1", 
+            &filename.to_string()
+        ])
         .status()
-        .unwrap();
-
+        .unwrap();    
     
     let filename1 = filename.to_string();
     if status.success() {
@@ -116,20 +133,23 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
     let index = get_current_monitor_index(&window) - 1;
 
     if timer > 0 {
-    let mut sleep_command = tokioCommand::new("sleep")
-        .arg(&timer.to_string())
-        .spawn()
-        .unwrap();
+        let mut sleep_command = 
+        stdCommand::new("timeout")
+            .arg("/t")
+            .arg(&timer.to_string())
+            .arg("/nobreak") // Ensures that waiting cannot be skipped with a keypress
+            .spawn()
+            .unwrap();
 
-    let pid = sleep_command.id().unwrap();
+    let pid = sleep_command.id();
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            Command::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().await.unwrap();
+            stdCommand::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().unwrap();
         });
     });
 
-    let output = sleep_command.wait_with_output().await.unwrap();
+    let output = sleep_command.wait_with_output().unwrap();
     if !output.status.success() {
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
@@ -137,7 +157,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
 
 let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), &filename.to_string()]));
+        .args(["-f", "gdigrab", "-i", "desktop", &filename.to_string()]));
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
@@ -159,7 +179,7 @@ let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
     if open_file {
         // Use tokio::task::spawn to execute the opening
         let _open_task = task::spawn(async move {
-            let _open = tokioCommand::new("cmd").arg("/C").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
+            let _open = stdCommand::new("cmd").arg("/C").arg(filename1.as_str()).output().map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
         });
     }
     return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
@@ -174,28 +194,45 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     let index = get_current_monitor_index(&window) - 1;
 
     if timer > 0 {
-    let mut sleep_command = tokioCommand::new("sleep")
-        .arg(&timer.to_string())
-        .spawn()
-        .unwrap();
+        let mut sleep_command = 
+        stdCommand::new("timeout")
+            .arg("/t")
+            .arg(&timer.to_string())
+            .arg("/nobreak") // Ensures that waiting cannot be skipped with a keypress
+            .spawn()
+            .unwrap();
 
-    let pid = sleep_command.id().unwrap();
+    let pid = sleep_command.id();
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            Command::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().await.unwrap();
+            stdCommand::new("taskkill").args(&["/F", "/PID", &pid.to_string()]).output().unwrap();
         });
     });
 
-    let output = sleep_command.wait_with_output().await.unwrap();
+    let output = sleep_command.wait_with_output().unwrap();
     if !output.status.success() {
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
     }
 
+    let parts: Vec<&str> = area.split(',').collect();
+        let x = parts[0].trim().parse::<i32>().unwrap();
+        let y = parts[1].trim().parse::<i32>().unwrap();
+        let width = parts[2].trim().parse::<i32>().unwrap();
+        let height = parts[3].trim().parse::<i32>().unwrap();
+
 let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), &filename.to_string()]));
+        .args([
+            "-f", "gdigrab", 
+            "-framerate", "30", 
+            "-video_size", &format!("{},{}", width, height), 
+            "-i", "desktop", 
+            "-offset_x", &x.to_string(), 
+            "-offset_y", &y.to_string(),
+            &filename.to_string()
+        ]));
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
