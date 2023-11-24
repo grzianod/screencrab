@@ -399,7 +399,7 @@ fn main() {
                 .menu(create_context_menu())
                 .visible(true)
                 .fullscreen(false)
-                .inner_size((monitor_size.width as f64) * 0.6f64/scale_factor, (monitor_size.height as f64) * 0.23f64/scale_factor )
+                .inner_size((monitor_size.width as f64) * 0.65f64/scale_factor, (monitor_size.height as f64) * 0.28f64/scale_factor )
                 .position((monitor_size.width as f64) * 0.2f64/scale_factor, (monitor_size.height as f64) * 0.67f64/scale_factor)
                 .resizable(true)
                 .closable(true)

@@ -93,15 +93,11 @@ function App() {
         setCountdown(0);
         setIsCounting(false);
 
-        if(mode === "capture")
-            emit("kill", {})
-                .then( () => {})
-                .catch((err) => console.log("ERROR: "+err) /* TODO: handle error */)
-        else if (capturing)
+        if (!isCounting)
             emit("stop", {})
-                .then( () => {})
-                .catch((err) => console.log("ERROR: "+err) /* TODO: handle error */)
-                .finally(() => setCapturing(false));
+            .then( () => {})
+            .catch((err) => console.log("ERROR: "+err) /* TODO: handle error */)
+            .finally(() => setCapturing(false));
         else
             emit("kill", {})
                 .then( () => {})

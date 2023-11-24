@@ -1,12 +1,16 @@
 use tokio::task;
-use tokio::process::Command;
+use tauri::api::process::Command;
+use tauri::api::process::CommandEvent;
+use tokio::process::Command as tokioCommand;
+use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
 use crate::utils::*;
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
 
-    let mut sleep_command = Command::new("sleep")
+    if timer > 0 {
+    let mut sleep_command = tokioCommand::new("sleep")
         .arg(&timer.to_string())
         .spawn()
         .unwrap();
@@ -15,7 +19,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+            let _output = tokioCommand::new("kill")
                 .arg("-9")
                 .arg(pid.to_string())
                 .output()
@@ -26,27 +30,21 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     if !output.status.success() {
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
+    }
 
-    let mut process = Command::new("ffmpeg")
-        .arg("-y")
-        .args(&["-f", "x11grab"])
-        .args(&["-i", format!(":{}.0+0,0", index).as_str()])
-        .args(&["-draw_mouse", if pointer { "true" } else { "false" }])
-        .args(&["-frames:v", "1"])
-        .arg(&filename.to_string())
-        .spawn()
-        .map_err(|e| Response::new(None, Some(format!("Failed to take screenshot: {}", e))))
+    let status = Command::new_sidecar("ffmpeg")
+        .unwrap()
+        .args(["-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
+        .status()
         .unwrap();
 
-
-    let output = process.wait().await.unwrap();
     let filename1 = filename.to_string();
-    if output.success() {
+    if status.success() {
         if !clipboard && open_file {
-            // Use tokio::task::spawn to execute the opening
-            let _open_task = task::spawn(async move {
-                let _open = Command::new("xdg-open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e))));
-            });
+            window.windows().get("main_window").unwrap().minimize().unwrap();
+            window.windows().get("tools").unwrap().show().unwrap();
+            window.windows().get("tools").unwrap().unminimize().unwrap();
+            window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
@@ -59,26 +57,30 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 
 pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
-    let mut sleep_command = Command::new("sleep")
+
+    if timer > 0 {
+    let sleep_command = stdCommand::new("sleep")
         .arg(&timer.to_string())
         .spawn()
         .unwrap();
 
-    let pid = sleep_command.id().unwrap();
+    let pid = sleep_command.id();
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+            let _output = stdCommand::new("kill")
                 .arg("-9")
                 .arg(pid.to_string())
                 .output()
-                .await;
+                .unwrap();
         });
     });
-    let output = sleep_command.wait_with_output().await.unwrap();
+    let output = sleep_command.wait_with_output().unwrap();
+    println!("{:?}", output);
     if !output.status.success() {
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
+}
 
     let parts: Vec<&str> = area.split(',').collect();
         let x = parts[0].trim().parse::<i32>().unwrap();
@@ -86,82 +88,76 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
         let width = parts[2].trim().parse::<i32>().unwrap();
         let height = parts[3].trim().parse::<i32>().unwrap();
 
-    println!("{}, {}", width, height);
 
-
-    let mut process = Command::new("ffmpeg")
-        .arg("-y")
-        .args(&["-f", "x11grab"])
-        .args(&["-s", format!("{}x{}", width, height).as_str()])
-        .args(&["-i", format!(":{}.0+{},{}", index, x.to_string(), y.to_string()).as_str()])
-        .args(&["-draw_mouse", if pointer { "true" } else { "false" }])
-        .args(&["-frames:v", "1"])
-        .arg(&filename.to_string())
-        .spawn()
-        .map_err(|e| Response::new(None, Some(format!("Failed to take screenshot: {}", e))))
+    let status = Command::new_sidecar("ffmpeg")
+        .unwrap()
+        .args(["-f", "x11grab", "-video_size", format!("{},{}", width, height).as_str(), "-i", format!(":{}.0+{},{}", index, x, y).as_str(), "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
+        .status()
         .unwrap();
 
-    let output = process.wait().await.unwrap();
+    
     let filename1 = filename.to_string();
-    if output.success() {
+    if status.success() {
         if !clipboard && open_file {
-            // Use tokio::task::spawn to execute the opening
-            let _open_task = task::spawn(async move {
-                let _open = Command::new("xdg-open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e))));
-            });
+            window.windows().get("main_window").unwrap().minimize().unwrap();
+            window.windows().get("tools").unwrap().show().unwrap();
+            window.windows().get("tools").unwrap().unminimize().unwrap();
+            window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
         } else {
             return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
         }
-    }
+    } 
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
 
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
-    let mut sleep_command = Command::new("sleep")
+
+    let index = get_current_monitor_index(&window) - 1;
+
+    if timer > 0 {
+    let sleep_command = stdCommand::new("sleep")
         .arg(&timer.to_string())
         .spawn()
         .unwrap();
 
-    let pid = sleep_command.id().unwrap();
+    let pid = sleep_command.id();
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+            let _output = stdCommand::new("kill")
                 .arg("-9")
                 .arg(pid.to_string())
                 .output()
-                .await;
+                .unwrap();
         });
     });
-    let output = sleep_command.wait_with_output().await.unwrap();
+    let output = sleep_command.wait_with_output().unwrap();
     if !output.status.success() {
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
+}
 
-    let mut process = Command::new("ffmpeg")
-        .arg("-y")
-        .args(&["-f", "x11grab"])
-        .args(&["-i", format!(":{}.0+0,0", index).as_str()])
-        .arg(&filename.to_string())
-        .spawn()
-        .map_err(|e| Response::new(None, Some(format!("Failed to take screenshot: {}", e))))
-        .unwrap();
+
+    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
+        .unwrap()
+        .args(["-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), &filename.to_string()]));
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
 
-    let pid = process.id().unwrap();
-
+    let process = command.spawn().unwrap();
+    let pid = process.id();
     let window_ = window.clone();
+    let filename1 = filename.to_string();
     window.listen_global("stop", move |_event| {
         tokio::task::spawn(async move {
-            let _output = Command::new("kill")
-                .arg("-2")  //SIGTERM
+            let _output = tokioCommand::new("kill")
+                .arg("-2")
                 .arg(pid.to_string())
                 .output()
                 .await;
@@ -170,71 +166,69 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
         window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
         window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
     });
-
-    let output = process.wait().await.unwrap();
-    let filename1 = filename.to_string();
-    if output.success() {
-        if open_file {
-            // Use tokio::task::spawn to execute the opening
-            let _open_task = task::spawn(async move {
-                let _open = Command::new("xdg-open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
-            });
-        }
-        return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
+    
+    let status = process.wait_with_output().unwrap().status;
+    if status.code().unwrap() == 255 {
+    if open_file {
+        // Use tokio::task::spawn to execute the opening
+        let _open_task = task::spawn(async move {
+            let _open = tokioCommand::new("xdg-open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
+        });
+    }
+    return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
     }
     return Response::new(None, Some(format!("Screen Crab cancelled")) );
 }
 
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
-    let mut sleep_command = Command::new("sleep")
+
+    if timer > 0 {
+    let sleep_command = stdCommand::new("sleep")
         .arg(&timer.to_string())
         .spawn()
         .unwrap();
 
-    let pid = sleep_command.id().unwrap();
+    let pid = sleep_command.id();
 
     window.listen_global("kill", move |_event| {
         tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+            let _output = stdCommand::new("kill")
                 .arg("-9")
                 .arg(pid.to_string())
                 .output()
-                .await;
+                .unwrap();
         });
     });
-    let output = sleep_command.wait_with_output().await.unwrap();
+    let output = sleep_command.wait_with_output().unwrap();
+    println!("{:?}", output);
     if !output.status.success() {
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
-
+}
     let parts: Vec<&str> = area.split(',').collect();
     let x = parts[0].trim().parse::<i32>().unwrap();
     let y = parts[1].trim().parse::<i32>().unwrap();
     let width = parts[2].trim().parse::<i32>().unwrap();
     let height = parts[3].trim().parse::<i32>().unwrap();
 
-
-    let mut process = Command::new("ffmpeg")
-        .arg("-y")
-        .args(&["-f", "x11grab"])
-        .args(&["-s", format!("{}x{}", width, height).as_str()])
-        .args(&["-i", format!(":{}.0+{},{}", index, x.to_string(), y.to_string()).as_str()])
-        .arg(&filename.to_string())
-        .spawn()
-        .map_err(|e| Response::new(None, Some(format!("Failed to take screenshot: {}", e))))
-        .unwrap();
+    
+    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
+        .unwrap()
+        .args(["-f", "x11grab", "-video_size", format!("{},{}", width, height).as_str(), "-i", format!(":{}.0+{},{}", index, x, y).as_str(), &filename.to_string()])
+        );
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
 
-    let pid = process.id().unwrap();
+    let process = command.spawn().unwrap();
 
     let window_ = window.clone();
+    let pid = process.id();
     window.listen_global("stop", move |_event| {
         tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+            let _output = tokioCommand::new("kill")
                 .arg("-2")  //SIGTERM
                 .arg(pid.to_string())
                 .output()
@@ -245,13 +239,13 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
         window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
     });
 
-    let output = process.wait().await.unwrap();
+    let status = process.wait_with_output().unwrap().status;
     let filename1 = filename.to_string();
-    if output.success() {
+    if status.code().unwrap() == 255 {
         if open_file {
             // Use tokio::task::spawn to execute the opening
             let _open_task = task::spawn(async move {
-                let _open = Command::new("xdg-open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
+                let _open = tokioCommand::new("xdg-open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
             });
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
