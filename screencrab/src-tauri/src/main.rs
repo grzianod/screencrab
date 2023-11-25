@@ -330,6 +330,7 @@ fn main() {
                 "selector",
                 tauri::WindowUrl::App("./blank.html".into()))
                 .decorations(false)
+                .visible(false)
                 .transparent(true)
                 .resizable(true)
                 .always_on_top(false)
@@ -439,7 +440,7 @@ fn main() {
                     .visible(true)
                     .fullscreen(false)
                     //adjust size & position for the platform
-                    .inner_size((monitor_size.width as f64) * 0.65f64 / scale_factor, (monitor_size.height as f64) * 0.28f64 / scale_factor)
+                    .inner_size((monitor_size.width as f64) * 0.63f64 / scale_factor, (monitor_size.height as f64) * 0.25f64 / scale_factor)
                     .position((monitor_size.width as f64) * 0.2f64 / scale_factor, (monitor_size.height as f64) * 0.67f64 / scale_factor)
                     .resizable(true)
                     .closable(true)
