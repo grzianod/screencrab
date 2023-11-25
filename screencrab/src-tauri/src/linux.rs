@@ -34,7 +34,8 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 
     let status = Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
+        .args(["-y", "-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), "-frames:v", "1", &filename.to_string()])
+        .args(if pointer {vec!["-draw_mouse", "1"]} else {vec!["-draw_mouse", "0"]})
         .status()
         .unwrap();
 
@@ -91,7 +92,8 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
 
     let status = Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "x11grab", "-video_size", format!("{},{}", width, height).as_str(), "-i", format!(":{}.0+{},{}", index, x, y).as_str(), "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
+        .args(["-y", "-f", "x11grab", "-video_size", format!("{},{}", width, height).as_str(), "-i", format!(":{}.0+{},{}", index, x, y).as_str(), "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
+        .args(if pointer {vec!["-draw_mouse", "1"]} else {vec!["-draw_mouse", "0"]})
         .status()
         .unwrap();
 
@@ -141,10 +143,11 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
     }
 }
 
-
     let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), &filename.to_string()]));
+        .args(["-y", "-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), &filename.to_string()])
+        .args(if audio {vec!["-f", "pulse", "-i", "default"]} else {Vec::with_capacity(0)})
+    );
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
@@ -212,10 +215,10 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     let width = parts[2].trim().parse::<i32>().unwrap();
     let height = parts[3].trim().parse::<i32>().unwrap();
 
-    
     let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
         .unwrap()
         .args(["-f", "x11grab", "-video_size", format!("{},{}", width, height).as_str(), "-i", format!(":{}.0+{},{}", index, x, y).as_str(), &filename.to_string()])
+        .args(if audio {vec!["-f", "pulse", "-i", "default"]} else {Vec::with_capacity(0)})
         );
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
