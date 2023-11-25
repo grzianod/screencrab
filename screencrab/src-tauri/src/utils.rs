@@ -17,11 +17,6 @@ pub struct Payload {
     path: String
 }
 
-impl Payload {
-    pub fn new(path: String) -> Payload {
-        Payload { path }
-    }
-}
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Response {
     response: Option<String>,

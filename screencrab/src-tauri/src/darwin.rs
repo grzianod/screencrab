@@ -1,5 +1,5 @@
-use tokio::task;
-use tokio::process::Command;
+use tokio::process::Command as tokioCommand;
+use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
 use std::process::Stdio;
 use crate::utils::*;
@@ -8,7 +8,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     let filename1 = filename.to_string();
     let index = get_current_monitor_index(&window);
 
-    let mut command = Command::new("screencapture");
+    let mut command = tokioCommand::new("screencapture");
 
     if pointer { command.arg("-C"); }
     if clipboard { command.arg("-c"); }
@@ -21,13 +21,10 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     let pid = process.as_ref().unwrap().id().unwrap();
 
     window.listen_global("kill", move |_event| {
-        tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+            let _output = stdCommand::new("kill")
                 .arg("-15")
                 .arg(pid.to_string())
-                .output()
-                .await;
-        });
+                .output();
     });
 
     let output = process.unwrap().wait().await.unwrap();
@@ -50,7 +47,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     let filename1 = filename.to_string();
     let index = get_current_monitor_index(&window);
 
-    let mut command = Command::new("screencapture");
+    let mut command = tokioCommand::new("screencapture");
 
     if pointer { command.arg("-C"); }
     if clipboard { command.arg("-c"); }
@@ -64,22 +61,18 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     let pid = process.as_ref().unwrap().id().unwrap();
 
     window.listen_global("kill", move |_event| {
-        tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+            let _output = stdCommand::new("kill")
                 .arg("-15")
                 .arg(pid.to_string())
-                .output()
-                .await;
-        });
+                .output();
     });
 
     let output = process.unwrap().wait().await.unwrap();
     if output.success() {
         if !clipboard && open_file {
-            // Use tokio::task::spawn to execute the opening
-            let _open_task = task::spawn(async move {
-                let _open = Command::new("open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
-            });
+            window.windows().get("main_window").unwrap().minimize().unwrap();
+            window.windows().get("tools").unwrap().show().unwrap();
+            window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
@@ -95,7 +88,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
     let filename2 = filename.to_string();
     let index = get_current_monitor_index(&window);
 
-    let mut command = Command::new("screencapture");
+    let mut command = tokioCommand::new("screencapture");
     command.stdin(Stdio::piped());
     command.arg("-v");
 
@@ -113,24 +106,20 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
 
     window.listen_global("kill", move |_event| {
-        tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+            let _output = stdCommand::new("kill")
                 .arg("-9")
                 .arg(pid.to_string())
-                .output()
-                .await;
-        });
+                .output();
     });
 
     let window_ = window.clone();
     window.listen_global("stop", move |_event| {
-        tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+
+            let _output = stdCommand::new("kill")
                 .arg("-2")  //SIGTERM
                 .arg(pid.to_string())
-                .output()
-                .await;
-        });
+                .output();
+
         window_.menu_handle().get_item("stop_recording").set_enabled(false).unwrap();
         window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
         window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
@@ -139,10 +128,9 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
     let output = process.wait().await.unwrap();
     if output.success() {
         if open_file {
-            // Use tokio::task::spawn to execute the opening
-            let _open_task = task::spawn(async move {
-                let _open = Command::new("open").arg(filename2.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
-            });
+
+            let _open = stdCommand::new("open").arg(filename2.as_str()).output().unwrap();
+
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename1.to_string())), None);
     }
@@ -154,7 +142,7 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     let filename2 = filename.to_string();
     let index = get_current_monitor_index(&window);
 
-    let mut command = Command::new("screencapture");
+    let mut command = tokioCommand::new("screencapture");
     command.stdin(Stdio::piped());
     command.arg("-v");
 
@@ -173,24 +161,22 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
 
     window.listen_global("kill", move |_event| {
-        tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+
+            let _output = stdCommand::new("kill")
                 .arg("-9")
                 .arg(pid.to_string())
-                .output()
-                .await;
-        });
+                .output();
+
     });
 
     let window_ = window.clone();
     window.listen_global("stop", move |_event| {
-        tokio::task::spawn(async move {
-            let _output = Command::new("kill")
+
+            let _output = stdCommand::new("kill")
                 .arg("-2")  //SIGTERM
                 .arg(pid.to_string())
-                .output()
-                .await;
-        });
+                .output();
+
         window_.menu_handle().get_item("stop_reording").set_enabled(false).unwrap();
         window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
         window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
@@ -199,10 +185,9 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     let output = process.wait().await.unwrap();
     if output.success() {
         if open_file {
-            // Use tokio::task::spawn to execute the opening
-            let _open_task = task::spawn(async move {
-                let _open = Command::new("open").arg(filename2.as_str()).output().await.map_err(|e| Response::new(None,  Some(format!("Failed to open screenshot: {}", e)) ));
-            });
+
+            let _open = stdCommand::new("open").arg(filename2.as_str()).output().unwrap();
+
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename1.to_string())), None );
     }

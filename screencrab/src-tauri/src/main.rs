@@ -4,15 +4,15 @@ mod menu;
 mod utils;
 
 use chrono::prelude::*;
-use tauri::{Window, AppHandle, PhysicalSize, PhysicalPosition, Icon, CursorIcon};
+use tauri::{Window, AppHandle};
 use std::path::Path;
 use crate::menu::{create_context_menu};
-use crate::utils::{Response, utils_dir};
+use crate::utils::{monitor_dialog, Response};
 use tauri::{Manager, SystemTray, SystemTrayEvent, api::process};
 use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::api::notification::Notification;
-use std::{env, fs};
+use std::{fs};
 use serde_json;
 use tauri::{LogicalPosition, LogicalSize};
 
@@ -30,12 +30,11 @@ struct CmdArgs {
 #[cfg(target_os="macos")]
 use tauri::utils::TitleBarStyle;
 #[cfg(target_os = "macos")]
-use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior, NSCursor};
+use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior};
 #[cfg(target_os = "macos")]
 use cocoa::appkit::NSWindowTitleVisibility;
 #[cfg(target_os = "macos")]
 use cocoa::appkit::NSWindowStyleMask;
-use tauri_plugin_positioner::WindowExt;
 
 
 #[cfg(target_os = "macos")]
@@ -80,7 +79,12 @@ fn custom_area_selection(app: AppHandle, id: String, left: f64, top: f64, width:
 
     let n = app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
     for i in 0..n {
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().hide().unwrap();
+        if let Some(helper) = app.windows().get(format!("helper_{}", i).as_str()) {
+            helper.hide().unwrap();
+        }
+        else {
+            monitor_dialog(app.app_handle());
+        }
     }
 
     app.windows().get("selector").unwrap().set_size(size).unwrap();
@@ -95,9 +99,14 @@ fn show_all_helpers(app: AppHandle) {
     app.windows().get("selector").unwrap().hide().unwrap();
     let monitors = app.windows().get("main_window").unwrap().available_monitors().unwrap();
     for (i, monitor) in monitors.iter().enumerate() {
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().show().unwrap();
+        if let Some(helper) = app.windows().get(format!("helper_{}", i).as_str()) {
+            helper.set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
+            helper.set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
+            helper.show().unwrap();
+        }
+        else {
+            monitor_dialog(app.app_handle());
+        }
     }
 }
 
@@ -105,8 +114,13 @@ fn show_all_helpers(app: AppHandle) {
 fn hide_all_helpers(app: AppHandle) {
     app.windows().get("selector").unwrap().hide().unwrap();
     let monitors = app.windows().get("main_window").unwrap().available_monitors().unwrap();
-    for (i, monitor) in monitors.iter().enumerate() {
-        app.windows().get(format!("helper_{}", i).as_str()).unwrap().hide().unwrap();
+    for i in 0..monitors.len() {
+        if let Some(helper) = app.windows().get(format!("helper_{}", i).as_str()) {
+            helper.hide().unwrap();
+        }
+        else {
+            monitor_dialog(app.app_handle());
+        }
     }
 }
 
@@ -233,7 +247,7 @@ fn main() {
             let scale_factor = app.windows().get("start_window").unwrap().scale_factor().unwrap();
             let monitor_size = monitor.size();
 
-            let tools = tauri::WindowBuilder::new(
+            tauri::WindowBuilder::new(
                 app,
                 "tools",
                 tauri::WindowUrl::App("./tools.html".into()))
@@ -330,7 +344,6 @@ fn main() {
             let available_monitors = area.available_monitors().unwrap();
             let mut helpers = Vec::with_capacity(available_monitors.len());
             for (i,monitor) in available_monitors.iter().enumerate() {
-                let monitor_size = monitor.size().to_owned();
                 #[cfg(target_os = "macos")] {
                     helpers.push(tauri::WindowBuilder::new(
                         app,
@@ -392,47 +405,101 @@ fn main() {
                 helpers[i].set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
             }
 
-            let main_window = tauri::WindowBuilder::new(
-                app,
-                "main_window",
-                tauri::WindowUrl::App("./index.html".into()))
-                .menu(create_context_menu())
-                .visible(true)
-                .fullscreen(false)
-                .inner_size((monitor_size.width as f64) * 0.65f64/scale_factor, (monitor_size.height as f64) * 0.28f64/scale_factor )
-                .position((monitor_size.width as f64) * 0.2f64/scale_factor, (monitor_size.height as f64) * 0.67f64/scale_factor)
-                .resizable(true)
-                .closable(true)
-                .always_on_top(true)
-                .minimizable(true)
-                .focused(true)
-                .title("Screen Crab")
-                .content_protected(true)
-                .decorations(true)
-                .build()
-                .unwrap();
+            let main_window;
 
-            #[cfg(target_os = "macos")]
-            unsafe {
-                let id = main_window.ns_window().unwrap() as cocoa::base::id;
-                NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces);
-                NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorMoveToActiveSpace);
-                NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorTransient);
-                #[cfg(target_arch = "x86_64")]
-                NSWindow::setTitlebarAppearsTransparent_(id, 1);
-                #[cfg(target_arch = "aarch64")]
-                NSWindow::setTitlebarAppearsTransparent_(id, true);
-                let mut style_mask = id.styleMask();
-                style_mask.set(
-                    NSWindowStyleMask::NSFullSizeContentViewWindowMask,
-                    true,
-                );
-                id.setStyleMask_(style_mask);
-                NSWindow::setTitleVisibility_(id, NSWindowTitleVisibility::NSWindowTitleHidden);
-                #[cfg(target_arch = "x86_64")]
-                NSWindow::setTitlebarAppearsTransparent_(id, 1);
-                #[cfg(target_arch = "aarch64")]
-                NSWindow::setTitlebarAppearsTransparent_(id, true);
+            #[cfg(target_os = "linux")] {
+                main_window = tauri::WindowBuilder::new(
+                    app,
+                    "main_window",
+                    tauri::WindowUrl::App("./index.html".into()))
+                    .menu(create_context_menu())
+                    .visible(true)
+                    .fullscreen(false)
+                    //adjust size & position for the platform
+                    .inner_size((monitor_size.width as f64) * 0.65f64 / scale_factor, (monitor_size.height as f64) * 0.28f64 / scale_factor)
+                    .position((monitor_size.width as f64) * 0.2f64 / scale_factor, (monitor_size.height as f64) * 0.67f64 / scale_factor)
+                    .resizable(true)
+                    .closable(true)
+                    .always_on_top(true)
+                    .minimizable(true)
+                    .focused(true)
+                    .title("Screen Crab")
+                    .content_protected(true)
+                    .decorations(true)
+                    .build()
+                    .unwrap();
+            }
+
+            #[cfg(target_os = "windows")] {
+                main_window = tauri::WindowBuilder::new(
+                    app,
+                    "main_window",
+                    tauri::WindowUrl::App("./index.html".into()))
+                    .menu(create_context_menu())
+                    .visible(true)
+                    .fullscreen(false)
+                    //adjust size & position for the platform
+                    .inner_size((monitor_size.width as f64) * 0.65f64 / scale_factor, (monitor_size.height as f64) * 0.28f64 / scale_factor)
+                    .position((monitor_size.width as f64) * 0.2f64 / scale_factor, (monitor_size.height as f64) * 0.67f64 / scale_factor)
+                    .resizable(true)
+                    .closable(true)
+                    .always_on_top(true)
+                    .minimizable(true)
+                    .focused(true)
+                    .title("Screen Crab")
+                    .content_protected(true)
+                    .decorations(true)
+                    .build()
+                    .unwrap();
+            }
+
+            #[cfg(target_os = "macos")] {
+                main_window = tauri::WindowBuilder::new(
+                    app,
+                    "main_window",
+                    tauri::WindowUrl::App("./index.html".into()))
+                    .menu(create_context_menu())
+                    .visible(true)
+                    .fullscreen(false)
+                    //adjust size & position for the platform
+                    .inner_size((monitor_size.width as f64) * 0.6f64/scale_factor, (monitor_size.height as f64) * 0.24f64/scale_factor )
+                    .position((monitor_size.width as f64) * 0.2f64/scale_factor, (monitor_size.height as f64) * 0.67f64/scale_factor)
+                    .resizable(true)
+                    .closable(true)
+                    .always_on_top(true)
+                    .minimizable(true)
+                    .focused(true)
+                    .title("Screen Crab")
+                    .title_bar_style(TitleBarStyle::Transparent)
+                    .content_protected(true)
+                    .decorations(true)
+                    .build()
+                    .unwrap();
+                unsafe {
+                    let id = main_window.ns_window().unwrap() as cocoa::base::id;
+                    #[cfg(target_arch = "x86_64")]
+                    NSWindow::setMovableByWindowBackground_(id, 1);
+                    #[cfg(target_arch = "aarch64")]
+                    NSWindow::setMovableByWindowBackground_(id, true);
+                    NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces);
+                    NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorMoveToActiveSpace);
+                    NSWindow::setCollectionBehavior_(id, NSWindowCollectionBehavior::NSWindowCollectionBehaviorTransient);
+                    #[cfg(target_arch = "x86_64")]
+                    NSWindow::setTitlebarAppearsTransparent_(id, 1);
+                    #[cfg(target_arch = "aarch64")]
+                    NSWindow::setTitlebarAppearsTransparent_(id, true);
+                    let mut style_mask = id.styleMask();
+                    style_mask.set(
+                        NSWindowStyleMask::NSFullSizeContentViewWindowMask,
+                        true,
+                    );
+                    id.setStyleMask_(style_mask);
+                    NSWindow::setTitleVisibility_(id, NSWindowTitleVisibility::NSWindowTitleHidden);
+                    #[cfg(target_arch = "x86_64")]
+                    NSWindow::setTitlebarAppearsTransparent_(id, 1);
+                    #[cfg(target_arch = "aarch64")]
+                    NSWindow::setTitlebarAppearsTransparent_(id, true);
+                }
             }
 
             let capture_mouse_pointer = Arc::new(Mutex::new(false));
