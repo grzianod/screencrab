@@ -195,10 +195,17 @@ pub fn copy_to_clipboard(path: String) -> Response {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
     let image = image::load_from_memory(&buffer).unwrap();
+    let format = image::guess_format(&buffer)
+        .map(|f| f.into())
+        .unwrap_or(image::ImageFormat::Jpeg);
 
     let (width, height) = image.dimensions();
 
-    let image_data = ImageData { width: width as usize, height: height as usize, bytes: Cow::from(buffer) };
+    let mut image_bytes = Vec::new();
+    image.write_to(&mut image_bytes, format)
+        .expect("Failed to write image to bytes");
+
+    let image_data = ImageData { width: width as usize, height: height as usize, bytes: Cow::from(image_bytes) };
     if let Err(err) = ctx.set_image(image_data) {
         return Response::new(None, Some(err.to_string()));
     }
