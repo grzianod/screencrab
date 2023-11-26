@@ -4,11 +4,18 @@ use tauri::api::dialog::FileDialogBuilder;
 
 use tokio::task;
 use tokio::process::Command;
-use tauri::{AppHandle, Window, Manager};
+use tauri::{AppHandle, Window, Manager, App};
 use std::{env, fs};
 use std::fs::File;
 use std::io::Write;
 use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
+
+#[cfg(not(target_os = "macos"))]
+use arboard::{Clipboard, ImageData};
+#[cfg(not(target_os = "macos"))]
+use image::{DynamicImage, GenericImageView};
+#[cfg(not(target_os = "macos"))]
+use crate::get_image_bytes;
 
 
 // the payload type must implement `Serialize` and `Clone`.
@@ -174,4 +181,23 @@ pub fn monitor_dialog(app: AppHandle) {
             if value { app.restart(); }
             else { app.exit(0);  }
         });
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn copy_to_clipboard(path: String) -> Response {
+    let mut ctx = Clipboard::new().unwrap();
+    let mut file = File::open(image_path).unwrap();
+
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).unwrap();
+
+    let (width, height) = image.dimensions();
+
+    let image_data = ImageData { width, height, bytes: Cow::from(buffer) };
+    if let Ok(()) = ctx.set_image(image_data) {
+        return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
+    }
+    else {
+        return Response::new(None, Some(format!("Failed to save to Clipboard")));
+    }
 }

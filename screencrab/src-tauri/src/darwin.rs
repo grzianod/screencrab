@@ -2,6 +2,7 @@ use tokio::process::Command as tokioCommand;
 use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
 use std::process::Stdio;
+use crate::utils;
 use crate::utils::*;
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
@@ -35,7 +36,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
             window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
-            return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
+            return utils::copy_to_clipboard(filename.to_string());
         } else {
             return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
         }
