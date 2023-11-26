@@ -18,6 +18,8 @@ use std::io::Read;
 use image::DynamicImage;
 #[cfg(not(target_os = "macos"))]
 use std::io::Cursor;
+#[cfg(not(target_os = "macos"))]
+use image::GenericImageView;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
