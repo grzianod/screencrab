@@ -16,6 +16,10 @@ use arboard::{Clipboard, ImageData};
 use image::{DynamicImage, GenericImageView};
 #[cfg(not(target_os = "macos"))]
 use crate::get_image_bytes;
+#[cfg(not(target_os = "macos"))]
+use std::io::Read;
+#[cfg(not(target_os = "macos"))]
+use std::borrow::Cow;
 
 
 // the payload type must implement `Serialize` and `Clone`.
@@ -194,7 +198,7 @@ pub fn copy_to_clipboard(path: String) -> Response {
 
     let (width, height) = image.dimensions();
 
-    let image_data = ImageData { width, height, bytes: Cow::from(buffer) };
+    let image_data = ImageData { width: width as usize, height: height as usize, bytes: Cow::from(buffer) };
     if let Ok(()) = ctx.set_image(image_data) {
         return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
     }
