@@ -204,10 +204,11 @@ pub fn copy_to_clipboard(path: String) -> Response {
     let mut image_bytes = Vec::new();
     image.write_to(&mut Cursor::new(&mut image_bytes), format).unwrap();
 
-    if let Err(err) = ctx.set_contents(String::from_utf8_unchecked(image_bytes)) {
-        return Response::new(None, Some(err.to_string()));
-    }
-    else {
-        return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
+    unsafe {
+        if let Err(err) = ctx.set_contents(String::from_utf8_unchecked(image_bytes)) {
+            return Response::new(None, Some(err.to_string()));
+        } else {
+            return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
+        }
     }
 }
