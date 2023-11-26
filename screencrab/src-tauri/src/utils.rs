@@ -186,10 +186,11 @@ pub fn monitor_dialog(app: AppHandle) {
 #[cfg(not(target_os = "macos"))]
 pub fn copy_to_clipboard(path: String) -> Response {
     let mut ctx = Clipboard::new().unwrap();
-    let mut file = File::open(image_path).unwrap();
+    let mut file = File::open(path).unwrap();
 
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
+    let image = image::load_from_memory(&buffer).unwrap();
 
     let (width, height) = image.dimensions();
 

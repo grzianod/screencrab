@@ -4,7 +4,8 @@ use tauri::api::process::CommandEvent;
 use tokio::process::Command as tokioCommand;
 use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
-use crate::utils::*;
+mod utils;
+use crate::utils::{copy_to_clipboard};
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
