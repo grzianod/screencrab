@@ -188,7 +188,7 @@ pub fn monitor_dialog(app: AppHandle) {
 
 #[cfg(not(target_os = "macos"))]
 pub fn copy_to_clipboard(path: String) -> Response {
-    let mut ctx = ClipboardProvider::new().unwrap();
+    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     let mut file = File::open(path).unwrap();
 
     let mut buffer = Vec::new();
