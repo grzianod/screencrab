@@ -201,10 +201,10 @@ pub fn copy_to_clipboard(path: String) -> Response {
 
     let (width, height) = image.dimensions();
 
-    let mut image_bytes = vec![];
+    let mut image_bytes = Vec::new();
     image.write_to(&mut Cursor::new(&mut image_bytes), format).unwrap();
 
-    if let Err(err) = ctx.set_contents(image_bytes) {
+    if let Err(err) = ctx.set_contents(image_bytes.into()) {
         return Response::new(None, Some(err.to_string()));
     }
     else {
