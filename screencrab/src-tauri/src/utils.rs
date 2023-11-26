@@ -7,7 +7,7 @@ use tokio::process::Command;
 use tauri::{AppHandle, Window, Manager, App};
 use std::{env, fs};
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 
 #[cfg(not(target_os = "macos"))]
