@@ -20,6 +20,8 @@ use crate::get_image_bytes;
 use std::io::Read;
 #[cfg(not(target_os = "macos"))]
 use std::borrow::Cow;
+#[cfg(not(target_os = "macos"))]
+use std::io::Cursor;
 
 
 // the payload type must implement `Serialize` and `Clone`.
@@ -196,9 +198,16 @@ pub fn copy_to_clipboard(path: String) -> Response {
     file.read_to_end(&mut buffer).unwrap();
     let image: DynamicImage = image::load_from_memory(&buffer).unwrap();
 
+    let format = image::guess_format(&buffer)
+        .map(|f| f.into())
+        .unwrap_or(image::ImageFormat::Png);
+
     let (width, height) = image.dimensions();
 
-    let image_data = ImageData { width: width as usize, height: height as usize, bytes: Cow::from(buffer) };
+    let mut image_bytes = vec![];
+    image.write_to(&mut Cursor::new(&mut image_bytes), format).unwrap();
+
+    let image_data = ImageData { width: width as usize, height: height as usize, bytes: Cow::from(image_bytes) };
     if let Err(err) = ctx.set_image(image_data) {
         return Response::new(None, Some(err.to_string()));
     }
