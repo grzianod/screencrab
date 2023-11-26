@@ -199,10 +199,10 @@ pub fn copy_to_clipboard(path: String) -> Response {
     let (width, height) = image.dimensions();
 
     let image_data = ImageData { width: width as usize, height: height as usize, bytes: Cow::from(buffer) };
-    if let Ok(()) = ctx.set_image(image_data) {
-        return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
+    if let Err(err) = ctx.set_image(image_data) {
+        return Response::new(None, Some(err.to_string()));
     }
     else {
-        return Response::new(None, Some(format!("Failed to save to Clipboard")));
+        return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
     }
 }
