@@ -107,7 +107,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
             window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
-            return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
+            return copy_to_clipboard(filename.to_string());
         } else {
             return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
         }
