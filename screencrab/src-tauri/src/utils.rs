@@ -194,16 +194,16 @@ pub fn copy_to_clipboard(path: String) -> Response {
 
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
-    let image = image::load_from_memory(&buffer).unwrap();
+    let image: DynamicImage = image::load_from_memory(&buffer).unwrap();
+
     let format = image::guess_format(&buffer)
         .map(|f| f.into())
-        .unwrap_or(image::ImageFormat::Jpeg);
+        .unwrap_or(image::ImageFormat::Png);
 
     let (width, height) = image.dimensions();
 
     let mut image_bytes = vec![];
-    image.write_to(&mut image_bytes, format)
-        .expect("Failed to write image to bytes");
+    image.write_to(&mut image_bytes, format).unwrap();
 
     let image_data = ImageData { width: width as usize, height: height as usize, bytes: Cow::from(image_bytes) };
     if let Err(err) = ctx.set_image(image_data) {
