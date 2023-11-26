@@ -12,7 +12,12 @@ use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDial
 
 #[cfg(not(target_os = "macos"))]
 use clipboard::{ClipboardContext, ClipboardProvider};
-
+#[cfg(not(target_os = "macos"))]
+use std::io::Read;
+#[cfg(not(target_os = "macos"))]
+use image::DynamicImage;
+#[cfg(not(target_os = "macos"))]
+use std::io::Cursor;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
