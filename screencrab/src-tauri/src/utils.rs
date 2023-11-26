@@ -204,7 +204,7 @@ pub fn copy_to_clipboard(path: String) -> Response {
     let mut image_bytes = Vec::new();
     image.write_to(&mut Cursor::new(&mut image_bytes), format).unwrap();
 
-    if let Err(err) = ctx.set_contents(image_bytes.into()) {
+    if let Err(err) = ctx.set_contents(String::from_utf8(image_bytes)) {
         return Response::new(None, Some(err.to_string()));
     }
     else {
