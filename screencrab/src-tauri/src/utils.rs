@@ -16,6 +16,7 @@ use clipboard::{ClipboardContext, ClipboardProvider};
 use std::io::Read;
 #[cfg(not(target_os = "macos"))]
 use std::io::Error;
+use std::ops::Deref;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
@@ -187,7 +188,7 @@ pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     let mut content = std::fs::read_to_string(path).unwrap();
     if let Err(err) = ctx.set_contents(content) {
-        return Result::Err(err)
+        return Result::Err(*err)
     }
     else {
         return Result::Ok(())
