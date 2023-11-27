@@ -7,16 +7,15 @@ use tokio::process::Command;
 use tauri::{AppHandle, Window, Manager, App};
 use std::{env, fs};
 use std::fs::File;
-use std::io::{ErrorKind, Write};
+use std::io::Write;
+use arboard::Clipboard;
 use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 
 #[cfg(not(target_os = "macos"))]
-use clipboard::{ClipboardContext, ClipboardProvider};
+use base64::{engine::general_purpose, Engine as _};
 #[cfg(not(target_os = "macos"))]
-use std::io::Read;
-#[cfg(not(target_os = "macos"))]
-use std::io::Error;
-use std::ops::Deref;
+use image::GenericImageView;
+
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
@@ -185,12 +184,19 @@ pub fn monitor_dialog(app: AppHandle) {
 
 #[cfg(not(target_os = "macos"))]
 pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
-    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-    let mut content = std::fs::read_to_string(path).unwrap();
-    if let Err(_) = ctx.set_contents(content) {
-        return Result::Err(Error::new(ErrorKind::InvalidData, "Failed to save to the Clipboard"))
-    }
-    else {
-        return Result::Ok(())
-    }
+    let mut ctx = Clipboard::new().unwrap();
+    let buffer = fs::read(path).unwrap();
+    let img = image::load_from_memory(&buffer).unwrap();
+    let pixels = img
+        .pixels()
+        .into_iter()
+        .map(|(_, _, pixel)| pixel.0)
+        .flatten()
+        .collect::<Vec<_>>();
+    let img_data = ImageData {
+        height: img.height() as usize,
+        width: img.width() as usize,
+        bytes: Cow::Owned(pixels),
+    };
+    return ctx.set_image(img_data)
 }
