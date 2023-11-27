@@ -11,15 +11,11 @@ use std::io::Write;
 use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 
 #[cfg(not(target_os = "macos"))]
-use clipboard::{ClipboardContext, ClipboardProvider};
+use arboard::{Clipboard, ImageData};
 #[cfg(not(target_os = "macos"))]
-use std::io::Read;
+use base64::{engine::general_purpose, Engine as _};
 #[cfg(not(target_os = "macos"))]
 use image::DynamicImage;
-#[cfg(not(target_os = "macos"))]
-use std::io::Cursor;
-#[cfg(not(target_os = "macos"))]
-use image::GenericImageView;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
@@ -188,27 +184,29 @@ pub fn monitor_dialog(app: AppHandle) {
 
 #[cfg(not(target_os = "macos"))]
 pub fn copy_to_clipboard(path: String) -> Response {
-    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    let ctx = arboard::Clipboard::new().unwrap();
     let mut file = File::open(path).unwrap();
 
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
     let image: DynamicImage = image::load_from_memory(&buffer).unwrap();
 
-    let format = image::guess_format(&buffer)
-        .map(|f| f.into())
-        .unwrap_or(image::ImageFormat::Png);
+    let pixels = image
+        .pixels()
+        .into_iter()
+        .map(|(_, _, pixel)| pixel.0)
+        .flatten()
+        .collect::<Vec<_>>();
 
-    let (width, height) = image.dimensions();
+    let img_data = ImageData {
+        height: image.height() as usize,
+        width: image.width() as usize,
+        bytes: Cow::Owned(pixels),
+    };
 
-    let mut image_bytes = Vec::new();
-    image.write_to(&mut Cursor::new(&mut image_bytes), format).unwrap();
-
-    unsafe {
-        if let Err(err) = ctx.set_contents(String::from_utf8_unchecked(image_bytes)) {
+        if let Err(err) = ctx.set_image(img_data) {
             return Response::new(None, Some(err.to_string()));
         } else {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
         }
-    }
 }
