@@ -20,6 +20,8 @@ use image::GenericImageView;
 use std::io::Read;
 #[cfg(not(target_os = "macos"))]
 use std::borrow::Cow;
+#[cfg(not(target_os = "macos"))]
+use arboard::Error;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
