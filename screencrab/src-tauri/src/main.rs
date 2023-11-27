@@ -15,6 +15,7 @@ use tauri::api::notification::Notification;
 use std::{fs};
 use serde_json;
 use tauri::{LogicalPosition, LogicalSize};
+use webbrowser::*;
 
 
 #[derive(serde::Deserialize)]
@@ -554,6 +555,9 @@ fn main() {
                     }
                     "change_hotkeys" => {
                         hotkeys_.show().unwrap();
+                    }
+                    "learn_more" => {
+                        webbrowser::open("https://github.com/grzianod/screencrab/blob/main/screencrab/README.md").unwrap();
                     }
                     _ => {}
                 }
