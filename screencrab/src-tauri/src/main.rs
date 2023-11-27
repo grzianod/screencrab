@@ -606,6 +606,9 @@ fn main() {
                         "change_hotkeys" => {
                             hotkeys_.show().unwrap();
                         }
+                        "learn_more" => {
+                            webbrowser::open("https://github.com/grzianod/screencrab/blob/main/screencrab/README.md").unwrap();
+                        }
                         _ => {}
                     }
                     area_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
@@ -652,6 +655,9 @@ fn main() {
                             }
                             "change_hotkeys" => {
                                 hotkeys_.show().unwrap();
+                            }
+                            "learn_more" => {
+                                webbrowser::open("https://github.com/grzianod/screencrab/blob/main/screencrab/README.md").unwrap();
                             }
                             _ => {}
                         }
