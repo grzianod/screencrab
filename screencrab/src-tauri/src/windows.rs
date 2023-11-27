@@ -7,6 +7,7 @@ use tauri::{Window, Manager};
 use crate::utils::*;
 use winapi::um::wincon::GenerateConsoleCtrlEvent;
 use winapi::um::wincon::CTRL_BREAK_EVENT;
+use std::fs;
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
 
