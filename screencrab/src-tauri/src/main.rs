@@ -238,6 +238,11 @@ fn close_hotkeys(app: AppHandle) {
     app.windows().get("hotkeys").unwrap().hide().unwrap();
 }
 
+#[tauri::command]
+fn delete_file(app: AppHandle, path: String) {
+    utils::delete_dialog(app, path);
+}
+
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
@@ -673,7 +678,7 @@ fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![capture, get_image_bytes, folder_dialog, current_default_path, log_message, write_to_json, load_hotkeys, close_hotkeys, window_hotkeys, custom_area_selection, show_all_helpers, hide_all_helpers])
+        .invoke_handler(tauri::generate_handler![capture, get_image_bytes, folder_dialog, current_default_path, log_message, write_to_json, load_hotkeys, close_hotkeys, window_hotkeys, custom_area_selection, show_all_helpers, hide_all_helpers, delete_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

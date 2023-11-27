@@ -530,8 +530,8 @@ function App() {
                             </Container>
 
                         </Container>
+                        <FormText className={"mt-2"}>{text}</FormText>
                     </Container>
-
 
 
                 </Container>

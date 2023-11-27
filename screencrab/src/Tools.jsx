@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
-import { Button, Container, Spinner, Row } from 'react-bootstrap';
+import {Button, Container, Spinner, Row, FormText} from 'react-bootstrap';
 import { listen } from "@tauri-apps/api/event";
 import { SketchPicker } from 'react-color';
 
 const Tools = () => {
+    const [text, setText] = useState(undefined);
+    const [imagePath, setImagePath] = useState(undefined);
     const [imageSrc, setImageSrc] = useState('');
     const [loading, setLoading] = useState(false);
     const [color, setColor] = useState('#ffffff'); // Initial color is white
@@ -16,6 +18,7 @@ const Tools = () => {
 
     const loadImage = async (path) => {
         try {
+            setImagePath(path);
             const imageBytes = await invoke('get_image_bytes', {path: path});
 
             // Convert Uint8Array to base64
@@ -28,6 +31,13 @@ const Tools = () => {
             console.error('Error loading image:', error);
         }
     };
+
+    const deleteFile = () => {
+        invoke('delete_file', {path: imagePath})
+            .then(() => {})
+            .catch((err) => setText(err));
+        console.log("CLIC");
+    }
 
     useEffect(() => {
         setLoading(true);
@@ -158,9 +168,11 @@ const Tools = () => {
                 <Row className="justify-content-around">
                 <Row className="justify-content-around">
                     <Row className="justify-content-around">
-                    <Button variant="danger" className={"m-2"}>Delete</Button>
+                    <Button variant="danger" className={"m-2"}
+                            onClick={deleteFile}>Delete</Button>
                     </Row>
                     <Row className="justify-content-around">
+                        <FormText>{text}</FormText>
                     </Row>
                 </Row>
                 <Row className="justify-content-around">

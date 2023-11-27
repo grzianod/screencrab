@@ -4,7 +4,7 @@ use tauri::api::dialog::FileDialogBuilder;
 
 use tokio::task;
 use tokio::process::Command;
-use tauri::{AppHandle, Window, Manager, App};
+use tauri::{AppHandle, Window, Manager};
 use std::{env, fs};
 use std::fs::File;
 use std::io::Write;
@@ -18,6 +18,7 @@ use base64::{engine::general_purpose, Engine as _};
 use image::GenericImageView;
 #[cfg(not(target_os = "macos"))]
 use std::borrow::Cow;
+use std::path::Path;
 
 
 // the payload type must implement `Serialize` and `Clone`.
@@ -182,6 +183,21 @@ pub fn monitor_dialog(app: AppHandle) {
         .show(move |value| {
             if value { app.restart(); }
             else { app.exit(0);  }
+        });
+}
+
+pub fn delete_dialog(app: AppHandle, path: String) {
+    let filename = Path::new(path.as_str()).file_name().unwrap().to_str().unwrap();
+    MessageDialogBuilder::new(format!("Are you sure you want to delete {}", filename), "This item will be deleted immediately.")
+        .kind(MessageDialogKind::Error)
+        .buttons(MessageDialogButtons::OkCancelWithLabels("Delete".to_string(), "Cancel".to_string()))
+        .show(move |value| {
+            if value {
+                fs::remove_file(path).unwrap();
+                app.windows().get("tools").unwrap().hide().unwrap();
+                app.windows().get("main_window").unwrap().show().unwrap();
+                app.windows().get("main_window").unwrap().set_focus().unwrap();
+            }
         });
 }
 
