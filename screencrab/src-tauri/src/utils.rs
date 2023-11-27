@@ -193,7 +193,7 @@ pub fn copy_to_clipboard(path: String) -> Response {
 
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
-    let image: DynamicImage = image::load_from_memory(&buffer).unwrap();
+    let image = image::load_from_memory(&buffer).unwrap();
 
     let pixels = image
         .pixels()
