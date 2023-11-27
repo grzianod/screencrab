@@ -1,3 +1,4 @@
+use std::fs;
 use tokio::task;
 use tauri::api::process::Command;
 use tauri::api::process::CommandEvent;
@@ -48,7 +49,13 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
             window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
-            return copy_to_clipboard(filename.to_string());
+            if let Err(err) = copy_to_clipboard(filename.to_string()) {
+                return Response::new(Some(format!("Failed to copy on Clipboard. Screen Crab saved to {}", filename.to_string())), None);
+            }
+            else {
+                fs::remove_file(filename.to_string());
+                return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
+            }
         } else {
             return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
         }
@@ -107,7 +114,13 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
             window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
-            return copy_to_clipboard(filename.to_string());
+            if let Err(err) = copy_to_clipboard(filename.to_string()) {
+                return Response::new(Some(format!("Failed to copy on Clipboard. Screen Crab saved to {}", filename.to_string())), None);
+            }
+            else {
+                fs::remove_file(filename.to_string());
+                return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
+            }
         } else {
             return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
         }

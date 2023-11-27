@@ -208,9 +208,5 @@ pub fn copy_to_clipboard(path: String) -> Response {
         bytes: Cow::Owned(pixels),
     };
 
-        if let Err(err) = ctx.set_image(img_data) {
-            return Response::new(None, Some(err.to_string()));
-        } else {
-            return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
-        }
+    return ctx.set_image(img_data)
 }
