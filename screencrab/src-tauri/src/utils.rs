@@ -11,17 +11,9 @@ use std::io::Write;
 use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 
 #[cfg(not(target_os = "macos"))]
-use arboard::{Clipboard, ImageData};
-#[cfg(not(target_os = "macos"))]
-use base64::{engine::general_purpose, Engine as _};
-#[cfg(not(target_os = "macos"))]
-use image::GenericImageView;
+use clipboard::{ClipboardContext, ClipboardProvider};
 #[cfg(not(target_os = "macos"))]
 use std::io::Read;
-#[cfg(not(target_os = "macos"))]
-use std::borrow::Cow;
-#[cfg(not(target_os = "macos"))]
-use arboard::Error;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
@@ -190,26 +182,7 @@ pub fn monitor_dialog(app: AppHandle) {
 
 #[cfg(not(target_os = "macos"))]
 pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
-    let mut ctx = arboard::Clipboard::new().unwrap();
-    let mut file = File::open(path).unwrap();
-
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer).unwrap();
-    let image = image::load_from_memory(&buffer).unwrap();
-
-    let pixels = image
-        .pixels()
-        .into_iter()
-        .map(|(_, _, pixel)| pixel.0)
-        .flatten()
-        .collect::<Vec<_>>();
-
-    let img_data = ImageData {
-        height: image.height() as usize,
-        width: image.width() as usize,
-        bytes: Cow::Owned(pixels),
-    };
-    println!("{:?}", img_data);
-
-    return ctx.set_image(img_data)
+    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    let mut content = std::fs::read_to_string(path).unwrap();
+    return ctx.set_contents(content)
 }
