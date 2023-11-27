@@ -15,7 +15,11 @@ use arboard::{Clipboard, ImageData};
 #[cfg(not(target_os = "macos"))]
 use base64::{engine::general_purpose, Engine as _};
 #[cfg(not(target_os = "macos"))]
-use image::DynamicImage;
+use image::GenericImageView;
+#[cfg(not(target_os = "macos"))]
+use std::io::Read;
+#[cfg(not(target_os = "macos"))]
+use std::borrow::Cow;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
