@@ -104,10 +104,10 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
         .args([
             "-f", "gdigrab", 
             "-framerate", "30", 
-            "-video_size", &format!("{},{}", width, height), 
+            "-video_size", format!("{}x{}", width, height).as_str(),
             "-i", "desktop", 
-            "-offset_x", &x.to_string(), 
-            "-offset_y", &y.to_string(),
+            "-offset_x", format!("{}", x).as_str(),
+            "-offset_y", format!("{}", y).as_str(),
             "-draw_mouse", if pointer { "1" } else { "0" }, 
             "-frames:v", "1", 
             &filename.to_string()
@@ -239,10 +239,10 @@ let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
         .args([
             "-f", "gdigrab", 
             "-framerate", "30", 
-            "-video_size", &format!("{},{}", width, height), 
+            "-video_size", &format!("{}x{}", width, height),
             "-i", "desktop", 
-            "-offset_x", &x.to_string(), 
-            "-offset_y", &y.to_string(),
+            "-offset_x", format!("{}", x).as_str(),
+            "-offset_y", format!("{}", y).as_str(),
             &filename.to_string()
         ]));
 
