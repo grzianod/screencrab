@@ -7,7 +7,7 @@ use tokio::process::Command;
 use tauri::{AppHandle, Window, Manager, App};
 use std::{env, fs};
 use std::fs::File;
-use std::io::Write;
+use std::io::{ErrorKind, Write};
 use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 
 #[cfg(not(target_os = "macos"))]
@@ -187,8 +187,8 @@ pub fn monitor_dialog(app: AppHandle) {
 pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     let mut content = std::fs::read_to_string(path).unwrap();
-    if let Err(err) = ctx.set_contents(content) {
-        return Result::Err(*err)
+    if let Err(_) = ctx.set_contents(content) {
+        return Result::Err(Error::new(ErrorKind::InvalidData, "Failed to save to the Clipboard"))
     }
     else {
         return Result::Ok(())
