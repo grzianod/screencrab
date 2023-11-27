@@ -14,6 +14,10 @@ use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDial
 use clipboard::{ClipboardContext, ClipboardProvider};
 #[cfg(not(target_os = "macos"))]
 use std::io::Read;
+#[cfg(target_os = "linux")]
+use clipboard::x11_clipboard::Error;
+#[cfg(target_os = "windows")]
+use clipboard::windows_clipboard::Error;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
