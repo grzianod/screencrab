@@ -209,6 +209,7 @@ pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
         width: image.width() as usize,
         bytes: Cow::Owned(pixels),
     };
+    println!("{:?}", img_data);
 
     return ctx.set_image(img_data)
 }
