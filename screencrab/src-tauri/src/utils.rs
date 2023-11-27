@@ -187,7 +187,7 @@ pub fn monitor_dialog(app: AppHandle) {
 }
 
 #[cfg(not(target_os = "macos"))]
-pub fn copy_to_clipboard(path: String) -> Response {
+pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
     let mut ctx = arboard::Clipboard::new().unwrap();
     let mut file = File::open(path).unwrap();
 
