@@ -14,10 +14,6 @@ use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDial
 use clipboard::{ClipboardContext, ClipboardProvider};
 #[cfg(not(target_os = "macos"))]
 use std::io::Read;
-#[cfg(target_os = "linux")]
-use clipboard::x11_clipboard::Error;
-#[cfg(target_os = "windows")]
-use clipboard::windows_clipboard::Error;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
@@ -188,5 +184,10 @@ pub fn monitor_dialog(app: AppHandle) {
 pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     let mut content = std::fs::read_to_string(path).unwrap();
-    return ctx.set_contents(content)
+    if let Err(err) = ctx.set_contents(content) {
+        return Result::Err(err)
+    }
+    else {
+        return Result::Ok(())
+    }
 }
