@@ -4,7 +4,7 @@ use tauri::api::dialog::FileDialogBuilder;
 
 use tokio::task;
 use tokio::process::Command;
-use tauri::{AppHandle, Window, Manager};
+use tauri::{AppHandle, Window, Manager, PhysicalPosition};
 use std::{env, fs};
 use std::fs::File;
 use std::io::Write;
@@ -220,7 +220,12 @@ pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
     clip.set_image(img_data)
 }
 
-#[cfg(target_os="windows")]
-pub fn get_monitor_position(app: AppHandle, index: usize) -> Result<(), Error> {
 
+pub fn get_monitor_position(window: &Window, index: usize) -> PhysicalPosition<i32> {
+    let mut position = PhysicalPosition::new(0, 0);
+    for (i, monitor) in window.available_monitors().unwrap().iter().enumerate() {
+        if i >= index { break; }
+        positon += monitor.position();
+    }
+    position
 }

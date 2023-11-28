@@ -12,6 +12,8 @@ use std::fs;
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
 
     let index = get_current_monitor_index(&window) - 1;
+    let position = get_monitor_position(&window, index);
+    let size = window.current_monitor().unwrap().unwrap().size();
 
     if timer > 0 {
     let mut sleep_command = 
@@ -38,7 +40,16 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 
     let status = Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "gdigrab", "-i", "desktop", "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
+        .args([
+            "-f", "gdigrab",
+            "-offset_x", format!("{}", position.x).as_str(),
+            "-offset_y", format!("{}", position.y).as_str(),
+            "-video_size", format!("{}x{}", size.width, size.height).as_str(),
+            "-i", "desktop",
+            "-draw_mouse", if pointer { "1" } else { "0" },
+            "-frames:v", "1",
+            &filename.to_string()
+        ])
         .status()
         .unwrap();
 
@@ -69,6 +80,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
 
     let index = get_current_monitor_index(&window) - 1;
+    let position = get_monitor_position(&window, index);
 
     if timer > 0 {
         let mut sleep_command = 
@@ -104,11 +116,11 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
         .unwrap()
         .args([
             "-f", "gdigrab", 
-            "-framerate", "30", 
+            "-framerate", "30",
+            "-offset_x", format!("{}", position.x + x).as_str(),
+            "-offset_y", format!("{}", position.y + y).as_str(),
             "-video_size", format!("{}x{}", width, height).as_str(),
-            "-i", "desktop", 
-            "-offset_x", format!("{}", x).as_str(),
-            "-offset_y", format!("{}", y).as_str(),
+            "-i", "desktop",
             "-draw_mouse", if pointer { "1" } else { "0" }, 
             "-frames:v", "1", 
             &filename.to_string()
@@ -144,6 +156,8 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
     
     let index = get_current_monitor_index(&window) - 1;
+    let position = get_monitor_position(&window, index);
+    let size = window.current_monitor().unwrap().unwrap().size();
 
     if timer > 0 {
         let mut sleep_command = 
@@ -168,9 +182,17 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
     }
     }
 
-let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
+    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "gdigrab", "-i", "desktop", &filename.to_string()])
+        .args([
+            "-f", "gdigrab",
+            "-framerate", "30",
+            "-offset_x", format!("{}", position.x).as_str(),
+            "-offset_y", format!("{}", position.y).as_str(),
+            "-video_size", format!("{}x{}", size.width, size.height).as_str(),
+            "-i", "desktop",
+            &filename.to_string()
+        ])
         .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { Vec::with_capacity(0)})
     );
 
@@ -207,7 +229,7 @@ let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     
     let index = get_current_monitor_index(&window) - 1;
-    let offset = get_monitor_position(window.app_handle(), index);
+    let position = get_monitor_position(&window, index);
 
     if timer > 0 {
         let mut sleep_command = 
@@ -242,15 +264,16 @@ let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
         .unwrap()
         .args([
             "-f", "gdigrab", 
-            "-framerate", "30", 
-            "-video_size", &format!("{}x{}", width, height),
-            "-i", "desktop", 
-            "-offset_x", format!("{}", x).as_str(),
-            "-offset_y", format!("{}", y).as_str(),
+            "-framerate", "30",
+            "-offset_x", format!("{}", position.x + x).as_str(),
+            "-offset_y", format!("{}", position.y + y).as_str(),
+            "-video_size", format!("{}x{}", width, height).as_str(),
+            "-i", "desktop",
             &filename.to_string()
         ])
         .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { Vec::with_capacity(0)})
-        );
+        .args(["-show_region" ,"1"])
+);
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
