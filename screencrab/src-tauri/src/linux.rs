@@ -131,8 +131,6 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
 
-    let index = get_current_monitor_index(&window) - 1;
-
     if timer > 0 {
     let sleep_command = stdCommand::new("sleep")
         .arg(&timer.to_string())

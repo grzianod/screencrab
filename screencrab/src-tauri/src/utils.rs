@@ -219,3 +219,8 @@ pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
     };
     clip.set_image(img_data)
 }
+
+#[cfg(target_os="windows")]
+pub fn get_monitor_position(app: AppHandle, index: usize) -> Result<(), Error> {
+
+}

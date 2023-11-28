@@ -170,7 +170,9 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
 
 let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-f", "gdigrab", "-i", "desktop", &filename.to_string()]));
+        .args(["-f", "gdigrab", "-i", "desktop", &filename.to_string()])
+        .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { Vec::with_capacity(0)})
+    );
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
@@ -205,6 +207,7 @@ let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     
     let index = get_current_monitor_index(&window) - 1;
+    let offset = get_monitor_position(window.app_handle(), index);
 
     if timer > 0 {
         let mut sleep_command = 
@@ -245,7 +248,9 @@ let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
             "-offset_x", format!("{}", x).as_str(),
             "-offset_y", format!("{}", y).as_str(),
             &filename.to_string()
-        ]));
+        ])
+        .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { Vec::with_capacity(0)})
+        );
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
