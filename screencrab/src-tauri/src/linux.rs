@@ -232,7 +232,8 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
         .unwrap()
         .args(["-f", "x11grab", "-video_size", format!("{},{}", width, height).as_str(), "-i", format!(":{}.0+{},{}", index, x, y).as_str(), &filename.to_string()])
         .args(if audio {vec!["-f", "pulse", "-i", "default"]} else {Vec::with_capacity(0)})
-        );
+        .args(["-show_region", "1"])
+    );
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
