@@ -558,6 +558,7 @@ fn main() {
                     "learn_more" => {
                         webbrowser::open("https://github.com/grzianod/screencrab/blob/main/screencrab/README.md").unwrap();
                     }
+
                     _ => {}
                 }
                 window_.emit_to("main_window", event.menu_item_id(), {}).unwrap();
