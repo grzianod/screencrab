@@ -21,6 +21,7 @@ use std::borrow::Cow;
 use std::path::Path;
 
 
+
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
 pub struct Payload {
@@ -203,19 +204,18 @@ pub fn delete_dialog(app: AppHandle, path: String) {
 
 #[cfg(not(target_os = "macos"))]
 pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
-    let mut ctx = Clipboard::new().unwrap();
-    let buffer = fs::read(path).unwrap();
-    let img = image::load_from_memory(&buffer).unwrap();
+    let mut clip = arboard::Clipboard::new().unwrap();
+    let img = image::open(filename.to_string()).unwrap();
     let pixels = img
         .pixels()
         .into_iter()
         .map(|(_, _, pixel)| pixel.0)
         .flatten()
         .collect::<Vec<_>>();
-    let img_data = ImageData {
+    let img_data = arboard::ImageData {
         height: img.height() as usize,
         width: img.width() as usize,
         bytes: Cow::Owned(pixels),
     };
-    return ctx.set_image(img_data)
+    clip.set_image(img_data);
 }

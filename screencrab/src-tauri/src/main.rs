@@ -15,7 +15,6 @@ use tauri::api::notification::Notification;
 use std::{fs};
 use serde_json;
 use tauri::{LogicalPosition, LogicalSize};
-use webbrowser::*;
 
 
 #[derive(serde::Deserialize)]
