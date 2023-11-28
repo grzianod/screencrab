@@ -205,7 +205,7 @@ pub fn delete_dialog(app: AppHandle, path: String) {
 #[cfg(not(target_os = "macos"))]
 pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
     let mut clip = arboard::Clipboard::new().unwrap();
-    let img = image::open(filename.to_string()).unwrap();
+    let img = image::open(path).unwrap();
     let pixels = img
         .pixels()
         .into_iter()
