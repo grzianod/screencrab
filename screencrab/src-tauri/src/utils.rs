@@ -225,7 +225,9 @@ pub fn get_monitor_position(window: &Window, index: usize) -> PhysicalPosition<i
     let mut position = PhysicalPosition::new(0, 0);
     for (i, monitor) in window.available_monitors().unwrap().iter().enumerate() {
         if i >= index { break; }
-        positon += monitor.position();
+        let monitor_pos = monitor.position();
+        position.x += monitor_pos.x;
+        position.y += monitor_pos.y;
     }
     position
 }
