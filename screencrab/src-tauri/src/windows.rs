@@ -13,8 +13,8 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 
     let index = get_current_monitor_index(&window) - 1;
     let position = get_monitor_position(&window, index);
-    let size = window.current_monitor().unwrap().unwrap().size();
-
+    let monitor = window.current_monitor().unwrap().unwrap(); // Store the monitor in a variable
+    let size = monitor.size();
     if timer > 0 {
     let mut sleep_command = 
         stdCommand::new("timeout")
@@ -157,7 +157,8 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
     
     let index = get_current_monitor_index(&window) - 1;
     let position = get_monitor_position(&window, index);
-    let size = window.current_monitor().unwrap().unwrap().size();
+    let monitor = window.current_monitor().unwrap().unwrap(); // Store the monitor in a variable
+    let size = monitor.size();
 
     if timer > 0 {
         let mut sleep_command = 
@@ -193,7 +194,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
             "-i", "desktop",
             &filename.to_string()
         ])
-        .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { Vec::with_capacity(0)})
+        .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { [""; 4] })
     );
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
@@ -271,7 +272,7 @@ let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
             "-i", "desktop",
             &filename.to_string()
         ])
-        .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { Vec::with_capacity(0)})
+        .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { [""; 4]})
         .args(["-show_region" ,"1"])
 );
 
