@@ -186,7 +186,9 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
     }
     }
     
-    let script = r#"
+    let mut command: stdCommand;
+    if audio {
+        let script = r#"
                     $output = ffmpeg -list_devices true -f dshow -i audio 2>&1
                     $pattern ='(?<=\]\s*")[^"]+(?="\s*\(audio\))'
                     $match = [regex]::Match($output, $pattern)
@@ -203,19 +205,28 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
     let microphone_name= String::from_utf8(microphone).unwrap();
     let audio_string = format!("audio=\"{}\"", microphone_name);
     println!("{}", audio_string);
-    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg").unwrap().args([
-        "-f", "gdigrab",
-        "-framerate", "30",
-        "-offset_x", format!("{}", position.x).as_str(),
-        "-offset_y", format!("{}", position.y).as_str(),
-        "-video_size", format!("{}x{}", size.width, size.height).as_str(),
-        "-i", "desktop",
-        &filename.to_string()
-    ]));
-    //.args(if audio {["-f", "dshow", "-i", audio_string.as_str()]} else { [""; 4] }));
-
-    let mut command2 = command.creation_flags(0x00000200);
-    
+     command = *(stdCommand::from(Command::new_sidecar("ffmpeg").unwrap()
+    .args(["-f", "gdigrab"])
+    .args(["-framerate", "30"])
+    .args(["-offset_x", format!("{}", position.x).as_str()])
+    .args(["-offset_y", format!("{}", position.y).as_str()])
+    .args(["-video_size", format!("{}x{}", size.width, size.height).as_str()])
+    .args(["-i", "desktop"])
+    .args(["-f", "dshow", "-i", audio_string.as_str()])
+    .args([&filename.to_string()])
+    )).creation_flags(0x00000200);
+    }
+    else {
+        command = *(stdCommand::from(Command::new_sidecar("ffmpeg").unwrap()
+    .args(["-f", "gdigrab"])
+    .args(["-framerate", "30"])
+    .args(["-offset_x", format!("{}", position.x).as_str()])
+    .args(["-offset_y", format!("{}", position.y).as_str()])
+    .args(["-video_size", format!("{}x{}", size.width, size.height).as_str()])
+    .args(["-i", "desktop"])
+    .args([&filename.to_string()])
+    )).creation_flags(0x00000200);
+    }
     
     
     
@@ -223,7 +234,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
 
-    let mut process = command2.spawn().unwrap();
+    let mut process = command.spawn().unwrap();
     let pid = process.id();
     println!("pid : {}", pid);
     let window_ = window.clone();
