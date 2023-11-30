@@ -2,12 +2,17 @@ use tokio::task;
 use tauri::api::process::Command;
 use tauri::api::process::CommandEvent;
 use tokio::process::Command as tokioCommand;
+use std::os::windows::io::AsHandle;
+use std::os::windows::process::CommandExt;
 use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
 use crate::utils::*;
 use winapi::um::wincon::GenerateConsoleCtrlEvent;
-use winapi::um::wincon::CTRL_BREAK_EVENT;
+use winapi::um::wincon::{CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT};
 use std::fs;
+use std::thread;
+use std::time::Duration;
+
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
 
@@ -79,9 +84,6 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
 
 pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
 
-    let index = get_current_monitor_index(&window) - 1;
-    let position = get_monitor_position(&window, index);
-
     if timer > 0 {
         let mut sleep_command = 
         stdCommand::new("timeout")
@@ -106,27 +108,28 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     }
 
     let parts: Vec<&str> = area.split(',').collect();
-        let x = parts[0].trim().parse::<i32>().unwrap();
-        let y = parts[1].trim().parse::<i32>().unwrap();
-        let width = parts[2].trim().parse::<i32>().unwrap();
-        let height = parts[3].trim().parse::<i32>().unwrap();
+    let x = parts[0].trim().parse::<i32>().unwrap();
+    let y = parts[1].trim().parse::<i32>().unwrap();
+    let width = parts[2].trim().parse::<i32>().unwrap();
+    let height = parts[3].trim().parse::<i32>().unwrap();
 
 
-        let status = Command::new_sidecar("ffmpeg")
-        .unwrap()
-        .args([
-            "-f", "gdigrab", 
-            "-framerate", "30",
-            "-offset_x", format!("{}", position.x + x).as_str(),
-            "-offset_y", format!("{}", position.y + y).as_str(),
-            "-video_size", format!("{}x{}", width, height).as_str(),
-            "-i", "desktop",
-            "-draw_mouse", if pointer { "1" } else { "0" }, 
-            "-frames:v", "1", 
-            &filename.to_string()
-        ])
-        .status()
-        .unwrap();    
+    let status = Command::new_sidecar("ffmpeg")
+    .unwrap()
+    .args([
+        "-f", "gdigrab", 
+        "-framerate", "30",
+        "-offset_x", format!("{}", x).as_str(),
+        "-offset_y", format!("{}", y).as_str(),
+        "-video_size", format!("{}x{}", width, height).as_str(),
+        "-i", "desktop",
+        "-draw_mouse", if pointer { "1" } else { "0" }, 
+        "-frames:v", "1", 
+        &filename.to_string()
+    ])
+    .status()
+    .unwrap();
+    
     
     let filename1 = filename.to_string();
     if status.success() {
@@ -182,27 +185,47 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
         return Response::new(None, Some(format!("Screen Crab cancelled")));
     }
     }
-
-    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
+    
+    let script = r#"
+                    $output = ffmpeg -list_devices true -f dshow -i audio 2>&1
+                    $pattern ='(?<=\]\s*")[^"]+(?="\s*\(audio\))'
+                    $match = [regex]::Match($output, $pattern)
+                    $extractedText = $match.Value
+                    Write-Host $extractedText -NoNewline"#;
+    let microphone = stdCommand::new("powershell")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
+        .arg("-Command")
+        .arg(script)
+        .output()
         .unwrap()
-        .args([
-            "-f", "gdigrab",
-            "-framerate", "30",
-            "-offset_x", format!("{}", position.x).as_str(),
-            "-offset_y", format!("{}", position.y).as_str(),
-            "-video_size", format!("{}x{}", size.width, size.height).as_str(),
-            "-i", "desktop",
-            &filename.to_string()
-        ])
-        .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { [""; 4] })
-    );
+        .stdout;
+    let microphone_name= String::from_utf8(microphone).unwrap();
+    let audio_string = format!("audio=\"{}\"", microphone_name);
+    println!("{}", audio_string);
+    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg").unwrap().args([
+        "-f", "gdigrab",
+        "-framerate", "30",
+        "-offset_x", format!("{}", position.x).as_str(),
+        "-offset_y", format!("{}", position.y).as_str(),
+        "-video_size", format!("{}x{}", size.width, size.height).as_str(),
+        "-i", "desktop",
+        &filename.to_string()
+    ]));
+    //.args(if audio {["-f", "dshow", "-i", audio_string.as_str()]} else { [""; 4] }));
 
+    let mut command2 = command.creation_flags(0x00000200);
+    
+    
+    
+    
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
 
-    let process = command.spawn().unwrap();
+    let mut process = command2.spawn().unwrap();
     let pid = process.id();
+    println!("pid : {}", pid);
     let window_ = window.clone();
     let filename1 = filename.to_string();
     window.listen_global("stop", move |_event| {
@@ -211,6 +234,8 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
         window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
         window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
     });
+
+
 
     let status = process.wait_with_output().unwrap().status;
     if status.code().unwrap() == 255 {
@@ -228,9 +253,6 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
 
 
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
-    
-    let index = get_current_monitor_index(&window) - 1;
-    let position = get_monitor_position(&window, index);
 
     if timer > 0 {
         let mut sleep_command = 
@@ -266,8 +288,8 @@ let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
         .args([
             "-f", "gdigrab", 
             "-framerate", "30",
-            "-offset_x", format!("{}", position.x + x).as_str(),
-            "-offset_y", format!("{}", position.y + y).as_str(),
+            "-offset_x", format!("{}", x).as_str(),
+            "-offset_y", format!("{}", y).as_str(),
             "-video_size", format!("{}x{}", width, height).as_str(),
             "-i", "desktop",
             &filename.to_string()
