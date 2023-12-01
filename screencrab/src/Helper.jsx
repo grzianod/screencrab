@@ -3,6 +3,7 @@ import './styles.css';
 import {invoke} from "@tauri-apps/api/tauri";
 import {LogicalPosition, LogicalSize, WebviewWindow} from '@tauri-apps/api/window';
 import {window} from "@tauri-apps/api";
+import {emit} from "@tauri-apps/api/event";
 
 function Helper({  }) {
     const [dragging, setDragging] = useState(false);
@@ -50,7 +51,7 @@ function Helper({  }) {
     useEffect(() => {
         document.addEventListener("keyup", async (event) => {
            if(event.key === "Escape") {
-               await invoke("hide_all_helpers", {});
+               await emit("escape", {});
            }
         });
     }, []);

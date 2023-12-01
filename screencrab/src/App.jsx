@@ -213,13 +213,7 @@ function App() {
         return () => promise.then(remove => remove());
     });
     useEffect(() => {
-        const promise = listen("change_hotkeys", () => {
-            setHotkeys((hotkeys) => !hotkeys);
-            if(hotkeys)
-                invoke("resize_window_default", {}).then( () => {});
-            else
-                invoke("resize_window_hotkeys", {}).then( () => {});
-        });
+        const promise = listen("escape", async () => await setCaptureFullscreen() );
         return () => promise.then(remove => remove());
     });
 

@@ -39,6 +39,8 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
     let abs_path: String;
     let fs_path = Path::new(file_path);
 
+    app.windows().get("main_window").unwrap().set_content_protected(true).unwrap();
+
     if (!cfg!(target_os="windows") && file_path.ends_with("/") && (!fs_path.exists() || !fs_path.is_dir())) || ((cfg!(target_os="windows") && file_path.ends_with("\\") && (!fs_path.exists() || !fs_path.is_dir()))) {
         return Err(format!("\"{}\" is not a valid directory.", file_path));
     }
@@ -122,6 +124,7 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
             .icon("icons/icon.icns").show().unwrap();
     }
 
+    app.windows().get("main_window").unwrap().set_content_protected(false).unwrap();
     return Ok(result);
 }
 
@@ -388,6 +391,17 @@ fn main() {
                     WindowEvent::CloseRequested{..} => {
                         main_window_.app_handle().exit(0);
                     }
+                    _ => {}
+                }
+            });
+
+            let main_window__ = main_window.clone();
+            area.on_window_event(move |event| {
+                match event {
+                    WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
+                        main_window__.set_focus().unwrap();
+                    }
+                    WindowE
                     _ => {}
                 }
             });
