@@ -30,9 +30,9 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     let output = process.unwrap().wait().await.unwrap();
     if output.success() {
         if !clipboard && open_file {
-            window.windows().get("main_window").unwrap().minimize().unwrap();
-            window.windows().get("tools").unwrap().show().unwrap();
-            window.emit_all("path", filename.to_string()).unwrap();
+            if let Err(_err) = stdCommand::new("open").arg(filename.to_string()).spawn() {
+                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
+            }
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
@@ -70,9 +70,9 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     let output = process.unwrap().wait().await.unwrap();
     if output.success() {
         if !clipboard && open_file {
-            window.windows().get("main_window").unwrap().minimize().unwrap();
-            window.windows().get("tools").unwrap().show().unwrap();
-            window.emit_all("path", filename.to_string()).unwrap();
+            if let Err(_err) = stdCommand::new("open").arg(filename.to_string()).spawn() {
+                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
+            }
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
@@ -85,7 +85,6 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
 
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     let filename1 = filename.to_string();
-    let filename2 = filename.to_string();
     let index = get_current_monitor_index(&window);
 
     let mut command = tokioCommand::new("screencapture");
@@ -128,9 +127,9 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
     let output = process.wait().await.unwrap();
     if output.success() {
         if open_file {
-
-            let _open = stdCommand::new("open").arg(filename2.as_str()).output().unwrap();
-
+            if let Err(_err) = stdCommand::new("open").arg(filename.to_string()).spawn() {
+                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
+            }
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename1.to_string())), None);
     }
@@ -139,7 +138,6 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
 
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     let filename1 = filename.to_string();
-    let filename2 = filename.to_string();
     let index = get_current_monitor_index(&window);
 
     let mut command = tokioCommand::new("screencapture");
@@ -185,9 +183,9 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     let output = process.wait().await.unwrap();
     if output.success() {
         if open_file {
-
-            let _open = stdCommand::new("open").arg(filename2.as_str()).output().unwrap();
-
+            if let Err(_err) = tokioCommand::new("open").arg(filename.to_string()).spawn() {
+                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
+            }
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename1.to_string())), None );
     }

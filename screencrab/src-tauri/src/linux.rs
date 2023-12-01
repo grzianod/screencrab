@@ -43,10 +43,9 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
-            window.windows().get("main_window").unwrap().minimize().unwrap();
-            window.windows().get("tools").unwrap().show().unwrap();
-            window.windows().get("tools").unwrap().unminimize().unwrap();
-            window.emit_all("path", filename.to_string()).unwrap();
+            if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
+                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
+            }
         }
         if clipboard {
             if let Err(err) = copy_to_clipboard(filename.to_string()) {
@@ -108,10 +107,9 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
-            window.windows().get("main_window").unwrap().minimize().unwrap();
-            window.windows().get("tools").unwrap().show().unwrap();
-            window.windows().get("tools").unwrap().unminimize().unwrap();
-            window.emit_all("path", filename.to_string()).unwrap();
+            if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
+                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
+            }
         }
         if clipboard {
             if let Err(err) = copy_to_clipboard(filename.to_string()) {
@@ -184,10 +182,9 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
     let status = process.wait_with_output().unwrap().status;
     if status.code().unwrap() == 255 {
     if open_file {
-        // Use tokio::task::spawn to execute the opening
-        let _open_task = task::spawn(async move {
-            let _open = tokioCommand::new("xdg-open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
-        });
+        if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
+            return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
+        }
     }
     return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
     }
@@ -258,10 +255,9 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     let filename1 = filename.to_string();
     if status.code().unwrap() == 255 {
         if open_file {
-            // Use tokio::task::spawn to execute the opening
-            let _open_task = task::spawn(async move {
-                let _open = tokioCommand::new("xdg-open").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e)) ));
-            });
+            if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
+                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
+            }
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
     }

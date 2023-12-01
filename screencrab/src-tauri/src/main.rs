@@ -4,28 +4,14 @@ mod menu;
 mod utils;
 
 use chrono::prelude::*;
-use tauri::{Window, AppHandle};
+use tauri::{Window, AppHandle, WindowEvent};
 use std::path::Path;
 use crate::menu::{create_context_menu};
-use crate::utils::{monitor_dialog, Response};
-use tauri::{Manager, SystemTray, SystemTrayEvent, api::process};
+use crate::utils::{Response};
+use tauri::{Manager, SystemTray, SystemTrayEvent};
 use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::api::notification::Notification;
-use std::{fs};
-use serde_json;
-use tauri::{LogicalPosition, LogicalSize};
-
-
-#[derive(serde::Deserialize)]
-struct HotkeyInput {
-    hotkey_data: serde_json::Value,
-}
-
-#[derive(serde::Deserialize)]
-struct CmdArgs {
-    message: String,
-}
 
 #[cfg(target_os="macos")]
 use tauri::utils::TitleBarStyle;
@@ -47,90 +33,6 @@ mod windows;
 
 #[cfg(target_os = "linux")]
 mod linux;
-
-#[tauri::command]
-async fn folder_dialog(handle: AppHandle) -> Response {
-    return utils::folder_picker(handle).await;
-}
-
-#[tauri::command]
-async fn current_default_path() -> Response {
-    return utils::current_default_path().await;
-}
-
-#[tauri::command]
-fn get_image_bytes(path: String) -> Vec<u8> {
-    // Read the image file at runtime and return its bytes
-    let image_bytes = std::fs::read(path).expect("Failed to read image file");
-    image_bytes
-}
-
-#[tauri::command]
-fn log_message(args: CmdArgs) {
-    println!("{}", args.message);
-}
-
-#[tauri::command]
-fn custom_area_selection(app: AppHandle, id: String, left: f64, top: f64, width: f64, height: f64) {
-    let offset = LogicalPosition::new(app.windows().get(id.as_str()).unwrap().outer_position().unwrap().x as f64,app.windows().get(id.as_str()).unwrap().outer_position().unwrap().y as f64);
-    let scale_factor = app.windows().get(id.as_str()).unwrap().current_monitor().unwrap().unwrap().scale_factor();
-    let position = LogicalPosition::new((left + offset.x/scale_factor) as i32, (top + offset.y/scale_factor) as i32);
-    let size = LogicalSize::new(width as i32, height as i32);
-
-    let n = app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
-    for i in 0..n {
-        if let Some(helper) = app.windows().get(format!("helper_{}", i).as_str()) {
-            helper.hide().unwrap();
-        }
-        else {
-            monitor_dialog(app.app_handle());
-        }
-    }
-
-    app.windows().get("selector").unwrap().set_size(size).unwrap();
-    app.windows().get("selector").unwrap().set_position(position).unwrap();
-    app.windows().get("selector").unwrap().show().unwrap();
-    app.windows().get("main_window").unwrap().set_focus().unwrap();
-
-}
-
-#[tauri::command]
-fn show_all_helpers(app: AppHandle) {
-    app.windows().get("selector").unwrap().hide().unwrap();
-    let monitors = app.windows().get("main_window").unwrap().available_monitors().unwrap();
-    for (i, monitor) in monitors.iter().enumerate() {
-        if let Some(helper) = app.windows().get(format!("helper_{}", i).as_str()) {
-            helper.set_position(monitor.position().to_logical::<f64>(monitor.scale_factor())).unwrap();
-            helper.set_size(monitor.size().to_logical::<f64>(monitor.scale_factor())).unwrap();
-            helper.show().unwrap();
-        }
-        else {
-            monitor_dialog(app.app_handle());
-        }
-    }
-}
-
-#[tauri::command]
-fn hide_all_helpers(app: AppHandle) {
-    app.windows().get("selector").unwrap().hide().unwrap();
-    let monitors = app.windows().get("main_window").unwrap().available_monitors().unwrap();
-    for i in 0..monitors.len() {
-        if let Some(helper) = app.windows().get(format!("helper_{}", i).as_str()) {
-            helper.hide().unwrap();
-        }
-        else {
-            monitor_dialog(app.app_handle());
-        }
-    }
-}
-
-#[tauri::command]
-fn write_to_json(app: AppHandle, input: HotkeyInput) {
-    let path = utils::utils_dir() + "/hotkeys.json";
-    let file_path = Path::new(&path);
-    fs::write(file_path, input.hotkey_data.to_string()).unwrap();
-    process::restart(&app.env())
-}
 
 #[tauri::command(rename_all = "snake_case")]
 async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &str, timer: u64, pointer: bool, file_path: &str, file_type: &str, clipboard: bool, audio: bool, open_file: bool) -> Result<Response, String> {
@@ -223,25 +125,6 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
     return Ok(result);
 }
 
-#[tauri::command]
-async fn load_hotkeys() -> String {
-    utils::hotkeys()
-}
-
-#[tauri::command]
-fn window_hotkeys(app: AppHandle) {
-    app.windows().get("hotkeys").unwrap().show().unwrap();
-}
-
-#[tauri::command]
-fn close_hotkeys(app: AppHandle) {
-    app.windows().get("hotkeys").unwrap().hide().unwrap();
-}
-
-#[tauri::command]
-fn delete_file(app: AppHandle, path: String) {
-    utils::delete_dialog(app, path);
-}
 
 fn main() {
     tauri::Builder::default()
@@ -252,24 +135,6 @@ fn main() {
             let scale_factor = app.windows().get("start_window").unwrap().scale_factor().unwrap();
             let monitor_size = monitor.size();
 
-            tauri::WindowBuilder::new(
-                app,
-                "tools",
-                tauri::WindowUrl::App("./tools.html".into()))
-                .decorations(true)
-                .visible(false)
-                .inner_size((monitor_size.width as f64) * 0.9f64/scale_factor, (monitor_size.height as f64) * 0.8f64/scale_factor )
-                .position((monitor_size.width as f64) * 0.05f64/scale_factor, (monitor_size.height as f64) * 0.1f64/scale_factor)
-                .resizable(true)
-                .closable(true)
-                .always_on_top(false)
-                .title("ScreenCrab Tools")
-                .minimizable(true)
-                .maximizable(true)
-                .focused(true)
-                .build()
-                .unwrap();
-
             let hotkeys = tauri::WindowBuilder::new(
                 app,
                 "hotkeys",
@@ -279,13 +144,23 @@ fn main() {
                 .inner_size((monitor_size.width as f64) * 0.6f64/scale_factor, (monitor_size.height as f64) * 0.9f64/scale_factor )
                 .position((monitor_size.width as f64) * 0.2f64/scale_factor, (monitor_size.height as f64) * 0.05f64/scale_factor)
                 .resizable(true)
-                .closable(false)
-                .always_on_top(false)
+                .closable(true)
+                .always_on_top(true)
                 .title("Shortcut Keys")
                 .minimizable(true)
                 .focused(true)
                 .build()
                 .unwrap();
+
+            let hotkeys_ = hotkeys.clone();
+            hotkeys.on_window_event(move |event| {
+                match event {
+                    WindowEvent::CloseRequested{api, ..} => {
+                        api.prevent_close();
+                        hotkeys_.hide().unwrap(); }
+                    _ => {}
+                }
+            });
 
             #[cfg(target_os = "macos")]
                 let area = tauri::WindowBuilder::new(
@@ -507,6 +382,16 @@ fn main() {
                 }
             }
 
+            let main_window_ = main_window.clone();
+            main_window.on_window_event(move |event| {
+                match event {
+                    WindowEvent::CloseRequested{..} => {
+                        main_window_.app_handle().exit(0);
+                    }
+                    _ => {}
+                }
+            });
+
             let capture_mouse_pointer = Arc::new(Mutex::new(false));
             let copy_to_clipboard = Arc::new(Mutex::new(false));
             let edit_after_capture = Arc::new(Mutex::new(true));
@@ -681,13 +566,7 @@ fn main() {
             }
             _ => {}
         })
-        .on_window_event(|event| match event.event() {
-            tauri::WindowEvent::CloseRequested { .. } => {
-                event.window().app_handle().exit(0);
-            }
-            _ => {}
-        })
-        .invoke_handler(tauri::generate_handler![capture, get_image_bytes, folder_dialog, current_default_path, log_message, write_to_json, load_hotkeys, close_hotkeys, window_hotkeys, custom_area_selection, show_all_helpers, hide_all_helpers, delete_file])
+        .invoke_handler(tauri::generate_handler![capture, utils::folder_dialog, utils::current_default_path, utils::write_to_json, utils::load_hotkeys, utils::close_hotkeys, utils::window_hotkeys, utils::custom_area_selection, utils::show_all_helpers, utils::hide_all_helpers])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
