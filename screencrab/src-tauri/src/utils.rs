@@ -189,9 +189,8 @@ pub async fn current_default_path() -> Response {
         if result.starts_with('~') { result = result.replace("~", env::var("HOME").unwrap().as_str()) }
 
         if !result.ends_with("/") { result.push('/'); }
+        return Response::new(Some(result), None );
     }
-
-    return Response::new(Some(result), None );
 }
 
 pub fn utils_dir() -> String {

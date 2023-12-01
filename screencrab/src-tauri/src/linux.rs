@@ -1,12 +1,11 @@
 use std::fs;
-use tokio::task;
 use tauri::api::process::Command;
 use tokio::process::Command as tokioCommand;
 use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
 use crate::utils::*;
 
-pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
+pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
 
     if timer > 0 {
@@ -60,7 +59,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
 
-pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
+pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
 
     if timer > 0 {
