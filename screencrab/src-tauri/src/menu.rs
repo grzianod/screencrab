@@ -6,6 +6,7 @@ pub fn create_context_menu() -> Menu {
     let content = hotkeys();
     let hotkeys: Hotkeys = serde_json::from_str(&content).unwrap();
 
+    #[cfg(target_os = "macos")]
     let about = Submenu::new("Screen Crab",
                              Menu::new()
                                  .add_native_item(MenuItem::Services)
