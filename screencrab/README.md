@@ -2,6 +2,11 @@
 
 A cross-platform Rust application to perform screen grabbing 
 
+### Screenshots
+- macOS:
+
+    ![Screenshot](./screenshots/ScreenCrab_macOS.png)
+
 ### Recommended development Operating Systems
 - [Windows 11 Pro](https://www.microsoft.com/it-it/software-download/windows11)
 - [Ubuntu 20.04 LTS](https://releases.ubuntu.com/focal/)
