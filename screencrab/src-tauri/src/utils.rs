@@ -16,7 +16,7 @@ use tauri::api::process;
 #[cfg(target_os = "macos")]
 use tokio::process::Command;
 #[cfg(not(target_os = "macos"))]
-use arboard::{Clipboard, ImageData, Error};
+use arboard::{Clipboard, Error};
 #[cfg(not(target_os = "macos"))]
 use image::GenericImageView;
 #[cfg(not(target_os = "macos"))]
@@ -169,9 +169,11 @@ pub async fn folder_dialog(handle: AppHandle) -> Response {
 pub async fn current_default_path() -> Response {
     #[cfg(target_os = "windows")] {
         let result = format!("{}\\", env::var("USERPROFILE").unwrap().to_string());
+        return Response::new(Some(result), None );
     }
     #[cfg(target_os = "linux")] {
         let result = format!("{}/", env::var("HOME").unwrap().to_string());
+        return Response::new(Some(result), None );
     }
     #[cfg(target_os = "macos")] {
         let output = Command::new("defaults")

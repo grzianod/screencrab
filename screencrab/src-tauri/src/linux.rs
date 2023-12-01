@@ -1,7 +1,6 @@
 use std::fs;
 use tokio::task;
 use tauri::api::process::Command;
-use tauri::api::process::CommandEvent;
 use tokio::process::Command as tokioCommand;
 use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
@@ -11,7 +10,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     let index = get_current_monitor_index(&window) - 1;
 
     if timer > 0 {
-    let mut sleep_command = tokioCommand::new("sleep")
+    let sleep_command = tokioCommand::new("sleep")
         .arg(&timer.to_string())
         .spawn()
         .unwrap();
@@ -40,7 +39,6 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
         .status()
         .unwrap();
 
-    let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
             if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
@@ -103,8 +101,6 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
         .status()
         .unwrap();
 
-    
-    let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
             if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
@@ -165,7 +161,6 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
     let process = command.spawn().unwrap();
     let pid = process.id();
     let window_ = window.clone();
-    let filename1 = filename.to_string();
     window.listen_global("stop", move |_event| {
         tokio::task::spawn(async move {
             let _output = tokioCommand::new("kill")
@@ -252,7 +247,6 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     });
 
     let status = process.wait_with_output().unwrap().status;
-    let filename1 = filename.to_string();
     if status.code().unwrap() == 255 {
         if open_file {
             if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
