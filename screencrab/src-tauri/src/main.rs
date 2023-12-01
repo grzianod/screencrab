@@ -401,7 +401,6 @@ fn main() {
                     WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
                         main_window__.set_focus().unwrap();
                     }
-                    WindowE
                     _ => {}
                 }
             });

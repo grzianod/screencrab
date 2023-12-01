@@ -33,9 +33,11 @@ cocoa = "0.25.0"
 winapi = "0.3.9"
 cpal = "0.15.2"
 arboard = "3.2.1"
+image = "0.24.7"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 arboard = "3.2.1"
+image = "0.24.7"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

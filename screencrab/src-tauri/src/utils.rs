@@ -18,8 +18,6 @@ use tauri::api::process;
 #[cfg(not(target_os = "macos"))]
 use arboard::{Clipboard, ImageData, Error};
 #[cfg(not(target_os = "macos"))]
-use base64::{engine::general_purpose, Engine as _};
-#[cfg(not(target_os = "macos"))]
 use image::GenericImageView;
 #[cfg(not(target_os = "macos"))]
 use std::borrow::Cow;
