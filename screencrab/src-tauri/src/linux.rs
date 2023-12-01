@@ -48,11 +48,11 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
             }
         }
         if clipboard {
-            if let Err(err) = copy_to_clipboard(filename.to_string()) {
+            if let Err(_err) = copy_to_clipboard(filename.to_string()) {
                 return Response::new(Some(format!("Failed to copy on Clipboard. Screen Crab saved to {}", filename.to_string())), None);
             }
             else {
-                fs::remove_file(filename.to_string());
+                fs::remove_file(filename.to_string()).unwrap();
                 return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
             }
         } else {
@@ -112,11 +112,11 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
             }
         }
         if clipboard {
-            if let Err(err) = copy_to_clipboard(filename.to_string()) {
+            if let Err(_err) = copy_to_clipboard(filename.to_string()) {
                 return Response::new(Some(format!("Failed to copy on Clipboard. Screen Crab saved to {}", filename.to_string())), None);
             }
             else {
-                fs::remove_file(filename.to_string());
+                fs::remove_file(filename.to_string()).unwrap();
                 return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
             }
         } else {

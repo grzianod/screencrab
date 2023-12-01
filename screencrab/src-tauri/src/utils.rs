@@ -3,7 +3,6 @@ use tokio::sync::oneshot;
 use tauri::api::dialog::FileDialogBuilder;
 
 use tokio::task;
-use tokio::process::Command;
 use tauri::{AppHandle, Window, Manager};
 use std::{env, fs};
 use std::fs::File;
@@ -14,7 +13,8 @@ use tauri::LogicalSize;
 use tauri::LogicalPosition;
 use tauri::api::process;
 
-
+#[cfg(target_os = "macos")]
+use tokio::process::Command;
 #[cfg(not(target_os = "macos"))]
 use arboard::{Clipboard, ImageData, Error};
 #[cfg(not(target_os = "macos"))]
@@ -167,12 +167,11 @@ pub async fn folder_dialog(handle: AppHandle) -> Response {
 
 #[tauri::command]
 pub async fn current_default_path() -> Response {
-    let mut result;
     #[cfg(target_os = "windows")] {
-        result = format!("{}\\", env::var("USERPROFILE").unwrap().to_string());
+        let result = format!("{}\\", env::var("USERPROFILE").unwrap().to_string());
     }
     #[cfg(target_os = "linux")] {
-        result = format!("{}/", env::var("HOME").unwrap().to_string());
+        let result = format!("{}/", env::var("HOME").unwrap().to_string());
     }
     #[cfg(target_os = "macos")] {
         let output = Command::new("defaults")
@@ -181,7 +180,7 @@ pub async fn current_default_path() -> Response {
             .await
             .expect("Failed to execute command");
 
-        result = String::from_utf8(output.stdout).unwrap().trim().to_string();
+        let mut result = String::from_utf8(output.stdout).unwrap().trim().to_string();
 
         if result.is_empty() { result = env::var("HOME").unwrap().to_string(); }
 
@@ -283,7 +282,7 @@ pub fn hide_all_helpers(app: AppHandle) {
 
 #[cfg(not(target_os = "macos"))]
 pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
-    let mut clip = arboard::Clipboard::new().unwrap();
+    let mut clip = Clipboard::new().unwrap();
     let img = image::open(path).unwrap();
     let pixels = img
         .pixels()
