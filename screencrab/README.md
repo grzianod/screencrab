@@ -1,4 +1,4 @@
-# Screen Crab ![Image](./icon.png) 
+# Screen Crab ![Image](./src-tauri/icons/icon.ico) 
 
 A cross-platform Rust application to perform screen grabbing 
 
