@@ -1,9 +1,9 @@
 <p align="center" width="100%">
     <img width="25%" src="./src-tauri/icons/Square310x310Logo.png"> 
 </p>
-<p align="center" width="100%">
-<p style="font-size: 3rem"><strong>Screen Crab</strong></p>
-</p>
+
+<center style="font-size: 3rem"><strong>Screen Crab</strong></center>
+
 
 #
 
