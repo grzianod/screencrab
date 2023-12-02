@@ -1,6 +1,4 @@
-<div style="display:flex; flex-direction:row; align-items: center"><img src="./src-tauri/icons/icon.ico" width="100" height="100"> 
-<p style="margin-left: 1rem; margin-top: 1rem; font-size: 2rem;"><strong>Screen Crab</strong></p>
-</div>
+<img src="./src-tauri/icons/Square310x310Logo.png" width="100" height="100"> 
 
 # Screen Crab
 
