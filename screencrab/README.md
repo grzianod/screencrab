@@ -1,4 +1,4 @@
-<img src="./src-tauri/icons/Square310x310Logo.png" width="100" height="100"> 
+<img src="./src-tauri/icons/Square310x310Logo.png" width="200" height="200"> 
 
 # Screen Crab
 
