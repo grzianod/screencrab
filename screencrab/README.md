@@ -1,10 +1,7 @@
 <p align="center" width="100%">
     <img width="25%" src="./src-tauri/icons/Square310x310Logo.png"> <br>
-    <text style="font-size: 3rem"><strong>Screen Crab</strong></text><br>
+    <font size="10rem"><strong>Screen Crab</strong></font><br>
 </p>
-
-
-
 
 #
 
