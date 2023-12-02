@@ -1,7 +1,9 @@
 <p align="center" width="100%">
     <img width="25%" src="./src-tauri/icons/Square310x310Logo.png"> <br>
+    <p align="center" width="100%">
     <font size="6"><strong>Screen Crab</strong></font><br>
     <text>A cross-platform Rust application to perform screen grabbing </text><br>
+    </p>
 </p>
 
 #
