@@ -20,15 +20,14 @@ A cross-platform Rust application to perform screen grabbing
 
 ## Features
 
-- Built-in Annotation Tools
-- Multi-monitor support
-- Custom Hotkeys support for fast capturing
-- Efficient screen recording
-- Record microphone audio 
-- Multiple capture and record formats
-- Delayed capture and record
-- Custom area selection to capture
-- Click&Drag area selection
+- [x] Built-In Annotation Tools
+- [x] Multi-Monitor support
+- [x] Custom Hotkeys support for fast capturing
+- [x] Efficient Screen Recording
+- [x] Record Microphone Audio 
+- [x] Multiple Capture and Record formats
+- [x] Delayed Capture and Record
+- [x] Click&Drag custom area selection
 
 ## Development 
 
