@@ -1,11 +1,10 @@
 <p align="center" width="100%">
     <img width="25%" src="./src-tauri/icons/Square310x310Logo.png"> <br>
-    <font size="10rem"><strong>Screen Crab</strong></font><br>
+    <text size="10rem"><strong>Screen Crab</strong></text><br>
+    <text>A cross-platform Rust application to perform screen grabbing </text><br>
 </p>
 
 #
-
-A cross-platform Rust application to perform screen grabbing 
 
 
 ### Screenshots
