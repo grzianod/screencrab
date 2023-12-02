@@ -453,7 +453,7 @@ fn main() {
                         hotkeys_.show().unwrap();
                     }
                     "learn_more" => {
-                        webbrowser::open("https://github.com/grzianod/screencrab/blob/main/screencrab/README.md").unwrap();
+                        webbrowser::open("https://github.com/grzianod/screencrab/tree/main/screencrab#screen-crab").unwrap();
                     }
 
                     _ => {}
