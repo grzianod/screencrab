@@ -1,6 +1,7 @@
-<img src="./src-tauri/icons/Square310x310Logo.png" width="200" height="200"> 
+<center><img src="./src-tauri/icons/Square310x310Logo.png" width="200" height="200"> </center>
+<center style="font-size: 3rem"><strong>Screen Crab</strong></center>
 
-# Screen Crab
+#
 
 A cross-platform Rust application to perform screen grabbing 
 
