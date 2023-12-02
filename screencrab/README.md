@@ -1,5 +1,5 @@
-![Image](./icon.png)
 # Screen Crab
+![Image](./icon.png) 
 
 A cross-platform Rust application to perform screen grabbing 
 
