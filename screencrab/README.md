@@ -2,7 +2,7 @@
 
 # Screen Crab
 
-Cross-platform screen grabbing utility written in Rust
+A cross-platform screen grabbing utility written in Rust
 
 
 ## Screenshots
