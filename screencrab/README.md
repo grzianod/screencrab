@@ -1,14 +1,8 @@
-<html>
-    <head></head>
-    <body>
-        <div style="display: flex; flex-direction: row; align-items: center">
-            <img src="./src-tauri/icons/128x128@2x.png" alt="Image" width="100" height="100">
-            <p style="margin-left: 1rem; margin-top: 1rem; font-size: 2rem;"><strong>Screen Crab</strong></p>
-        </div>
-    </body>
-</html>
+<div style="display:flex; flex-direction:row; align-items: center"><img src="./src-tauri/icons/icon.ico" width="100" height="100"> 
+<p style="margin-left: 1rem; margin-top: 1rem; font-size: 2rem;"><strong>Screen Crab</strong></p>
+</div>
 
-#
+# Screen Crab
 
 A cross-platform Rust application to perform screen grabbing 
 
