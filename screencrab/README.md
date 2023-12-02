@@ -2,6 +2,8 @@
 
 # Screen Crab
 
+A cross-platform Rust application to perform screen grabbing 
+
 
 ### Screenshots
 - macOS:
