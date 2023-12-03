@@ -423,6 +423,11 @@ fn main() {
                 let record_external_audio_ = record_external_audio.clone();
                 let open_after_record_ = open_after_record.clone();
 
+                let hotkeys_string = utils::load_hotkeys();
+                let hotkeys_dict: Value = serde_json::from_str(hotkeys_string).unwrap();
+
+                let map = utils::create_mapping(hotkeys_dict);
+
                 let hotkeys = GlobalHotkeySet::new()
                     .add_global_hotkey("fullscreen_capture".as_str(), Modifier::Ctrl + Key::F)
                     .add_global_hotkey("custom_capture".as_str(), Modifier::Shift + Modifier::Alt + Key::A)

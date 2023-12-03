@@ -23,6 +23,14 @@ use image::GenericImageView;
 use std::borrow::Cow;
 use std::path::Path;
 
+#[cfg(target_os = "windows")]
+use std::collections::HashMap;
+#[cfg(target_os = "windows")]
+use serde_json::Value;
+#[cfg(target_os = "windows")]
+use winapi_easy::keyboard::{GlobalHotkeySet, Modifier, Key, KeyCombination, ModifierCombination};
+
+
 #[derive(Clone, serde::Serialize)]
 pub struct Payload {
     path: String
@@ -297,4 +305,52 @@ pub fn copy_to_clipboard(path: String) -> Result<(), Error> {
         bytes: Cow::Owned(pixels),
     };
     clip.set_image(img_data)
+}
+
+#[cfg(target_os="windows")]
+pub fn create_mapping(hotkeys: Value) -> HashMap<String, KeyCombination> {
+    let object = hotkeys.as_object().unwrap();
+    let mut map = HashMap::<String, KeyCombination>::new();
+    for (key, value) in object {
+        if let Some(value_str) = value.as_str() {
+            let parts: Vec<&str> = value_str.split("+").collect();
+            let mut modifiers_combination: ModifierCombination;
+            let mut key_combination: KeyCombination;
+            for part in &parts {
+                match part {
+                    "CmdOrCtrl" => {modifiers_combination += Modifier::Ctrl}
+                    "Option" => {modifiers_combination += Modifier::Alt}
+                    "Control" => {modifiers_combination += Modifier::Ctrl}
+                    "A"=> {key_combination+=Key::A}
+                    "B"=> {key_combination+=Key::B}
+                    "C"=> {key_combination+=Key::C}
+                    "D"=> {key_combination+=Key::D}
+                    "E"=> {key_combination+=Key::E}
+                    "F"=> {key_combination+=Key::F}
+                    "G"=> {key_combination+=Key::G}
+                    "H"=> {key_combination+=Key::H}
+                    "I"=> {key_combination+=Key::I}
+                    "J"=> {key_combination+=Key::J}
+                    "K"=> {key_combination+=Key::K}
+                    "L"=> {key_combination+=Key::L}
+                    "M"=> {key_combination+=Key::M}
+                    "N"=> {key_combination+=Key::N}
+                    "O"=> {key_combination+=Key::O}
+                    "P"=> {key_combination+=Key::P}
+                    "Q"=> {key_combination+=Key::Q}
+                    "R"=> {key_combination+=Key::R}
+                    "S"=> {key_combination+=Key::S}
+                    "T"=> {key_combination+=Key::T}
+                    "U"=> {key_combination+=Key::U}
+                    "V"=> {key_combination+=Key::V}
+                    "W"=> {key_combination+=Key::W}
+                    "X"=> {key_combination+=Key::X}
+                    "Y"=> {key_combination+=Key::Y}
+                    "Z"=> {key_combination+=Key::Z}
+                }
+            }
+            hotkeys_map.insert(key, modifiers_combination+key_combination);
+        }
+    }
+    map
 }
