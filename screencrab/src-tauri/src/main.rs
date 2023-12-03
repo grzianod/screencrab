@@ -29,13 +29,19 @@ mod darwin;
 
 #[cfg(target_os = "windows")]
 mod windows;
-
+#[cfg(target_os = "windows")]
+use serde_json::Value;
+#[cfg(target_os = "windows")]
+use winapi_easy::keyboard::{GlobalHotkeySet, Modifier, Key};
+#[cfg(target_os = "windows")]
+#[derive(Copy, Clone)]
+enum MyAction {
+    One,
+    Two,
+}
 
 #[cfg(target_os = "linux")]
 mod linux;
-
-#[cfg(target_os = "windows")]
-use winapi_easy::keyboard::{GlobalHotkeySet, Modifier, Key};
 
 #[tauri::command(rename_all = "snake_case")]
 async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &str, timer: u64, pointer: bool, file_path: &str, file_type: &str, clipboard: bool, audio: bool, open_file: bool) -> Result<Response, String> {
@@ -131,8 +137,8 @@ async fn capture(app: AppHandle, window: Window, mode: &str, view: &str, area: &
     return Ok(result);
 }
 
-
-fn main() {
+#[tokio::main]
+async fn main() {
     tauri::Builder::default()
         .setup(|app| {
 
@@ -423,29 +429,53 @@ fn main() {
                 let record_external_audio_ = record_external_audio.clone();
                 let open_after_record_ = open_after_record.clone();
 
-                let hotkeys_string = utils::load_hotkeys();
-                let hotkeys_dict: Value = serde_json::from_str(hotkeys_string).unwrap();
-
-                let map = utils::create_mapping(hotkeys_dict);
-
+                let hotkeys_string = utils::hotkeys();
+                let hotkeys_dict: Value = serde_json::from_str(hotkeys_string.as_str()).unwrap();
                 let hotkeys = GlobalHotkeySet::new()
-                    .add_global_hotkey("fullscreen_capture".as_str(), Modifier::Ctrl + Key::F)
-                    .add_global_hotkey("custom_capture".as_str(), Modifier::Shift + Modifier::Alt + Key::A)
-                    .add_global_hotkey("capture_mouse_pointer".as_str(), Modifier::Shift + Modifier::Alt + Key::B)
-                    .add_global_hotkey("copy_to_clipboard".as_str(), Modifier::Shift + Modifier::Alt + Key::C)
-                    .add_global_hotkey("edit_after_capture".as_str(), Modifier::Shift + Modifier::Alt + Key::D)
-                    .add_global_hotkey("fullscreen_record".as_str(), Modifier::Shift + Modifier::Alt + Key::E)
-                    .add_global_hotkey("custom_record".as_str(), Modifier::Shift + Modifier::Alt + Key::F)
-                    .add_global_hotkey("stop_recording".as_str(), Modifier::Shift + Modifier::Alt + Key::G)
-                    .add_global_hotkey("record_external_audio".as_str(), Modifier::Shift + Modifier::Alt + Key::H)
-                    .add_global_hotkey("open_after_record".as_str(), Modifier::Shift + Modifier::Alt + Key::I);
+                    .add_global_hotkey(MyAction::One, Modifier::Ctrl + Modifier::Alt + Key::A)
+                    .add_global_hotkey(MyAction::Two, Modifier::Shift + Modifier::Alt + Key::B);
+                let main_window_ = main_window.clone();
+                tokio::task::spawn( async move {
+                        match hotkeys.listen_for_hotkeys() {
+                            Ok(iterator) => {
+                                // Now iterate over the iterator if Result is Ok
+                                for action_result in iterator {
+                                    match action_result {
+                                        Ok(action) => match action {
+                                            MyAction::One => main_window_.emit("fullscreen_capture", {}).unwrap(),
+                                            MyAction::Two => println!("Two!"),
+                                        },
+                                        Err(e) => eprintln!("Error while processing action: {:?}", e),
+                                    }
+                                }
+                            }
+                            Err(e) => eprintln!("Error listening for hotkeys: {:?}", e),
+                        }
+                    }
+                );
+                // Handle the Result from listen_for_hotkeys
+                
+                // let map = utils::create_mapping(hotkeys_dict);
+                
+                let hotkeys = GlobalHotkeySet::new()
+                    .add_global_hotkey("fullscreen_capture", Modifier::Ctrl + Key::F)
+                    .add_global_hotkey("custom_capture", Modifier::Shift + Modifier::Alt + Key::A)
+                    .add_global_hotkey("capture_mouse_pointer", Modifier::Shift + Modifier::Alt + Key::B)
+                    .add_global_hotkey("copy_to_clipboard", Modifier::Shift + Modifier::Alt + Key::C)
+                    .add_global_hotkey("edit_after_capture", Modifier::Shift + Modifier::Alt + Key::D)
+                    .add_global_hotkey("fullscreen_record", Modifier::Shift + Modifier::Alt + Key::E)
+                    .add_global_hotkey("custom_record", Modifier::Shift + Modifier::Alt + Key::F)
+                    .add_global_hotkey("stop_recording", Modifier::Shift + Modifier::Alt + Key::G)
+                    .add_global_hotkey("record_external_audio", Modifier::Shift + Modifier::Alt + Key::H)
+                    .add_global_hotkey("open_after_record", Modifier::Shift + Modifier::Alt + Key::I);
 
                 for action in hotkeys.listen_for_hotkeys().unwrap() {
-                    match action {
+                    let a = action.unwrap();
+                    match a {
                         "capture_mouse_pointer" => {
                             let mut data = capture_mouse_pointer_.lock().unwrap();
                             *data = !*data;
-                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            window_.menu_handle().get_item("capture_mouse_pointer").set_selected(*data).unwrap();
                         }
                         "copy_to_clipboard" => {
                             let mut data = copy_to_clipboard_.lock().unwrap();
@@ -458,22 +488,23 @@ fn main() {
                         "edit_after_capture" => {
                             let mut data = edit_after_capture_.lock().unwrap();
                             *data = !*data;
-                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            window_.menu_handle().get_item("edit_after_capture").set_selected(*data).unwrap();
                         }
                         "record_external_audio" => {
                             let mut data = record_external_audio_.lock().unwrap();
                             *data = !*data;
-                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            window_.menu_handle().get_item("record_external_audio").set_selected(*data).unwrap();
                         }
                         "open_after_record" => {
                             let mut data = open_after_record_.lock().unwrap();
                             *data = !*data;
-                            window_.menu_handle().get_item(event.menu_item_id()).set_selected(*data).unwrap();
+                            window_.menu_handle().get_item("open_after_record").set_selected(*data).unwrap();
                         }
                         _ => {}
                     }
-                    window_.emit_to("main_window", action, {}).unwrap();
+                    window_.emit_to("main_window", a, {}).unwrap();
                 }
+                
             }
 
             let window_ = main_window.clone();

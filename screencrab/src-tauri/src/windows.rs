@@ -6,13 +6,12 @@ use std::os::windows::io::AsHandle;
 use std::os::windows::process::CommandExt;
 use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
+use std::process::{Command as StdCommand};
 use crate::utils::*;
 use winapi::um::wincon::GenerateConsoleCtrlEvent;
 use winapi::um::wincon::{CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT};
 use std::fs;
-use std::thread;
-use std::time::Duration;
-use cpal::traits::{DeviceTrait, HostTrait};
+use cpal::traits::{HostTrait,DeviceTrait};
 
 pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
@@ -60,10 +59,6 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
-            window.windows().get("main_window").unwrap().minimize().unwrap();
-            window.windows().get("tools").unwrap().show().unwrap();
-            window.windows().get("tools").unwrap().unminimize().unwrap();
-            window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
             if let Err(err) = copy_to_clipboard(filename.to_string()) {
@@ -130,10 +125,6 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
-            window.windows().get("main_window").unwrap().minimize().unwrap();
-            window.windows().get("tools").unwrap().show().unwrap();
-            window.windows().get("tools").unwrap().unminimize().unwrap();
-            window.emit_all("path", filename.to_string()).unwrap();
         }
         if clipboard {
             if let Err(err) = copy_to_clipboard(filename.to_string()) {
@@ -148,7 +139,6 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     }
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
-
 
 pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
@@ -179,26 +169,73 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
         }
     }
 
-    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg").unwrap()
-        .args(["-f", "gdigrab"])
-        .args(["-framerate", "30"])
-        .args(["-offset_x", format!("{}", position.x).as_str()])
-        .args(["-offset_y", format!("{}", position.y).as_str()])
-        .args(["-video_size", format!("{}x{}", size.width, size.height).as_str()])
-        .args(["-i", "desktop"])
-    );
+    let mut selected_audio_device = String::new();
+
     if audio {
-        let mic_name = cpal::default_host().default_input_device().unwrap().name().unwrap();
-        let audio_string = format!("audio=\"{}\"", mic_name);
-        //command.raw_arg(["-f", "dshow", "-i", audio_string.as_str()]);
-        command.raw_arg("-f");
-        command.raw_arg("dshow");
-        command.raw_arg("-i");
-        command.raw_arg(audio_string.as_str());
+        // Run FFmpeg command to list devices
+        let output = std::process::Command::new("ffmpeg")
+            .args(["-list_devices", "true", "-f", "dshow", "-i", "dummy"])
+            .output();
+
+        match output {
+            Ok(output) => {
+                let output_str = String::from_utf8_lossy(&output.stdout);
+
+                // Extract audio device name, for example
+                if let Some(start) = output_str.find("DirectShow audio devices") {
+                    if let Some(end) = output_str[start..].find("Alternative name") {
+                        let audio_device_line = &output_str[start..start+end];
+                        // Extract the actual device name from audio_device_line
+                        // For example, the line might contain the name "Microfono (3- Samson Meteor Mic)"
+                        selected_audio_device = audio_device_line.to_string();
+                    }
+                }
+            },
+            Err(e) => {
+                // Handle the error if FFmpeg command fails to execute
+                return Response::new(None, Some(format!("Failed to execute FFmpeg command: {}", e)));
+            }
+        }
+        
     }
 
-    command.args([&filename.to_string()]);
+
+    // Modify the FFmpeg command to include the selected audio device
+    let audio_device_arg = if !selected_audio_device.is_empty() {
+        format!("-f dshow -i audio=\"{}\"", selected_audio_device)
+    } else {
+        String::new()
+    };
     
+    let filename_extension = std::path::Path::new(filename)
+    .extension()
+    .unwrap_or_default()
+    .to_str()
+    .unwrap_or_default()
+    .to_lowercase();
+
+    let (video_codec, format_option) = match filename_extension.as_str() {
+        "mp4" => ("-c:v", "libx264"),
+        "mov" => ("-c:v", "qtrle"),
+        "avi" => ("-c:v", "mpeg4"),
+        // Add more formats as needed
+        _ => return Response::new(None, Some(format!("Unsupported file format: {}", filename_extension))),
+    };
+
+    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
+        .unwrap()
+        .args([
+            "-f", "gdigrab",
+            "-framerate", "30",
+            "-offset_x", format!("{}", position.x).as_str(),
+            "-offset_y", format!("{}", position.y).as_str(),
+            "-video_size", format!("{}x{}", size.width, size.height).as_str(),
+            "-i", "desktop",
+            &filename.to_string()
+        ])
+        .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { [""; 4] })
+    );
+
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
