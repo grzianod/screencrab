@@ -341,67 +341,82 @@ impl Add for Combination {
 }
 */
 
-/*
-#[cfg(target_os="windows")]
-pub fn create_mapping(hotkeys: Value) -> HashMap<String, ModifierCombination> {
 
-    let object = hotkeys.as_object().unwrap(); 
-    let mut map = HashMap::<String, ModifierCombination>::new();
-    for (key, value) in object {
+#[cfg(target_os="windows")]
+pub fn create_mapping(hotkeys: Value) -> HashMap<String, KeyCombination> {
+
+    let object = hotkeys.as_object().unwrap();
+    let mut map = HashMap::<String, KeyCombination>::new();
+    for (action, value) in object {
         if let Some(value_str) = value.as_str() {
             let parts: Vec<&str> = value_str.split("+").collect();
-            let mut modifiers_combination: ModifierCombination;
-            for part in parts {
-                match part {
-                    "CmdOrCtrl" => modifiers_combination = modifiers_combination + Modifier::Ctrl, // Explicit conversion
-                    "Ctrl" => modifiers_combination = modifiers_combination + Modifier::Ctrl, // Explicit conversion
-                    "Shift" => modifiers_combination = modifiers_combination + Modifier::Shift, // Explicit conversion
-                    "Win" => modifiers_combination = modifiers_combination + Modifier::Win, // Explicit conversion
-                    "Alt" => modifiers_combination = modifiers_combination + Modifier::Alt, // Explicit conversion
-                    "Option" => modifiers_combination = modifiers_combination + Modifier::Alt, // Explicit conversion
-                    "1" => key_combination = Key::Number1, // Explicit conversion
-                    "2" => key_combination = Key::Number2, // Explicit conversion
-                    "3" => key_combination = Key::Number3, // Explicit conversion
-                    "4" => key_combination = Key::Number4, // Explicit conversion
-                    "5" => key_combination = Key::Number5, // Explicit conversion
-                    "6" => key_combination = Key::Number6, // Explicit conversion
-                    "7" => key_combination = Key::Number7, // Explicit conversion
-                    "8" => key_combination = Key::Number8, // Explicit conversion
-                    "9" => key_combination = Key::Number9, // Explicit conversion
-                    "0" => key_combination = Key::Number0, // Explicit conversion
-                    "A" => key_combination = Key::A, // Explicit conversion
-                    "B" => key_combination = Key::B, // Explicit conversion
-                    "C" => key_combination = Key::C, // Explicit conversion
-                    "D" => key_combination = Key::D, // Explicit conversion
-                    "E" => key_combination = Key::E, // Explicit conversion
-                    "F" => key_combination = Key::F, // Explicit conversion
-                    "G" => key_combination = Key::G, // Explicit conversion
-                    "H" => key_combination = Key::H, // Explicit conversion
-                    "I" => key_combination = Key::I, // Explicit conversion
-                    "J" => key_combination = Key::J, // Explicit conversion
-                    "K" => key_combination = Key::K, // Explicit conversion
-                    "L" => key_combination = Key::L, // Explicit conversion
-                    "M" => key_combination = Key::M, // Explicit conversion
-                    "N" => key_combination = Key::N, // Explicit conversion
-                    "O" => key_combination = Key::O, // Explicit conversion
-                    "P" => key_combination = Key::P, // Explicit conversion
-                    "Q" => key_combination = Key::Q, // Explicit conversion
-                    "R" => key_combination = Key::R, // Explicit conversion
-                    "S" => key_combination = Key::S, // Explicit conversion
-                    "T" => key_combination = Key::T, // Explicit conversion
-                    "U" => key_combination = Key::U, // Explicit conversion
-                    "V" => key_combination = Key::V, // Explicit conversion
-                    "W" => key_combination = Key::W, // Explicit conversion
-                    "X" => key_combination = Key::X, // Explicit conversion
-                    "Y" => key_combination = Key::Y, // Explicit conversion
-                    "Z" => key_combination = Key::Z, // Explicit conversion
-                    _ => {} // Handle other cases or unknown keys
+            let mut modifiers_combination: ModifierCombination = Modifier::Ctrl.into();
+            let mut key: Key = Key::A;
+            for (i,part) in parts.iter().enumerate() {
+                match *part {
+                    "CmdOrCtrl" | "Control" => {
+                        if i==0 {modifiers_combination = Modifier::Ctrl.into();}
+                        else { modifiers_combination = modifiers_combination + Modifier::Ctrl;}
+                    }
+    
+                    "Shift" => {
+                        if i==0 {modifiers_combination = Modifier::Shift.into();}
+                        else { modifiers_combination = modifiers_combination + Modifier::Shift;}
+                    }
+                    "Win" => {
+                        if i==0 {modifiers_combination = Modifier::Win.into();}
+                        else { modifiers_combination = modifiers_combination + Modifier::Win;}
+                    }
+                    "Option" => {
+                        if i==0 {modifiers_combination = Modifier::Alt.into();}
+                        else { modifiers_combination = modifiers_combination + Modifier::Alt;}
+                    }
+                    "Alt" => {
+                        if i==0 {modifiers_combination = Modifier::Alt.into();}
+                        else { modifiers_combination = modifiers_combination + Modifier::Alt;}
+                    }
+                    "1" => key= Key::Number1, // Explicit conversion
+                    "2" => key = Key::Number2, // Explicit conversion
+                    "3" => key = Key::Number3, // Explicit conversion
+                    "4" => key = Key::Number4, // Explicit conversion
+                    "5" => key = Key::Number5, // Explicit conversion
+                    "6" => key = Key::Number6, // Explicit conversion
+                    "7" => key = Key::Number7, // Explicit conversion
+                    "8" => key = Key::Number8, // Explicit conversion
+                    "9" => key = Key::Number9, // Explicit conversion
+                    "0" => key = Key::Number0, // Explicit conversion
+                    "A" => key = Key::A, // Explicit conversion
+                    "B" => key = Key::B, // Explicit conversion
+                    "C" => key = Key::C, // Explicit conversion
+                    "D" => key = Key::D, // Explicit conversion
+                    "E" => key = Key::E, // Explicit conversion
+                    "F" => key = Key::F, // Explicit conversion
+                    "G" => key = Key::G, // Explicit conversion
+                    "H" => key = Key::H, // Explicit conversion
+                    "I" => key = Key::I, // Explicit conversion
+                    "J" => key = Key::J, // Explicit conversion
+                    "K" => key = Key::K, // Explicit conversion
+                    "L" => key = Key::L, // Explicit conversion
+                    "M" => key = Key::M, // Explicit conversion
+                    "N" => key = Key::N, // Explicit conversion
+                    "O" => key = Key::O, // Explicit conversion
+                    "P" => key = Key::P, // Explicit conversion
+                    "Q" => key = Key::Q, // Explicit conversion
+                    "R" => key = Key::R, // Explicit conversion
+                    "S" => key = Key::S, // Explicit conversion
+                    "T" => key = Key::T, // Explicit conversion
+                    "U" => key = Key::U, // Explicit conversion
+                    "V" => key = Key::V, // Explicit conversion
+                    "W" => key = Key::W, // Explicit conversion
+                    "X" => key = Key::X, // Explicit conversion
+                    "Y" => key = Key::Y, // Explicit conversion
+                    "Z" => key = Key::Z, // Explicit conversion
+                    _ => { } // Handle other cases or unknown keys
                 }
             }
-
-            map.insert(key.to_string(), modifiers_combination);
+            map.insert(action.to_string(), modifiers_combination + key);
         }
     }
     map
 }
- */
+ 
