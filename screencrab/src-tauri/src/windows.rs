@@ -59,6 +59,9 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
+            let _open_task = task::spawn(async move {
+                let _open = tokioCommand::new("cmd").arg("/C").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e))));
+            });
         }
         if clipboard {
             if let Err(err) = copy_to_clipboard(filename.to_string()) {
@@ -125,6 +128,9 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
+            let _open_task = task::spawn(async move {
+                let _open = tokioCommand::new("cmd").arg("/C").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e))));
+            });
         }
         if clipboard {
             if let Err(err) = copy_to_clipboard(filename.to_string()) {
