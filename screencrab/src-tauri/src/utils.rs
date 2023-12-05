@@ -28,7 +28,7 @@ use std::collections::HashMap;
 #[cfg(target_os = "windows")]
 use serde_json::Value;
 #[cfg(target_os = "windows")]
-use winapi_easy::keyboard::{GlobalHotkeySet, Modifier, Key, KeyCombination, ModifierCombination};
+use winapi_easy::keyboard::{Modifier, Key, KeyCombination, ModifierCombination};
 #[cfg(target_os = "windows")]
 use tauri::PhysicalPosition;
 

@@ -1,25 +1,26 @@
 use tokio::task;
 use tauri::api::process::Command;
-use tauri::api::process::CommandEvent;
+//use tauri::api::process::CommandEvent;
 use tokio::process::Command as tokioCommand;
-use std::os::windows::io::AsHandle;
+//use std::os::windows::io::AsHandle;
 use std::os::windows::process::CommandExt;
 use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
-use std::process::{Command as StdCommand};
+//use std::process::{Command as StdCommand};
 use crate::utils::*;
 use winapi::um::wincon::GenerateConsoleCtrlEvent;
-use winapi::um::wincon::{CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT};
+use winapi::um::wincon::CTRL_BREAK_EVENT;
+//use winapi::um::wincon::{CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT};
 use std::fs;
 use cpal::traits::{HostTrait,DeviceTrait};
 
-pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
+pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
     let position = get_monitor_position(&window, index);
     let monitor = window.current_monitor().unwrap().unwrap(); // Store the monitor in a variable
     let size = monitor.size();
     if timer > 0 {
-        let mut sleep_command =
+        let sleep_command =
             stdCommand::new("timeout")
                 .arg("/t")
                 .arg(&timer.to_string())
@@ -64,10 +65,10 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
             });
         }
         if clipboard {
-            if let Err(err) = copy_to_clipboard(filename.to_string()) {
+            if let Err(_err) = copy_to_clipboard(filename.to_string()) {
                 return Response::new(Some(format!("Failed to copy on Clipboard. Screen Crab saved to {}", filename.to_string())), None);
             } else {
-                fs::remove_file(filename.to_string());
+                let _ = fs::remove_file(filename.to_string());
                 return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
             }
         } else {
@@ -77,9 +78,9 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
 
-pub async fn capture_custom(window: Window, area: &str, filename: &str, file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
+pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     if timer > 0 {
-        let mut sleep_command =
+        let sleep_command =
             stdCommand::new("timeout")
                 .arg("/t")
                 .arg(&timer.to_string())
@@ -133,10 +134,10 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
             });
         }
         if clipboard {
-            if let Err(err) = copy_to_clipboard(filename.to_string()) {
+            if let Err(_err) = copy_to_clipboard(filename.to_string()) {
                 return Response::new(Some(format!("Failed to copy on Clipboard. Screen Crab saved to {}", filename.to_string())), None);
             } else {
-                fs::remove_file(filename.to_string());
+                let _ = fs::remove_file(filename.to_string());
                 return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
             }
         } else {
@@ -146,14 +147,14 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
 
-pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, pointer: bool, clipboard: bool, audio: bool, open_file: bool) -> Response {
+pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
     let position = get_monitor_position(&window, index);
     let monitor = window.current_monitor().unwrap().unwrap(); // Store the monitor in a variable
     let size = monitor.size();
 
     if timer > 0 {
-        let mut sleep_command =
+        let sleep_command =
             stdCommand::new("timeout")
                 .arg("/t")
                 .arg(&timer.to_string())
@@ -207,7 +208,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
 
 
     // Modify the FFmpeg command to include the selected audio device
-    let audio_device_arg = if !selected_audio_device.is_empty() {
+    let _audio_device_arg = if !selected_audio_device.is_empty() {
         format!("-f dshow -i audio=\"{}\"", selected_audio_device)
     } else {
         String::new()
@@ -220,7 +221,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
     .unwrap_or_default()
     .to_lowercase();
 
-    let (video_codec, format_option) = match filename_extension.as_str() {
+    let (_video_codec, _format_option) = match filename_extension.as_str() {
         "mp4" => ("-c:v", "libx264"),
         "mov" => ("-c:v", "qtrle"),
         "avi" => ("-c:v", "mpeg4"),
@@ -252,7 +253,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
     
-    let mut process = command.creation_flags(0x00000200).spawn().unwrap();
+    let process = command.creation_flags(0x00000200).spawn().unwrap();
     let pid = process.id();
     let window_ = window.clone();
     let filename1 = filename.to_string();
@@ -280,7 +281,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
 
 pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u64, _pointer: bool, _clipboard: bool, audio: bool, open_file: bool) -> Response {
     if timer > 0 {
-        let mut sleep_command =
+        let sleep_command =
             stdCommand::new("timeout")
                 .arg("/t")
                 .arg(&timer.to_string())
@@ -333,7 +334,7 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
 
-    let mut process = command.creation_flags(0x00000200).spawn().unwrap();
+    let process = command.creation_flags(0x00000200).spawn().unwrap();
     let pid = process.id();
     let window_ = window.clone();
     let filename1 = filename.to_string();

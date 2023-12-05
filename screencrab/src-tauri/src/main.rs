@@ -6,8 +6,8 @@ mod utils;
 use chrono::prelude::*;
 use tauri::{Window, AppHandle, WindowEvent};
 use std::path::Path;
-use crate::menu::{create_context_menu};
-use crate::utils::{Response};
+use crate::menu::create_context_menu;
+use crate::utils::Response;
 use tauri::{Manager, SystemTray, SystemTrayEvent};
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -32,13 +32,7 @@ mod windows;
 #[cfg(target_os = "windows")]
 use serde_json::Value;
 #[cfg(target_os = "windows")]
-use winapi_easy::keyboard::{GlobalHotkeySet, Modifier, Key};
-#[cfg(target_os = "windows")]
-#[derive(Copy, Clone)]
-enum MyAction {
-    One,
-    Two,
-}
+use winapi_easy::keyboard::GlobalHotkeySet;
 
 #[cfg(target_os = "linux")]
 mod linux;
@@ -434,8 +428,8 @@ async fn main() {
                 let map = utils::create_mapping(hotkeys_dict);
     
                 let main_window_ = main_window.clone();
-                let task = tokio::task::spawn( async move {
-                    let mut hotkeys = GlobalHotkeySet::new()
+                let _task = tokio::task::spawn( async move {
+                    let hotkeys = GlobalHotkeySet::new()
                         .add_global_hotkey("fullscreen_capture", map.get("fullscreen_capture").unwrap().clone())
                         .add_global_hotkey("custom_capture", map.get("custom_capture").unwrap().clone())
                         .add_global_hotkey("copy_to_clipboard", map.get("copy_to_clipboard").unwrap().clone())
