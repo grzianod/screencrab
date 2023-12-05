@@ -65,8 +65,9 @@ function KeyCaptureInput({value, onChange, name}) {
     const handleKeyDown = (event) => {
         event.preventDefault();
         let capturedKey = event.code;
-
-        if (capturedKey.startsWith("Key")) {
+        if (capturedKey === "ControlLeft" || capturedKey === "ControlRight") {
+            capturedKey = "Ctrl";
+        }else if (capturedKey.startsWith("Key")) {
             capturedKey = capturedKey.slice(3);
         } else if (capturedKey.startsWith("Digit")) {
             capturedKey = capturedKey.slice(5);

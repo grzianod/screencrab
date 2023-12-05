@@ -2,6 +2,8 @@ use tokio::task;
 use tauri::api::process::Command;
 //use tauri::api::process::CommandEvent;
 use tokio::process::Command as tokioCommand;
+use winapi::um::winbase::CREATE_NO_WINDOW;
+use winapi::um::winbase::DETACHED_PROCESS;
 //use std::os::windows::io::AsHandle;
 use std::os::windows::process::CommandExt;
 use std::process::Command as stdCommand;
