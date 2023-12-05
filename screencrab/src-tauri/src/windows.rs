@@ -228,26 +228,31 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, point
         _ => return Response::new(None, Some(format!("Unsupported file format: {}", filename_extension))),
     };
 
-    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
-        .unwrap()
-        .args([
-            "-f", "gdigrab",
-            "-framerate", "30",
-            "-offset_x", format!("{}", position.x).as_str(),
-            "-offset_y", format!("{}", position.y).as_str(),
-            "-video_size", format!("{}x{}", size.width, size.height).as_str(),
-            "-i", "desktop",
-            &filename.to_string()
-        ])
-        .args(if audio {["-f", "dshow", "-i", "audio=\"Microphone (High Definition Audio Device)\""]} else { [""; 4] })
+    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg").unwrap()
+        .args(["-f", "gdigrab"])
+        .args(["-framerate", "30"])
+        .args(["-offset_x", format!("{}", position.x).as_str()])
+        .args(["-offset_y", format!("{}", position.y).as_str()])
+        .args(["-video_size", format!("{}x{}", size.width, size.height).as_str()])
+        .args(["-i", "desktop"])
     );
+    if audio {
+        let mic_name = cpal::default_host().default_input_device().unwrap().name().unwrap();
+        let audio_string = format!("audio=\"{}\"", mic_name);
+        command.raw_arg("-f");
+        command.raw_arg("dshow");
+        command.raw_arg("-i");
+        command.raw_arg(audio_string.as_str());
+    }
+
+    command.args([&filename.to_string()]);
+
 
     window.menu_handle().get_item("stop_recording").set_enabled(true).unwrap();
     window.menu_handle().get_item("custom_record").set_enabled(false).unwrap();
     window.menu_handle().get_item("fullscreen_record").set_enabled(false).unwrap();
     
     let mut process = command.creation_flags(0x00000200).spawn().unwrap();
-    println!("{:?}", command);
     let pid = process.id();
     let window_ = window.clone();
     let filename1 = filename.to_string();
