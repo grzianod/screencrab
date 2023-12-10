@@ -270,6 +270,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
             let _open_task = task::spawn(async move {
                 let _open = stdCommand::new("cmd").arg("/C").arg(filename1.as_str()).output().map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e))));
             });
+            window.app_handle().windows().get("main_window").unwrap().minimize().unwrap();
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
     }
@@ -350,6 +351,7 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
             let _open_task = task::spawn(async move {
                 let _open = tokioCommand::new("cmd").arg("/C").arg(filename1.as_str()).output().await.map_err(|e| Response::new(None, Some(format!("Failed to open screenshot: {}", e))));
             });
+            window.app_handle().windows().get("main_window").unwrap().minimize().unwrap();
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
     }

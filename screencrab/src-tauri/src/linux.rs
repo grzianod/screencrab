@@ -177,6 +177,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
         if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
             return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
         }
+        window.app_handle().windows().get("main_window").unwrap().minimize().unwrap();
     }
     return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
     }
@@ -249,6 +250,7 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
             if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
                 return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
             }
+            window.app_handle().windows().get("main_window").unwrap().minimize().unwrap();
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
     }
