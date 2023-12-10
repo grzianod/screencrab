@@ -32,6 +32,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     if output.success() {
         if !clipboard && open_file {
             tauriCommand::new_sidecar("prtools").unwrap().args(["--path", filename]).spawn().unwrap();
+            window.app_handle().windows().get("main_window").unwrap().minimize().unwrap();
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
@@ -70,6 +71,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     if output.success() {
         if !clipboard && open_file {
             tauriCommand::new_sidecar("prtools").unwrap().args(["--path", filename]).spawn().unwrap();
+            window.app_handle().windows().get("main_window").unwrap().minimize().unwrap();
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
