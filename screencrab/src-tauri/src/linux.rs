@@ -40,7 +40,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str
 
     if status.success() {
         if !clipboard && open_file {
-            tauriCommand::new_sidecar("Screen Crab Tools").unwrap().args(["--path", filename]).spawn().unwrap();
+            tauriCommand::new_sidecar("prtools").unwrap().args(["--path", filename]).spawn().unwrap();
         }
         if clipboard {
             if let Err(_err) = copy_to_clipboard(filename.to_string()) {
@@ -100,7 +100,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
 
     if status.success() {
         if !clipboard && open_file {
-            tauriCommand::new_sidecar("Screen Crab Tools").unwrap().args(["--path", filename]).spawn().unwrap();
+            tauriCommand::new_sidecar("prtools").unwrap().args(["--path", filename]).spawn().unwrap();
         }
         if clipboard {
             if let Err(_err) = copy_to_clipboard(filename.to_string()) {
