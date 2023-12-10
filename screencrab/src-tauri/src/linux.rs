@@ -1,5 +1,5 @@
 use std::fs;
-use tauri::api::process::Command;
+use tauri::api::process::Command as tauriCommand;
 use tokio::process::Command as tokioCommand;
 use std::process::Command as stdCommand;
 use tauri::{Window, Manager};
@@ -40,9 +40,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str
 
     if status.success() {
         if !clipboard && open_file {
-            if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
-                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
-            }
+            tauriCommand::new_sidecar("Screen Crab Tools").unwrap().args(["--path", filename]).spawn().unwrap();
         }
         if clipboard {
             if let Err(_err) = copy_to_clipboard(filename.to_string()) {
@@ -102,9 +100,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
 
     if status.success() {
         if !clipboard && open_file {
-            if let Err(_err) = stdCommand::new("xdg-open").arg(filename.to_string()).spawn() {
-                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
-            }
+            tauriCommand::new_sidecar("Screen Crab Tools").unwrap().args(["--path", filename]).spawn().unwrap();
         }
         if clipboard {
             if let Err(_err) = copy_to_clipboard(filename.to_string()) {

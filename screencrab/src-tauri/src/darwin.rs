@@ -1,5 +1,6 @@
 use tokio::process::Command as tokioCommand;
 use std::process::Command as stdCommand;
+use tauri::api::process::Command as tauriCommand;
 use tauri::{Window, Manager};
 use std::process::Stdio;
 use crate::utils::*;
@@ -30,9 +31,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, file_type: &str,
     let output = process.unwrap().wait().await.unwrap();
     if output.success() {
         if !clipboard && open_file {
-            if let Err(_err) = stdCommand::new("open").arg(filename.to_string()).spawn() {
-                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
-            }
+            tauriCommand::new_sidecar("Screen Crab Tools").unwrap().args(["--path", filename]).spawn().unwrap();
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);
@@ -70,9 +69,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, file_typ
     let output = process.unwrap().wait().await.unwrap();
     if output.success() {
         if !clipboard && open_file {
-            if let Err(_err) = stdCommand::new("open").arg(filename.to_string()).spawn() {
-                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
-            }
+            tauriCommand::new_sidecar("Screen Crab Tools").unwrap().args(["--path", filename]).spawn().unwrap();
         }
         if clipboard {
             return Response::new(Some(format!("Screen Crab saved to Clipboard")), None);

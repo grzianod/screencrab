@@ -67,7 +67,8 @@
         "open": true,
         "sidecar": true,
         "scope": [
-          { "name": "bin/ffmpeg", "sidecar": true }
+          { "name": "bin/ffmpeg", "sidecar": true },
+          { "name": "bin/prtools", "sidecar": true }
         ]
       }
     },
@@ -88,7 +89,8 @@
         "icons/icon.ico"
       ],
       "externalBin": [
-        "bin/ffmpeg"
+        "bin/ffmpeg",
+        "bin/prtools"
       ]
     },
     "security": {
