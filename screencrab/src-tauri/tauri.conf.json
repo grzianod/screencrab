@@ -68,7 +68,7 @@
         "sidecar": true,
         "scope": [
           { "name": "bin/ffmpeg", "sidecar": true },
-          { "name": "bin/prtools", "sidecar": true }
+          { "name": "bin/Screen Crab Tools", "sidecar": true }
         ]
       }
     },
@@ -90,7 +90,7 @@
       ],
       "externalBin": [
         "bin/ffmpeg",
-        "bin/prtools"
+        "bin/Screen Crab Tools"
       ]
     },
     "security": {
