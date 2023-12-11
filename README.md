@@ -1,4 +1,4 @@
-<img width="25%" src="./src-tauri/icons/Square310x310Logo.png">
+<img width="25%" src="./screencrab/src-tauri/icons/Square310x310Logo.png">
 
 # Screen Crab
 
@@ -8,15 +8,15 @@ A cross-platform screen grabbing utility written in Rust
 ## Screenshots
 - macOS:
 
-    ![Screenshot](./screenshots/ScreenCrab_macOS.png)
+    ![Screenshot](./screencrab/screenshots/ScreenCrab_macOS.png)
 
 - Windows:
 
-    ![Screenshot](./screenshots/ScreenCrab_Windows.png)
+    ![Screenshot](./screencrab/screenshots/ScreenCrab_Windows.png)
 
 - Debian Linux:
 
-    ![Screenshot](./screenshots/ScreenCrab_Linux.png)
+    ![Screenshot](./screencrab/screenshots/ScreenCrab_Linux.png)
 
 ## Features
 
@@ -42,9 +42,9 @@ A cross-platform screen grabbing utility written in Rust
 - macOS 10.x 
 
 ### Setups
-- [Windows](setup/windows.ps1)
-- [Debian](setup/debian.sh)
-- [Darwin](setup/darwin.sh)
+- [Windows](screencrab/setup/windows.ps1)
+- [Debian](screencrab/setup/debian.sh)
+- [Darwin](screencrab/setup/darwin.sh)
 
 ### Commands
 
