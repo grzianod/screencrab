@@ -42,7 +42,7 @@ pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str
         }
     }
 
-    let status = Command::new_sidecar("ffmpeg")
+    let status = tauriCommand::new_sidecar("ffmpeg")
         .unwrap()
         .args([
             "-f", "gdigrab",
@@ -57,7 +57,6 @@ pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str
         .status()
         .unwrap();
 
-    let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
             tauriCommand::new_sidecar("prtools").unwrap().args(["--path", filename]).spawn().unwrap();
@@ -108,7 +107,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
     let height = parts[3].trim().parse::<i32>().unwrap();
 
 
-    let status = Command::new_sidecar("ffmpeg")
+    let status = tauriCommand::new_sidecar("ffmpeg")
         .unwrap()
         .args([
             "-f", "gdigrab",
@@ -125,7 +124,6 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
         .unwrap();
 
 
-    let filename1 = filename.to_string();
     if status.success() {
         if !clipboard && open_file {
             tauriCommand::new_sidecar("prtools").unwrap().args(["--path", filename]).spawn().unwrap();
@@ -174,43 +172,6 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
         }
     }
 
-    let mut selected_audio_device = String::new();
-
-    if audio {
-        // Run FFmpeg command to list devices
-        let output = std::process::Command::new("ffmpeg")
-            .args(["-list_devices", "true", "-f", "dshow", "-i", "dummy"])
-            .output();
-
-        match output {
-            Ok(output) => {
-                let output_str = String::from_utf8_lossy(&output.stdout);
-
-                // Extract audio device name, for example
-                if let Some(start) = output_str.find("DirectShow audio devices") {
-                    if let Some(end) = output_str[start..].find("Alternative name") {
-                        let audio_device_line = &output_str[start..start+end];
-                        // Extract the actual device name from audio_device_line
-                        // For example, the line might contain the name "Microfono (3- Samson Meteor Mic)"
-                        selected_audio_device = audio_device_line.to_string();
-                    }
-                }
-            },
-            Err(e) => {
-                // Handle the error if FFmpeg command fails to execute
-                return Response::new(None, Some(format!("Failed to execute FFmpeg command: {}", e)));
-            }
-        }
-        
-    }
-
-
-    // Modify the FFmpeg command to include the selected audio device
-    let _audio_device_arg = if !selected_audio_device.is_empty() {
-        format!("-f dshow -i audio=\"{}\"", selected_audio_device)
-    } else {
-        String::new()
-    };
     
     let filename_extension = std::path::Path::new(filename)
     .extension()
@@ -227,7 +188,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
         _ => return Response::new(None, Some(format!("Unsupported file format: {}", filename_extension))),
     };
 
-    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg").unwrap()
+    let mut command = stdCommand::from(tauriCommand::new_sidecar("ffmpeg").unwrap()
         .args(["-f", "gdigrab"])
         .args(["-framerate", "30"])
         .args(["-offset_x", format!("{}", position.x).as_str()])
@@ -242,6 +203,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
         command.raw_arg("dshow");
         command.raw_arg("-i");
         command.raw_arg(audio_string.as_str());
+    
     }
 
     command.args([&filename.to_string()]);
@@ -308,7 +270,7 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     let width = parts[2].trim().parse::<i32>().unwrap();
     let height = parts[3].trim().parse::<i32>().unwrap();
 
-    let mut command = stdCommand::from(Command::new_sidecar("ffmpeg")
+    let mut command = stdCommand::from(tauriCommand::new_sidecar("ffmpeg")
         .unwrap()
         .args(["-f", "gdigrab"])
         .args(["-framerate", "30"])
