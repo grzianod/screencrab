@@ -38,6 +38,7 @@ function App() {
             let size = await selector.innerSize();
             let scaleFactor = await selector.scaleFactor();
             area = position.toLogical(scaleFactor).x + "," + position.toLogical(scaleFactor).y + "," + size.toLogical(scaleFactor).width + "," + size.toLogical(scaleFactor).height;
+            selector.hide();
         }
 
             invoke("capture", {
@@ -63,7 +64,6 @@ function App() {
             .finally(() => {
                     if(view === "custom") {
                         selector.setResizable(true);
-                        selector.hide();
                     }
 
                     setCapturing(false);
