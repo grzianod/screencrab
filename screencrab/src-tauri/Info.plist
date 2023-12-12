@@ -6,5 +6,7 @@
   <string>Screen Crab uses the microphone to register external audio while recording the screen</string>
   <key>LSUIElement</key>
   <string>1</string>
+  <key>NSCameraUseContinuityCameraDeviceType</key>
+  <string>Screen Crab would like to record your screen</string>
 </dict>
 </plist>

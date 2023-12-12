@@ -94,6 +94,7 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
 
     command.args(&["-T", timer.to_string().as_str()]);
     command.args(&["-D", index.to_string().as_str()]);
+    if open_file { command.arg("-P"); }
 
     let mut process = command.arg(filename1.as_str()).spawn().map_err(|e| Response::new(None, Some(format!("Failed to launch screen record: {}", e)) )).unwrap();
     let _stdin = process.stdin.take().unwrap();  //do not release process stdin at wait(), capture it to send SIGTERM to recording process
@@ -126,9 +127,6 @@ pub async fn record_fullscreen(window: Window, filename: &str, timer: u64, _poin
     let output = process.wait().await.unwrap();
     if output.success() {
         if open_file {
-            if let Err(_err) = stdCommand::new("open").arg(filename.to_string()).spawn() {
-                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
-            }
             window.app_handle().windows().get("main_window").unwrap().minimize().unwrap();
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename1.to_string())), None);
@@ -149,6 +147,7 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     command.args(&["-T", timer.to_string().as_str()]);
     command.args(&["-R", area]);
     command.args(&["-D", index.to_string().as_str()]);
+    if open_file { command.arg("-P"); }
 
     let mut process = command.arg(filename1.as_str()).spawn().map_err(|e| Response::new(None, Some(format!("Failed to launch screen record: {}", e)) )).unwrap();
     let mut _stdin = process.stdin.take().unwrap();  //do not release process stdin at wait(), capture it to send SIGTERM to recording process
@@ -175,7 +174,7 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
                 .arg(pid.to_string())
                 .output();
 
-        window_.menu_handle().get_item("stop_reording").set_enabled(false).unwrap();
+        window_.menu_handle().get_item("stop_recording").set_enabled(false).unwrap();
         window_.menu_handle().get_item("custom_record").set_enabled(true).unwrap();
         window_.menu_handle().get_item("fullscreen_record").set_enabled(true).unwrap();
     });
@@ -183,9 +182,6 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     let output = process.wait().await.unwrap();
     if output.success() {
         if open_file {
-            if let Err(_err) = tokioCommand::new("open").arg(filename.to_string()).spawn() {
-                return Response::new(Some(format!("Failed to open {}", filename.to_string())), None);
-            }
             window.app_handle().windows().get("main_window").unwrap().minimize().unwrap();
         }
         return Response::new(Some(format!("Screen Crab saved to {}", filename1.to_string())), None );
