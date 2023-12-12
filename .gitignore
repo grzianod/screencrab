@@ -1,1 +1,9 @@
-/screencrab/src-tauri/bin/
+/screencrab/src-tauri/bin/ffmpeg-aarch64-apple-darwin
+/screencrab/src-tauri/bin/prtools-aarch64-apple-darwin
+/screencrab/src-tauri/bin/ffmpeg-x86_64-pc-windows-msvc.exe
+/screencrab/src-tauri/bin/prtools-x86_64-pc-windows-msvc.exe
+/screencrab/src-tauri/bin/ffmpeg-x86_64-unknown-linux-gnu
+/screencrab/src-tauri/bin/prtools-x86_64-unknown-linux-gnu
+/screencrab/src-tauri/bin/ffmpeg-x86_64-apple-darwin
+/screencrab/src-tauri/bin/prtools-x86_64-apple-darwin
+/screencrab/src-tauri/bin/protools-x86_64-apple-darwin
