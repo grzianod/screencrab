@@ -78,7 +78,7 @@
       "identifier": "com.screencrab",
       "category": "Productivity",
       "appimage": {
-        "bundleMediaFramework": true,
+        "bundleMediaFramework": true
       },
       "macOS": {
         "minimumSystemVersion": "10.13",
@@ -89,8 +89,8 @@
           "type": "offlineInstaller"
         },
         "nsis": {
-          "headerImage": "icons/Square150x150Logo.png",
-          "sidebarImage": "icons/Square150x150Logo.png",
+          "headerImage": "icons/Square150x57Logo.bmp",
+          "sidebarImage": "icons/Square164x314Logo.bmp",
           "installerIcon": "icons/icon.ico"
         }
       },
