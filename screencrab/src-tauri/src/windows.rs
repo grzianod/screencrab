@@ -46,13 +46,13 @@ pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str
 
     let status = tauriCommand::new_sidecar("ffmpeg")
         .unwrap()
+        .args(["-draw_mouse", if pointer {"1"} else {"0"}])
         .args([
             "-f", "gdigrab",
             "-offset_x", format!("{}", position.x).as_str(),
             "-offset_y", format!("{}", position.y).as_str(),
             "-video_size", format!("{}x{}", size.width, size.height).as_str(),
             "-i", "desktop",
-            "-draw_mouse", if pointer { "1" } else { "0" },
             "-frames:v", "1",
             &filename.to_string()
         ])
@@ -111,6 +111,7 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
 
     let status = tauriCommand::new_sidecar("ffmpeg")
         .unwrap()
+        .args(["-draw_mouse", if pointer {"1"} else {"0"}])
         .args([
             "-f", "gdigrab",
             "-framerate", "30",
@@ -118,7 +119,6 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
             "-offset_y", format!("{}", y).as_str(),
             "-video_size", format!("{}x{}", width, height).as_str(),
             "-i", "desktop",
-            "-draw_mouse", if pointer { "1" } else { "0" },
             "-frames:v", "1",
             &filename.to_string()
         ])

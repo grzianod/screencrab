@@ -33,8 +33,8 @@ pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str
 
     let status = tauriCommand::new_sidecar("ffmpeg")
         .unwrap()
+        .args(["-draw_mouse", if pointer {"1"} else {"0"}])
         .args(["-y", "-f", "x11grab", "-i", format!(":{}.0+0,0", index).as_str(), "-frames:v", "1", &filename.to_string()])
-        .args(if pointer {vec!["-draw_mouse", "1"]} else {vec!["-draw_mouse", "0"]})
         .status()
         .unwrap();
 
@@ -94,8 +94,8 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
 
     let status = tauriCommand::new_sidecar("ffmpeg")
         .unwrap()
-        .args(["-y", "-f", "x11grab", "-video_size", format!("{},{}", width, height).as_str(), "-i", format!(":{}.0+{},{}", index, x, y).as_str(), "-draw_mouse", if pointer { "true" } else { "false" }, "-frames:v", "1", &filename.to_string()])
-        .args(if pointer {vec!["-draw_mouse", "1"]} else {vec!["-draw_mouse", "0"]})
+        .args(["-draw_mouse", if pointer {"1"} else {"0"}])
+        .args(["-y", "-f", "x11grab", "-video_size", format!("{},{}", width, height).as_str(), "-i", format!(":{}.0+{},{}", index, x, y).as_str(), "-frames:v", "1", &filename.to_string()])
         .status()
         .unwrap();
 
