@@ -89,8 +89,8 @@
           "type": "offlineInstaller"
         },
         "nsis": {
-          "headerImage": "icons/Square150x57Logo.bmp",
-          "sidebarImage": "icons/Square164x314Logo.bmp",
+          "headerImage": "icons/Square150x57Logo.jpg",
+          "sidebarImage": "icons/Square164x314Logo.jpg",
           "installerIcon": "icons/icon.ico"
         }
       },

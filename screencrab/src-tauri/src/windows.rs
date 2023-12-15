@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 use tokio::task;
 use tauri::api::process::Command as tauriCommand;
 //use tauri::api::process::CommandEvent;
@@ -13,6 +14,7 @@ use winapi::um::wincon::CTRL_BREAK_EVENT;
 //use winapi::um::wincon::{CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT};
 use std::fs;
 use cpal::traits::{HostTrait,DeviceTrait};
+use printpdf::*;
 
 pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str, timer: u64, pointer: bool, clipboard: bool, _audio: bool, open_file: bool) -> Response {
     let index = get_current_monitor_index(&window) - 1;
@@ -72,6 +74,9 @@ pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str
         } else {
             return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
         }
+    }
+    if _file_type.eq("pdf") {
+        return Response::new(None, Some(format!("Screen Crab cancelled. Could not capture as pdf on Windows")));
     }
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
@@ -139,6 +144,9 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
         } else {
             return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
         }
+    }
+    if _file_type.eq("pdf") {
+        return Response::new(None, Some(format!("Screen Crab cancelled. Could not capture as pdf on Windows")));
     }
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
