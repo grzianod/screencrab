@@ -477,6 +477,7 @@ async fn main() {
                                             _ => {}
                                         }
                                         main_window_.emit(action, {}).unwrap();
+                                        std::thread::sleep(std::time::Duration::from_secs(10));
                                     }
                                 }
                             Err(e) => eprintln!("Error listening for hotkeys: {:?}", e),
