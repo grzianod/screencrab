@@ -75,9 +75,6 @@ pub async fn capture_fullscreen(window: Window, filename: &str, _file_type: &str
             return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
         }
     }
-    if _file_type.eq("pdf") {
-        return Response::new(None, Some(format!("Screen Crab cancelled. Could not capture as pdf on Windows")));
-    }
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
 
@@ -106,10 +103,10 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
     }
 
     let parts: Vec<&str> = area.split(',').collect();
-    let x = parts[0].trim().parse::<i32>().unwrap();
-    let y = parts[1].trim().parse::<i32>().unwrap();
-    let width = parts[2].trim().parse::<i32>().unwrap();
-    let height = parts[3].trim().parse::<i32>().unwrap();
+    let x = (parts[0].trim().parse::<f64>().unwrap() * window.app_handle().windows().get("selector").unwrap().current_monitor().unwrap().unwrap().scale_factor()).floor() as i32;
+    let y = (parts[1].trim().parse::<f64>().unwrap() * window.app_handle().windows().get("selector").unwrap().current_monitor().unwrap().unwrap().scale_factor()).floor() as i32;
+    let width = (parts[2].trim().parse::<f64>().unwrap() * window.app_handle().windows().get("selector").unwrap().current_monitor().unwrap().unwrap().scale_factor()).ceil() as i32;
+    let height = (parts[3].trim().parse::<f64>().unwrap()* window.app_handle().windows().get("selector").unwrap().current_monitor().unwrap().unwrap().scale_factor()).ceil() as i32;
 
 
     let status = tauriCommand::new_sidecar("ffmpeg")
@@ -144,9 +141,6 @@ pub async fn capture_custom(window: Window, area: &str, filename: &str, _file_ty
         } else {
             return Response::new(Some(format!("Screen Crab saved to {}", filename.to_string())), None);
         }
-    }
-    if _file_type.eq("pdf") {
-        return Response::new(None, Some(format!("Screen Crab cancelled. Could not capture as pdf on Windows")));
     }
     return Response::new(None, Some(format!("Screen Crab cancelled")));
 }
@@ -273,10 +267,10 @@ pub async fn record_custom(window: Window, area: &str, filename: &str, timer: u6
     }
 
     let parts: Vec<&str> = area.split(',').collect();
-    let x = parts[0].trim().parse::<i32>().unwrap();
-    let y = parts[1].trim().parse::<i32>().unwrap();
-    let width = parts[2].trim().parse::<i32>().unwrap();
-    let height = parts[3].trim().parse::<i32>().unwrap();
+    let x = parts[0].trim().parse::<f64>().unwrap().ceil() as i32;
+    let y = parts[1].trim().parse::<f64>().unwrap().ceil() as i32;
+    let width = parts[2].trim().parse::<f64>().unwrap().ceil() as i32;
+    let height = parts[3].trim().parse::<f64>().unwrap().ceil() as i32;
 
     let mut command = stdCommand::from(tauriCommand::new_sidecar("ffmpeg")
         .unwrap()

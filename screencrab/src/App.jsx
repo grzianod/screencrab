@@ -374,7 +374,7 @@ function App() {
 
                                     <Dropdown.Menu style={{columnCount: "2"}}>
                                         <div className={"column"}>
-                                            <Dropdown.Item onClick={() => setCaptureType("pdf")} className={mode==="record" ? "d-none" : false}>
+                                            <Dropdown.Item onClick={() => setCaptureType("pdf")} className={mode==="record" || !navigator.platform.toUpperCase().includes('MAC') ? "d-none" : false}>
                                                 <FormText>pdf</FormText>
                                                 {captureType === "pdf" ?
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"

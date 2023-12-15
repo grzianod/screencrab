@@ -241,7 +241,7 @@ pub fn monitor_dialog(app: AppHandle) {
 pub fn custom_area_selection(app: AppHandle, id: String, left: f64, top: f64, width: f64, height: f64) {
     let offset = LogicalPosition::new(app.windows().get(id.as_str()).unwrap().outer_position().unwrap().x as f64,app.windows().get(id.as_str()).unwrap().outer_position().unwrap().y as f64);
     let scale_factor = app.windows().get(id.as_str()).unwrap().current_monitor().unwrap().unwrap().scale_factor();
-    let position = LogicalPosition::new((left + offset.x/scale_factor) as i32, (top + offset.y/scale_factor) as i32);
+    let position= LogicalPosition::new((left + offset.x/scale_factor) as i32, (top + offset.y/scale_factor) as i32);   
     let size = LogicalSize::new(width as i32, height as i32);
 
     let n = app.windows().get("main_window").unwrap().available_monitors().unwrap().len();
