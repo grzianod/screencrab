@@ -1,5 +1,4 @@
 #![cfg_attr(all(not(debug_assertions), target_os = "macos"), windows_subsystem = "console")]
-#![cfg_attr(all(not(debug_assertions), target_os = "windows"),windows_subsystem = "windows")]
 mod menu;
 mod utils;
 

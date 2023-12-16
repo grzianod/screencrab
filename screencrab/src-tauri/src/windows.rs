@@ -1,4 +1,3 @@
-#![windows_subsystem = "windows"]
 use tokio::task;
 use tauri::api::process::Command as tauriCommand;
 //use tauri::api::process::CommandEvent;
